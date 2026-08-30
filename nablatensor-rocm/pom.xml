@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.nablatensor</groupId><artifactId>nablatensor-parent</artifactId><version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>nablatensor-rocm</artifactId>
+  <name>nablatensor-rocm</name>
+  <description>ROCm/HIP replay engine: the recorded tape becomes a fused forward+adjoint HIP
+    kernel, HIPRTC-compiled once and replayed one scenario per work-item. Mirrors the CUDA
+    engine for AMD devices; selected automatically on a machine with a HIP runtime.</description>
+  <dependencies>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-backend-rocm</artifactId></dependency>
+  </dependencies>
+</project>

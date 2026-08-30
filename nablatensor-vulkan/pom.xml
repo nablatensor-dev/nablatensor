@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.nablatensor</groupId><artifactId>nablatensor-parent</artifactId><version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>nablatensor-vulkan</artifactId>
+  <name>nablatensor-vulkan</name>
+  <description>Vulkan replay engine: the recorded tape is code-generated into a GLSL compute
+    shader (unrolled forward + adjoint, on-device Philox), compiled to SPIR-V with libshaderc
+    and dispatched through the Vulkan loader via java.lang.foreign. The GPU path for machines
+    with no CUDA/HIP device. Single precision.</description>
+  <dependencies>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-backend-vulkan</artifactId></dependency>
+  </dependencies>
+</project>

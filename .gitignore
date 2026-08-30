@@ -1,0 +1,20 @@
+target/
+*.class
+*.jar
+*.log
+.idea/
+*.iml
+.vscode/
+.DS_Store
+dependency-reduced-pom.xml
+hs_err_pid*.log
+*.dump
+*.dumpstream
+TODO.txt
+
+# Python / Jupyter (see notebooks/README.md)
+.venv/
+__pycache__/
+*.egg-info/
+.ipynb_checkpoints/
+

@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    name: mvn test (JDK ${{ matrix.jdk }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        jdk: ['25']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: ${{ matrix.jdk }}
+          cache: maven
+
+      # The bank-deployable path: green with no GPU, no native lib, no incubator flag.
+      - name: Build and test (cpu-jit clean path)
+        run: mvn -B -q clean test
+
+      - name: Install
+        run: mvn -B -q install -DskipTests
+
+      # simd is exercised by the validate / examples test runs, which add the
+      # incubator module themselves; this step just makes the row explicit.
+      - name: Validation evidence pack (with simd)
+        run: >
+          MAVEN_OPTS="--add-modules jdk.incubator.vector"
+          mvn -B -q -pl nablatensor-validate exec:java
+          -Dexec.mainClass=com.nablatensor.validate.EvidenceMain
+          -Dscenarios=500000 -Dsteps=64

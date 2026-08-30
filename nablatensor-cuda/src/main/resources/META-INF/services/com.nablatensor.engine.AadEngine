@@ -1,0 +1,3 @@
+com.nablatensor.engine.CudaAadEngine
+com.nablatensor.engine.CudaInterpEngine
+com.nablatensor.engine.CudaEagerEngine

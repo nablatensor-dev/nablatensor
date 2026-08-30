@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.nablatensor</groupId>
+    <artifactId>nablatensor-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>nablatensor-jit-cpu</artifactId>
+  <name>nablatensor-jit-cpu</name>
+  <description>Bytecode-generating replay engine: the tape is emitted as a tape-specific class
+    with the Class-File API (final since JDK 24) whose forward and reverse sweeps are
+    straight-line bytecode, segmented to stay inside HotSpot C2 limits. No incubator module,
+    no native library. The LTS-Java-clean default fast path.</description>
+  <dependencies>
+    <dependency>
+      <groupId>com.nablatensor</groupId>
+      <artifactId>nablatensor-core</artifactId>
+    </dependency>
+  </dependencies>
+</project>

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.nablatensor</groupId>
+  <artifactId>nablatensor-parent</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>NablaTensor</name>
+  <description>Adjoint automatic differentiation for quantitative finance on the JVM:
+    write the valuation in Java once, get price and every Greek from one reverse sweep,
+    replay millions of scenarios on a bytecode kernel, SIMD or GPU from the same
+    recording. Apache-2.0.</description>
+  <url>https://github.com/nablatensor-dev/nablatensor</url>
+
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <!--
+    Java 25 language level (an LTS), built and run with the JDK that Maven itself
+    runs on. The default replay path (cpu-jit) is plain Java: no incubator module,
+    no native library. The simd module adds the jdk.incubator.vector module; GPU
+    backends use java.lang.foreign only (no JNI, no native jars) and gate
+    themselves at runtime through AadEngine.isAvailable().
+  -->
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <junit.version>5.11.3</junit.version>
+  </properties>
+
+  <modules>
+    <module>nablatensor-tensor</module>
+    <module>nablatensor-core</module>
+    <module>nablatensor-cpu</module>
+    <module>nablatensor-jit-cpu</module>
+    <module>nablatensor-simd</module>
+    <module>nablatensor-ops</module>
+    <module>nablatensor-backend-cuda</module>
+    <module>nablatensor-backend-rocm</module>
+    <module>nablatensor-backend-vulkan</module>
+    <module>nablatensor-cuda</module>
+    <module>nablatensor-rocm</module>
+    <module>nablatensor-vulkan</module>
+    <module>nablatensor-quant</module>
+    <module>nablatensor-scenario</module>
+    <module>nablatensor-risk</module>
+    <module>nablatensor-reg</module>
+    <module>nablatensor-validate</module>
+    <module>nablatensor-examples</module>
+    <module>nablatensor-bench</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-tensor</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-backend-cuda</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-backend-rocm</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-backend-vulkan</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-cuda</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-rocm</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-vulkan</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-ops</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-cpu</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-jit-cpu</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-simd</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-quant</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-scenario</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-risk</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-reg</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-validate</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter</artifactId>
+        <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+          <configuration>
+            <release>${maven.compiler.release}</release>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.5.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

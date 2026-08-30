@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.nablatensor</groupId><artifactId>nablatensor-parent</artifactId><version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>nablatensor-cuda</artifactId>
+  <name>nablatensor-cuda</name>
+  <description>CUDA replay engine: a recorded tape is code-generated into a fused
+    forward+adjoint CUDA kernel, NVRTC-compiled once, then replayed with one scenario per
+    thread. Also the no-codegen interpreter (cuda-interp) and eager (cuda-eager) variants.
+    Selected automatically when a CUDA device is present.</description>
+  <dependencies>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-backend-cuda</artifactId></dependency>
+  </dependencies>
+</project>

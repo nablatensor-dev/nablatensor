@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nablatensor-jupyter"
+version = "0.1.0"
+description = "JPype bridge that exposes the NablaTensor quant/adjoint API to Python notebooks"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "JPype1>=1.5.1",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+notebooks = [
+    "jupyterlab>=4.0",
+    "ipykernel>=6.29",
+    "matplotlib>=3.8",
+]
+
+[tool.setuptools]
+packages = ["nablatensor"]

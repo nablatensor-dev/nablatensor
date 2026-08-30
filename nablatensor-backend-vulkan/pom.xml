@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.nablatensor</groupId><artifactId>nablatensor-parent</artifactId><version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>nablatensor-backend-vulkan</artifactId>
+  <name>nablatensor-backend-vulkan</name>
+  <description>vulkan compute runtime via java.lang.foreign: runtime kernel compilation and
+    dispatch, no JNI and no native jar. Compiles with or without the vulkan toolchain present;
+    reports itself unavailable at runtime when the loader or device is missing.</description>
+  <dependencies>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-tensor</artifactId></dependency>
+  </dependencies>
+</project>

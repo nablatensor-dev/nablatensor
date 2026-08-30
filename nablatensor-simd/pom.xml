@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.nablatensor</groupId>
+    <artifactId>nablatensor-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>nablatensor-simd</artifactId>
+  <name>nablatensor-simd</name>
+  <description>SIMD replay engine, vectorising across scenarios with the incubating JDK Vector
+    API. Opt-in: the jar can be absent, or present while the incubator module is not resolved,
+    and in both cases the engine reports itself unavailable and selection falls back.</description>
+  <dependencies>
+    <dependency>
+      <groupId>com.nablatensor</groupId>
+      <artifactId>nablatensor-core</artifactId>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <release>${maven.compiler.release}</release>
+          <compilerArgs>
+            <arg>--add-modules</arg>
+            <arg>jdk.incubator.vector</arg>
+          </compilerArgs>
+          <showWarnings>false</showWarnings>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <argLine>--add-modules jdk.incubator.vector --enable-native-access=ALL-UNNAMED</argLine>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

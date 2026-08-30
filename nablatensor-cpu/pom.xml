@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.nablatensor</groupId>
+    <artifactId>nablatensor-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>nablatensor-cpu</artifactId>
+  <name>nablatensor-cpu</name>
+  <description>Scalar JVM replay engine. Plain Java, no optional runtime dependency, so it is
+    always available: the portable fallback and the deterministic reference (CPU oracle) an
+    accelerated result is checked against, path-for-path on the same Philox stream.</description>
+  <dependencies>
+    <dependency>
+      <groupId>com.nablatensor</groupId>
+      <artifactId>nablatensor-core</artifactId>
+    </dependency>
+  </dependencies>
+</project>

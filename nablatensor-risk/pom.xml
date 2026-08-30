@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.nablatensor</groupId><artifactId>nablatensor-parent</artifactId><version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>nablatensor-risk</artifactId>
+  <name>nablatensor-risk</name>
+  <description>Aggregation layer (Seam 7): risk factors, an immutable Sensitivities vector,
+    portfolio / netting-set composition by plain addition, the two-level correlation
+    aggregation shared by FRTB SA-SBM and ISDA SIMM, the three FRTB correlation scenarios,
+    and a time-profile structure for XVA.</description>
+  <dependencies>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-quant</artifactId></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId></dependency>
+  </dependencies>
+</project>

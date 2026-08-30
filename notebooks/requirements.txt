@@ -1,0 +1,5 @@
+# Run from the repo root:  pip install -r notebooks/requirements.txt
+#
+# Installs the local python/ bridge in editable mode together with its
+# "notebooks" extra (JPype1, NumPy, JupyterLab, ipykernel, matplotlib).
+-e ./python[notebooks]
