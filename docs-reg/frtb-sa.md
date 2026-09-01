@@ -2,7 +2,12 @@
 
 > **Phase 1** of the regulatory-calculator build. Companion to
 > `docs-internal/NABLATENSOR_REG_IMPLEMENTATION_PLAN.md`.
-> **Status:** design doc, pre-implementation. **Date:** 2026-09-01.
+> **Status:** Part I is the regulation; Part II is largely **implemented** in
+> `nablatensor-reg` — SBM for all seven risk classes, DRC, RRAO and the `FrtbSa`
+> assembler, with independent-oracle tests. Still open: the prescribed-bump /
+> adjoint **sensitivity extraction** bridge (§II.8), calibrated CSR
+> securitisation / CTP tables, and the runnable multi-class example. **Date:**
+> 2026-09-01.
 >
 > **Calculators, not sign-off.** This describes what the code will compute — the
 > numbers MAR21/22/23 and CRR3 ask for. Model validation, parameter attestation
