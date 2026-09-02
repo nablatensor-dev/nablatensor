@@ -92,12 +92,14 @@ try (MonteCarlo<EquityMarket> mc = MonteCarlo.of(Products.asianCall())  // Seam 
 (`p.greeks().spot()` is delta); `p.greek(EquityMarket::spot)` reads one directly.
 
 Run the worked version: `VanillaEuropeanGreeks`, `AsianGreeksBackends`,
-`SwapThePayoff`, `HestonSabrCalibration`, `MnistMlp` in `nablatensor-examples`.
+`FrtbCurvatureShowcase`, `FrtbFullShowcase`, `SwapThePayoff`,
+`HestonSabrCalibration`, `MnistMlp` in `nablatensor-examples`.
 Docs under [`docs/examples/`](docs/examples/): vanilla, Asian, swap-the-payoff,
 exotic-models, barrier-digital, rates-fx, multi-output, sabr-calibration,
-heston-calibration, mnist-mlp; plus [`docs/cookbook/custom-ops.md`](docs/cookbook/custom-ops.md).
+heston-calibration, mnist-mlp, FRTB curvature; plus
+[`docs/cookbook/custom-ops.md`](docs/cookbook/custom-ops.md).
 
-Or watch one happen: [`demo/`](demo/) has four narrated jshell sessions —
+Or watch one happen: [`demo/`](demo/) has six narrated jshell sessions —
 `greeks-on-gpu.sh` (a barrier note, every Greek from one sweep, 20 M paths on
 Vulkan), `adjoint-vs-bump.sh` (one reverse sweep vs eleven revaluations),
 `calibrate-a-smile.sh` (a SABR fit with an adjoint gradient), and
@@ -122,7 +124,6 @@ checked against the scalar oracle).
 | `nablatensor-quant` | `EquityMarket` + `GbmPath` + `Products` (European / Asian / lookback) + `MonteCarlo` + `BlackScholes`; *(P1)* `ExoticProducts` (barrier / digital / cliquet / autocallable), `HestonModel` · `SabrModel` · `LocalVolModel` · `HullWhite1F` · `LmmModel`, `BasketOption`, `Hooks` (antithetic / control-variate), `CurveBootstrap` + analytic Jacobian, `Calibrator` (adjoint-gradient L-BFGS), `MultiMetric` |
 | `nablatensor-scenario` | *(P2)* Seam 6 — `Shock` / `Scenario` / `Ladder` / `ScenarioSet` / `ScenarioRunner`: declarative shocks → `setInput` + replay, no recompile |
 | `nablatensor-risk` | *(P2)* Seam 7 — `RiskFactor`, `Sensitivities`, `Portfolio` / netting-set composition, `NestedAggregation` (the FRTB/SIMM `√(ΣK² + ΣγSS)` engine), `CorrelationScenario`, `TimeProfile` |
-| `nablatensor-reg` | *(P2)* `FrtbSaSbm` (equity: delta + vega + curvature, 3 correlation scenarios) and `IsdaSimm` (equity: delta + vega with the concentration risk factor) |
 | `nablatensor-validate` | replay on every backend at equal seed, diff vs the oracle, bump cross-check → a text **evidence pack** |
 | `nablatensor-examples` | worked demos, each also a test and a docs page |
 | `nablatensor-bench` | the reproducible comparison harness above |
@@ -149,7 +150,7 @@ dependency of the `cpu-jit` path.
 
 - **MVP** — engine + `cpu` oracle / `cpu-jit` / `simd` / `vulkan` / `rocm` / `cuda`, vanilla / Asian / lookback, GBM, validation harness, benchmark. ✅
 - **Phase 1** — smoothed indicator + `N(x)`/`erf`/`pow` + custom-op registry; barrier / digital / cliquet / autocallable / floating lookback; caps-floors / swaptions (Hull-White + LMM); FX / quanto; correlated basket; Bermudan *shell*; Heston / SABR / local-vol / Hull-White 1F / LMM step blocks with `drift()`/`diffusion()` hooks; antithetic / control-variate / importance-sampling / path-filter hooks; deposit-FRA-swap curve bootstrap + analytic Jacobian; adjoint-gradient calibration (L-BFGS **and** Levenberg-Marquardt), SABR closed-form and Heston Monte-Carlo fits; `MultiOutput` (one tape → N named measures) and `MultiMetric`. ✅
-- **Phase 2** — ⬤ *slice done*: aggregation layer (`nablatensor-risk`), scenario DSL (`nablatensor-scenario`), **FRTB SA** (SBM for all seven risk classes — GIRR / CSR non-sec / CSR sec / CTP / equity / commodity / FX — plus DRC and RRAO and the `FrtbSa` assembler; CSR sec / CTP ship placeholder tables), **ISDA SIMM equity** (delta + vega + concentration). ⬡ *remaining*: XVA, VaR / ES, AVA, SA-CCR, IRRBB, prescribed-bump/adjoint sensitivity extraction, multi-GPU.
+- **Phase 2** — ⬤ *slice done*: aggregation layer (`nablatensor-risk`) and scenario DSL (`nablatensor-scenario`), including the FRTB curvature repricing showcase. ⬡ *remaining*: XVA, VaR / ES, AVA, SA-CCR, IRRBB, prescribed-bump/adjoint sensitivity extraction, multi-GPU.
 - **Phase 3** — nested stochastic (Solvency II SCR, VM-22, IFRS 17); LSM early exercise; second-order adjoints.
 
 **Native multiple reverse seeds on one forward sweep** — a tape can now carry
@@ -181,8 +182,12 @@ mvn -o -q install
 
 ## Regulation
 
+- [`docs/reg/frtb-for-dummies.md`](docs/reg/frtb-for-dummies.md) — story-driven introduction to the complete FRTB Standardised Approach
+- [`docs/reg/frtb-buckets-and-hedging.md`](docs/reg/frtb-buckets-and-hedging.md) — when within- and cross-bucket positions really reduce capital
 - [`docs/reg/frtb-sa-sbm.md`](docs/reg/frtb-sa-sbm.md) — FRTB SA Sensitivities-Based Method, equity
 - [`docs/reg/isda-simm.md`](docs/reg/isda-simm.md) — ISDA SIMM, equity
+- [`docs/examples/frtb-curvature-showcase.md`](docs/examples/frtb-curvature-showcase.md) — executable shocked-repricing showcase
+- [`docs/examples/frtb-curvature-for-beginners.md`](docs/examples/frtb-curvature-for-beginners.md) — illustrated beginner's guide to the calculation
 - [`docs/examples/portfolio-aggregation.md`](docs/examples/portfolio-aggregation.md) · [`docs/examples/scenario-dsl.md`](docs/examples/scenario-dsl.md)
 
 ## Compare

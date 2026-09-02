@@ -588,7 +588,10 @@ public final class VulkanBackend implements ComputeBackend {
 
   @Override
   public int priority() {
-    return 40;
+    // Above ROCm (50): on the machines this project targets Vulkan (Mesa RADV)
+    // is the faster compute path, and this matches the AAD-engine ordering
+    // (vulkan 60 > rocm 55). Still below CUDA (100).
+    return 60;
   }
 
   public String deviceName() {

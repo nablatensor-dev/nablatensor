@@ -13,8 +13,7 @@
 #    finale "closing line"
 #
 #  This is NOT sourced by any test or build step — it is only ever run by a
-#  human (or an asciinema recording of one). It shells out to jshell against
-#  the compiled classes.
+#  human. It shells out to jshell against the compiled classes.
 #
 #  ⚠ Every typed line must be a COMPLETE jshell snippet or obviously
 #    unfinished (trailing '(' ',' '{'). jshell appends the missing semicolon,
@@ -234,9 +233,10 @@ double time(Runnable r) { long t = now(); r.run(); return msSince(t); }
 SETUP
 
   # Ask nablatensor — not the OS — which adjoint backend is really usable, and
-  # in what precision. Vulkan/ROCm are fp32; the CPU engines are fp64. The demos
-  # that want a GPU read $ENGINE; those that need fp64 use "cpu-jit".
-  # Override with NABLATENSOR_DEMO_ENGINE=rocm|vulkan|cpu-jit.
+  # in what precision. CUDA/Vulkan/ROCm are fp32; the CPU engines are fp64. The
+  # demos that want a GPU read $ENGINE (the fastest one available here); those
+  # that need fp64 use "cpu-jit".
+  # Override with NABLATENSOR_DEMO_ENGINE=cuda|vulkan|rocm|cpu-jit.
   local ENGINE=""
   if (( FORCE_CPU )); then
     ENGINE="cpu-jit"
@@ -245,7 +245,7 @@ SETUP
   else
     ENGINE="$(capture <<'PROBE'
 var _n = AadEngines.discovered().stream().filter(AadEngine::isAvailable).map(AadEngine::name).toList();
-System.out.println(_n.contains("vulkan") ? "vulkan" : _n.contains("rocm") ? "rocm" : "cpu-jit");
+System.out.println(_n.contains("cuda") ? "cuda" : _n.contains("vulkan") ? "vulkan" : _n.contains("rocm") ? "rocm" : "cpu-jit");
 PROBE
 )"
     ENGINE="${ENGINE//[[:space:]]/}"

@@ -44,7 +44,7 @@ public interface ComputeBackend {
   /** Whether this backend can run on the current machine (drivers/GPU present). */
   boolean isAvailable();
 
-  /** Higher wins when {@code Backend.AUTO} selects a default (CUDA &gt; ROCm &gt; CPU). */
+  /** Higher wins when {@code Backend.AUTO} selects a default (CUDA &gt; Vulkan &gt; ROCm &gt; CPU). */
   int priority();
 
   DeviceBuffer upload(float[] data, Shape shape, DType dtype, Device device);
