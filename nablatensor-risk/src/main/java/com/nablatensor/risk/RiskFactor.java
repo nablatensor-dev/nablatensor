@@ -21,7 +21,7 @@ package com.nablatensor.risk;
  * <p>The record is deliberately generic — one shape for every FRTB SA / SIMM
  * risk class. Interpretation of {@code name} / {@code tenor} / {@code tenor2} is
  * per risk class; the typed factory methods below encode the conventions the
- * {@code com.nablatensor.reg.frtb.*} parameter classes expect:
+ * FRTB SA / SIMM parameter classes expect:
  *
  * <ul>
  *   <li><b>GIRR</b> delta: {@code bucket} = currency, {@code name} = curve id

@@ -10,6 +10,8 @@ plan for implementing it** in `nablatensor-reg` and the shared risk model.
 | File | Regulation | Phase |
 |---|---|---|
 | [`frtb-sa.md`](frtb-sa.md) | FRTB market-risk capital — standardised approach (SBM + DRC + RRAO) | 1 |
+| [`nablatensor-library-usage.md`](nablatensor-library-usage.md) | NablaTensor APIs exercised by the FRTB scenario and test-only disposition | 1 |
+| [`external-nablatensor-calls.md`](external-nablatensor-calls.md) | Call-level inventory of functionality outside `nablatensor-reg` | 1 |
 
 Planned next: `cva.md` (BA-CVA / SA-CVA, Phase 2), `output-floor.md` (Phase 3),
 `frtb-eu-relief.md` (Phase 4), `trading-book-boundary.md` (Phase 5).

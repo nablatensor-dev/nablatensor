@@ -24,6 +24,7 @@ import com.nablatensor.tensor.Shape;
 import com.nablatensor.tensor.expr.Expr;
 import com.nablatensor.tensor.spi.ComputeBackend;
 import com.nablatensor.tensor.spi.DeviceBuffer;
+import com.nablatensor.tensor.spi.GpuKernel;
 import com.nablatensor.tensor.spi.GpuKernels;
 
 import java.util.HashMap;
@@ -42,6 +43,8 @@ import java.util.Map;
 public final class RocmBackend implements ComputeBackend {
 
   private static final int BLOCK = 256;
+  private static final GpuKernel MATMUL = GpuKernels.kernel("matmul_tiled");
+  private static final GpuKernel BATCHED_MATMUL = GpuKernels.kernel("batched_matmul_tiled");
 
   private static final int MAX_BROADCAST_RANK = 4;
 
@@ -203,10 +206,11 @@ public final class RocmBackend implements ComputeBackend {
     int n = rs.dim(1);
     requirePositiveMatmulDimensions(m, k, n);
     HipBuffer out = alloc(Shape.of(m, n));
-    long totalTiles = Math.multiplyExact((long) grid16(m), grid16(n));
+    long totalTiles = Math.multiplyExact((long) gridTiles(m), gridTiles(n));
     for (long offset = 0; offset < totalTiles; offset += Integer.MAX_VALUE) {
       int blocks = Math.toIntExact(Math.min(Integer.MAX_VALUE, totalTiles - offset));
-      HipRuntime.launchBlocks2d(functions.get("matmul_tiled"), blocks, 16, 16,
+      HipRuntime.launchBlocks2d(functions.get(MATMUL.name()), blocks,
+          MATMUL.blockDimX(), MATMUL.blockDimY(),
           out.pointer, left.pointer, right.pointer, m, k, n, offset);
     }
     return out;
@@ -229,11 +233,12 @@ public final class RocmBackend implements ComputeBackend {
     int n = rs.dim(2);
     requirePositiveMatmulDimensions(batch, m, k, n);
     HipBuffer out = alloc(Shape.of(batch, m, n));
-    long tilesPerBatch = Math.multiplyExact((long) grid16(m), grid16(n));
+    long tilesPerBatch = Math.multiplyExact((long) gridTiles(m), gridTiles(n));
     long totalTiles = Math.multiplyExact((long) batch, tilesPerBatch);
     for (long offset = 0; offset < totalTiles; offset += Integer.MAX_VALUE) {
       int blocks = Math.toIntExact(Math.min(Integer.MAX_VALUE, totalTiles - offset));
-      HipRuntime.launchBlocks2d(functions.get("batched_matmul_tiled"), blocks, 16, 16,
+      HipRuntime.launchBlocks2d(functions.get(BATCHED_MATMUL.name()), blocks,
+          BATCHED_MATMUL.blockDimX(), BATCHED_MATMUL.blockDimY(),
           out.pointer, left.pointer, right.pointer, batch, m, k, n, offset);
     }
     return out;
@@ -566,8 +571,8 @@ public final class RocmBackend implements ComputeBackend {
     return n == 0 ? 0 : 1 + (n - 1) / BLOCK;
   }
 
-  private static int grid16(int size) {
-    return 1 + (size - 1) / 16;
+  private static int gridTiles(int size) {
+    return 1 + (size - 1) / MATMUL.blockDimX();
   }
 
   private static void requirePositiveMatmulDimensions(int... dimensions) {

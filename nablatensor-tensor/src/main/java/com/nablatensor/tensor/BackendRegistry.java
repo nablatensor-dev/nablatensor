@@ -57,8 +57,8 @@ public final class BackendRegistry {
   /**
    * The default backend: the one named by {@code -Dnablatensor.backend=<name>} /
    * {@code NABLATENSOR_BACKEND} if that backend is present and available,
-   * otherwise the highest-priority available backend (CUDA &gt; ROCm &gt;
-   * Vulkan &gt; SIMD &gt; CPU).
+   * otherwise the highest-priority available backend (CUDA &gt; Vulkan &gt;
+   * ROCm &gt; SIMD &gt; CPU).
    */
   public static ComputeBackend defaultBackend() {
     String pinned = System.getProperty("nablatensor.tensor.backend", System.getenv("NABLATENSOR_BACKEND"));

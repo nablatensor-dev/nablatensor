@@ -15,9 +15,17 @@
  */
 package com.nablatensor.examples;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import com.nablatensor.risk.CorrelationScenario;
+import com.nablatensor.risk.RiskClass;
+import com.nablatensor.risk.RiskMeasure;
 import com.nablatensor.tensor.NablaTensors;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -37,6 +45,74 @@ class ExamplesSmokeTest {
     System.setProperty("scenarios", "50000");
     System.setProperty("steps", "32");
     AsianGreeksBackends.main(new String[0]);
+  }
+
+  @Test
+  void frtbCurvature() {
+    System.setProperty("scenarios", "10000");
+    System.setProperty("steps", "16");
+    System.setProperty("engine", "cpu-jit");
+    FrtbCurvatureShowcase.main(new String[0]);
+  }
+
+  @Test
+  void curvatureStripsLinearPnlAndTakesTheWorseShock() {
+    assertEquals(11.0,
+        FrtbCurvatureShowcase.curvatureValue(-10.0, -18.0, -6.0, 30.0, -0.5), 1e-12);
+  }
+
+  @Test
+  void frtbFull() {
+    System.setProperty("scenarios", "5000");
+    System.setProperty("steps", "8");
+    System.setProperty("engine", "cpu-jit");
+    FrtbFullShowcase.main(new String[0]);
+  }
+
+  @Test
+  void frtbFullCoversTablesNettingAndCapitalComponents() {
+    var parameters = FrtbFullShowcase.ParameterSet.demoMar21();
+    assertEquals(7, parameters.tables().size());
+    assertEquals(89, parameters.bucketCount());
+
+    var market = new FrtbFullShowcase.MarketData(
+        java.time.LocalDate.of(2026, 9, 2),
+        Map.of("SPX", 100.0, "USD-OIS-5Y", 0.042, "ACME-SPREAD-5Y", 0.012,
+            "EURUSD", 1.085, "WTI-1Y", 76.5, "IMPLIED-VOL", 0.20));
+    var trades = List.of(
+        new FrtbFullShowcase.TradeSpec("T1", "NS1", 10_000_000, 1),
+        new FrtbFullShowcase.TradeSpec("T2", "NS1", 4_000_000, -1),
+        new FrtbFullShowcase.TradeSpec("T3", "NS2", 2_000_000, 1));
+    var portfolio = FrtbFullShowcase.buildPortfolio(trades, parameters, market, 3.5);
+    assertEquals(2, portfolio.byNettingSet().size());
+    var netted = portfolio.aggregate();
+    int tradeFactorObservations = portfolio.trades().stream()
+      .mapToInt(trade -> trade.sensitivities().asMap().size()).sum();
+    assertTrue(netted.asMap().size() < tradeFactorObservations);
+    var capital = FrtbFullShowcase.aggregate(parameters, netted);
+
+    for (RiskClass riskClass : RiskClass.values()) {
+      assertFalse(netted.ofClass(riskClass).ofMeasure(RiskMeasure.DELTA).isEmpty());
+      assertFalse(netted.ofClass(riskClass).ofMeasure(RiskMeasure.VEGA).isEmpty());
+      assertFalse(netted.ofClass(riskClass).ofMeasure(RiskMeasure.CURVATURE).isEmpty());
+      var classCapital = capital.byClass().get(riskClass);
+      assertTrue(classCapital.total() > 0.0);
+      for (var measure : List.of(
+          classCapital.delta(), classCapital.vega(), classCapital.curvature())) {
+        assertEquals(CorrelationScenario.values().length, measure.scenarios().size());
+        assertEquals(measure.scenarios().values().stream().mapToDouble(Double::doubleValue).max()
+            .orElseThrow(), measure.total(), 1e-12);
+      }
+    }
+
+    var drc = FrtbFullShowcase.defaultRiskCharge(List.of(
+        new FrtbFullShowcase.DefaultPosition("A", 1_000_000, 0.03),
+        new FrtbFullShowcase.DefaultPosition("B", -200_000, 0.15)));
+    var rrao = FrtbFullShowcase.residualRiskAddOn(List.of(
+        new FrtbFullShowcase.ResidualPosition("X", 1_000_000, true),
+        new FrtbFullShowcase.ResidualPosition("Y", 2_000_000, false)));
+    assertTrue(drc.total() > 0.0);
+    assertEquals(0.012, rrao.total(), 1e-12);
   }
 
   @Test

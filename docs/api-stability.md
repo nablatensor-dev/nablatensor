@@ -14,7 +14,7 @@ packages**:
 | `com.nablatensor.engine` (SPI) | `AadEngine`, `AadExecutable` — implement to add a backend |
 | `com.nablatensor.quant` | `MonteCarlo`, `Product`, `TimeGrid`, `EquityMarket` (and the other `*Market` records), `Products`, `ExoticProducts`, `Hooks`, `MultiOutput`, `MultiMetric`, `Calibrator`, `BlackScholes`, the `*Model` step blocks |
 | `com.nablatensor.scenario` | `Shock`, `Scenario`, `ScenarioSet`, `Ladder`, `ScenarioRunner` |
-| `com.nablatensor.risk`, `com.nablatensor.reg` | the aggregation / regulatory types |
+| `com.nablatensor.risk` | the aggregation types |
 | `com.nablatensor.tensor` | `NablaTensors`, `Tensor`, `Shape`, `Device`, `DType`, `PrngKey`, and `com.nablatensor.tensor.spi.*` |
 
 ## What is not

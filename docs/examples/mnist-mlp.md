@@ -62,10 +62,11 @@ dataset so the pipeline still runs (this is also what the smoke test exercises).
 
 ## Output
 
-Real MNIST, fixed 80/20 split on row order, ROCm on a Radeon 780M iGPU:
+Real MNIST, fixed 80/20 split on row order, Radeon 780M iGPU with
+`NABLATENSOR_BACKEND=rocm` (auto-select now prefers `vulkan:0` on this box):
 
 ```
-nablatensor devices: [rocm:0, vulkan:0] -> training on rocm:0
+nablatensor devices: [vulkan:0, rocm:0] -> training on rocm:0
 data/mnist/mnist_train.csv: 60000 samples in 513 ms
 split: 48000 train / 12000 test (80/20 fixed)
 epoch 1/30  avg loss 0.5420

@@ -3,6 +3,7 @@
 | Notebook | Mirrors | What you run |
 |---|---|---|
 | [`greeks-on-gpu.ipynb`](greeks-on-gpu.ipynb) | [`demo/greeks-on-gpu.sh`](../demo/greeks-on-gpu.sh) | A down-and-in put written as a plain-Java lambda, recorded once, then **20 M paths priced with price + delta + vega + rho + dV/dK + dV/dT from one reverse sweep** — plus a spot ladder (with a plot) and a crash scenario on the same compiled kernel. |
+| [`frtb-full-on-cuda.ipynb`](frtb-full-on-cuda.ipynb) | [`demo/frtb-full-on-cuda.sh`](../demo/frtb-full-on-cuda.sh) | The FRTB standardised approach in **ten stages**: market/trade/rulebook loading, 89 parameter buckets, one adjoint delta and **three full shocked repricings on CUDA**, the CVR arithmetic, netting, `LOW`/`MEDIUM`/`HIGH` aggregation for all seven risk classes, DRC, RRAO, capital bridge and sign-off — plus a plot of what curvature actually measures. |
 
 The notebook drives the **same Java code** as the shell demo. A small package,
 [`python/nablatensor`](../python/nablatensor), boots one JDK 25 JVM through
@@ -68,6 +69,13 @@ all cells.
   backend this machine has — `vulkan`, else `rocm`, else the pure-Java
   `cpu-jit`. Force one by editing that line, e.g. `ENGINE = "cpu-jit"`.
   `nt.engines()` lists what the ServiceLoader found and whether each is usable.
+- **`frtb-full-on-cuda.ipynb` prefers `cuda`** and falls back to
+  `nt.best_engine()`, so it runs anywhere — on a GPU it uses fp32 and 2 M paths,
+  otherwise fp64 and 250 k. Only the timings change; the capital numbers move
+  by Monte-Carlo noise.
+- Its regulatory tables, sample trades and sign-off roles are **illustrative
+  demo data** in `FrtbFullShowcase` — a compute demonstration, not a
+  regulatory implementation.
 - **Non-default checkout / JDK.**
   `nt.start(project_root="/path/to/nablatensor", jdk_home="/path/to/jdk")`.
 - The bridge is a convenience for these examples, not a supported public API —

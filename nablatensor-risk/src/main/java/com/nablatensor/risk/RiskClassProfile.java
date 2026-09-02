@@ -16,9 +16,9 @@
 package com.nablatensor.risk;
 
 /**
- * The per-risk-class parameter surface the generic FRTB SA-SBM engine
- * ({@code com.nablatensor.reg.frtb.sbm.SbmCharge}) drives. One implementation
- * per risk class (GIRR, CSR non-sec / sec / CTP, equity, commodity, FX); the
+ * The per-risk-class parameter surface a generic FRTB SA-SBM engine drives.
+ * One implementation per risk class (GIRR, CSR non-sec / sec / CTP, equity,
+ * commodity, FX); the
  * implementation holds the MAR21 risk-weight, correlation and curvature-shock
  * tables and is the single place a value changes.
  *
@@ -27,7 +27,7 @@ package com.nablatensor.risk;
  *
  * <p>This interface carries no numbers. Its implementations do, and each of
  * those must cite the Basel paragraph and warn that the reader should verify
- * against the current rulebook — as {@code EquitySbmParameters} already does.
+ * against the current rulebook.
  */
 public interface RiskClassProfile {
 
