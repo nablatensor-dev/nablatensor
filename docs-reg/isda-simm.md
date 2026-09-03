@@ -1,7 +1,7 @@
 # ISDA SIMM & IM Model Validation — Compute Profile & NablaTensor Fit
 
-> **Analysis note** — companion to
-> `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §8. Not committed scope.
+> **Analysis note** — where the heaviest computation in ISDA SIMM / IM model
+> validation sits and whether NablaTensor helps. Not committed scope.
 > **Date:** 2026-09-02.
 >
 > **Verdict: Strong fit** — the same sensitivity vectors as FRTB SA, plus a
@@ -74,10 +74,10 @@ Yes, on both workloads:
 ## 4 · If we build it
 
 Extends the existing **`com.nablatensor.reg.simm`** slice (equity delta + vega +
-concentration) to all risk classes, curvature and the `g_bc` cross-bucket term —
-listed as coverage priority 3 in the drivers doc (`§14`). The recalibration
-cadence and the annual backtest are the recurring commercial hook; a backtest
-harness over historical market snapshots would reuse `com.nablatensor.scenario.*`.
+concentration) to all risk classes, curvature and the `g_bc` cross-bucket term.
+The recalibration cadence and the annual backtest are the recurring commercial
+hook; a backtest harness over historical market snapshots would reuse
+`com.nablatensor.scenario.*`.
 
 ## References
 
@@ -86,5 +86,5 @@ harness over historical market snapshots would reuse `com.nablatensor.scenario.*
 - [ISDA SIMM — solutions info hub](https://www.isda.org/isda-solutions-infohub/isda-simm/)
 - [Initial margin for non-cleared derivatives: the end of the journey? (BNP Paribas)](https://securities.cib.bnpparibas/initial-margin-for-non-cleared-derivatives-the-end-of-the-journey/)
 - EU **EMIR 3.0** (Regulation (EU) 2024/2987), IM model-validation provisions.
-- Internal: `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §8;
-  existing `com.nablatensor.reg.simm`.
+- Related: `docs-reg/frtb-sa.md` (the same sensitivity vectors, different risk
+  weights); existing `com.nablatensor.reg.simm`.

@@ -1,7 +1,7 @@
 # Crypto-Asset Prudential Treatment — Compute Profile & NablaTensor Fit
 
-> **Analysis note** — companion to
-> `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §12. Not committed scope.
+> **Analysis note** — where the heaviest computation in the crypto-asset
+> prudential regime sits and whether NablaTensor helps. Not committed scope.
 > **Date:** 2026-09-02.
 >
 > **Verdict: Not a driver** — the rule is classification and risk-weighting, with
@@ -72,5 +72,5 @@ risk-factor / bucket set, and needs no dedicated module.
 - [CRR III – prudential treatment of crypto exposures (White & Case)](https://www.whitecase.com/insight-alert/crr-iii-prudential-treatment-crypto-exposures)
 - [EBA publishes draft technical standards on the prudential treatment of crypto-asset exposures under the CRR](https://www.eba.europa.eu/publications-and-media/press-releases/eba-publishes-draft-technical-standards-prudential-treatment-crypto-asset-exposures-under-capital)
 - [New rules for the crypto exposures of banks (De Nederlandsche Bank)](https://www.dnb.nl/en/sector-news/supervision-2024/new-rules-for-the-crypto-exposures-of-banks/)
-- Internal: `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §12;
-  `docs-reg/frtb-sa.md`.
+- Related: `docs-reg/frtb-sa.md` (the treatment a crypto trading book falls back
+  to).

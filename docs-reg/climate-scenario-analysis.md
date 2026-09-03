@@ -1,8 +1,7 @@
 # Climate Scenario Analysis — Compute Profile & NablaTensor Fit
 
-> **Analysis note** — companion to
-> `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §10. Not committed scope.
-> **Date:** 2026-09-02.
+> **Analysis note** — where the heaviest computation in climate scenario analysis
+> sits and whether NablaTensor helps. Not committed scope. **Date:** 2026-09-02.
 >
 > **Verdict: Partial fit** — mechanically the same replay-across-a-grid problem
 > as stress testing, but a softening, EU/UK-only driver with still-maturing
@@ -77,5 +76,5 @@ scenario set for NGFS pathways, extend the horizon, reuse
 - [ECB — climate change and monetary policy (speech, 5 May 2026)](https://www.ecb.europa.eu/press/key/date/2026/html/ecb.sp260505_1~2e47b4c747.en.html)
 - [Bank of England — international engagement and initiatives (NGFS short-term scenarios)](https://www.bankofengland.co.uk/climate-change/international-engagement-and-initiatives)
 - [Comparing the ECB SSM climate stress test and the Bank of England's CBES (Deloitte)](https://www.deloitte.com/uk/en/services/audit-assurance/blogs/comparing-the-ecb-ssm-climate-change-stress-and-the-bank-of-englands-cbes.html)
-- Internal: `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §10;
-  `docs-reg/stress-testing.md`.
+- Related: `docs-reg/stress-testing.md` (the scenario-replay capability this
+  rides on).

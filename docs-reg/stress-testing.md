@@ -1,7 +1,7 @@
 # Supervisory Stress Testing — Compute Profile & NablaTensor Fit
 
-> **Analysis note** — companion to
-> `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §9. Not committed scope.
+> **Analysis note** — where the heaviest computation in supervisory stress
+> testing sits and whether NablaTensor helps. Not committed scope.
 > **Date:** 2026-09-02.
 >
 > **Verdict: Strong fit (headline)** — the canonical many-scenario, many-horizon
@@ -37,8 +37,8 @@ Stress testing is the **many-scenario full revaluation** workload:
    ×  (full revaluation + loss projection at each node)
 ```
 
-This is the **heaviest total-FLOP workload in the drivers document**. The Fed
-transparency proposal adds a second copy: banks build **internal replicas of the
+This is the **heaviest total-FLOP workload of any regime covered in these
+notes**. The Fed transparency proposal adds a second copy: banks build **internal replicas of the
 supervisory models** and run them alongside their own.
 
 **The bottleneck is the full-portfolio revaluation replicated across the
@@ -64,11 +64,11 @@ Yes — this is the use case behind the scenario-DSL narrative and the
 
 ## 4 · If we build it
 
-**Not a standalone Phase in the 1–5 plan** — it is a horizontal capability that
-the FRTB, CVA and IRRBB work all feed. A stress-test scenario harness is listed
-last in the drivers-doc coverage priority (`§14`). It reuses
-`com.nablatensor.scenario.*` and the adjoint engine directly; the deliverable is
-a scenario / horizon DSL and a results grid, not a new regulatory calculator.
+**Not a standalone phase in the current 1–5 roadmap** — it is a horizontal
+capability that the FRTB, CVA and IRRBB work all feed, and the lowest-priority
+coverage item. It reuses `com.nablatensor.scenario.*` and the adjoint engine
+directly; the deliverable is a scenario / horizon DSL and a results grid, not a
+new regulatory calculator.
 
 ## References
 
@@ -78,4 +78,5 @@ a scenario / horizon DSL and a results grid, not a new regulatory calculator.
 - [Enhanced transparency and public accountability of the supervisory stress test models and scenarios (Federal Register, 18 Nov 2025)](https://www.federalregister.gov/documents/2025/11/18/2025-20211/enhanced-transparency-and-public-accountability-of-the-supervisory-stress-test-models-and-scenarios)
 - [The 2026 Federal Reserve stress test results: a framework in transition (Bank Policy Institute)](https://bpi.com/the-2026-federal-reserve-stress-test-results-a-framework-in-transition/)
 - [Dodd-Frank Act Stress Tests 2026 (Federal Reserve)](https://www.federalreserve.gov/supervisionreg/dfa-stress-tests-2026.htm)
-- Internal: `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §9.
+- Related: `docs-reg/irrbb.md`, `docs-reg/climate-scenario-analysis.md` (same
+  scenario-replay capability).

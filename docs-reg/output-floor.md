@@ -1,8 +1,7 @@
 # The Output Floor — Compute Profile & NablaTensor Fit
 
-> **Analysis note** — companion to
-> `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §5. Not committed scope.
-> **Date:** 2026-09-02.
+> **Analysis note** — where the heaviest computation the output floor forces sits
+> and whether NablaTensor helps. Not committed scope. **Date:** 2026-09-02.
 >
 > **Verdict: Partial fit (transitive)** — the floor is not a new calculation; it
 > makes the standardised approaches into permanent production compute, so it
@@ -64,9 +63,9 @@ Yes, but only through its FRTB SA and SA-CVA contributions:
 
 ## 4 · If we build it
 
-Internal implementation plan **Phase 3** — and deliberately narrow: NablaTensor's
-slice is the **MR-SA and SA-CVA legs only**, consuming the totals produced by
-Phases 1 and 2. Standardised credit and operational RWA are out of scope (not a
+**Phase 3** of the regulatory-calculator build — and deliberately narrow:
+NablaTensor's slice is the **MR-SA and SA-CVA legs only**, consuming the totals
+produced by Phases 1 and 2 (`docs-reg/frtb-sa.md`, `docs-reg/cva.md`). Standardised credit and operational RWA are out of scope (not a
 quantitative-pricing problem). The deliverable is the parallel-run plumbing and
 the `max` against the internal-model number, plus the relieved / unrelieved dual
 run already sketched in `frtb-sa.md` §I.6.
@@ -80,6 +79,5 @@ run already sketched in `frtb-sa.md` §I.6.
 - [CRR III — transitional provisions (Banking.Vision)](https://banking.vision/en/crr-iii-transitional-provisions)
 - [Credit risk & output floor (Ashurst)](https://www.ashurst.com/en/insights/credit-risk-and-output-floor/)
 - [EBA roadmap on the EU banking package — the output floor](https://probability.nl/wp-content/uploads/2024/10/EBA-roadmap-on-EU-Banking-package-Output-Floor-PP-1.pdf)
-- Internal: `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §5,
-  `docs-internal/NABLATENSOR_REG_IMPLEMENTATION_PLAN.md` Phase 3;
-  `docs-reg/frtb-sa.md`, `docs-reg/cva.md`.
+- Related: `docs-reg/frtb-sa.md`, `docs-reg/cva.md` (the two standardised legs
+  this floor makes permanent).

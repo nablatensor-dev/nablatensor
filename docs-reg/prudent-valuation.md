@@ -1,8 +1,7 @@
 # Prudent Valuation / Additional Valuation Adjustments — Compute Profile & NablaTensor Fit
 
-> **Analysis note** — companion to
-> `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §6. Not committed scope.
-> **Date:** 2026-09-02.
+> **Analysis note** — where the heaviest computation in prudent valuation / AVAs
+> sits and whether NablaTensor helps. Not committed scope. **Date:** 2026-09-02.
 >
 > **Verdict: Partial fit** — a scenario-grid revaluation problem, but a smaller
 > grid than FRTB curvature or stress testing, and much of the framework is
@@ -83,5 +82,5 @@ adjoint engine for AVA sensitivities — no new subsystem.
 - [EBA consults on targeted amendments to the prudent valuation framework](https://eba.europa.eu/publications-and-media/press-releases/eba-consults-targeted-amendments-prudent-valuation-framework)
 - [EBA publishes final draft technical standards on prudent valuation](https://www.eba.europa.eu/eba-publishes-final-draft-technical-standards-on-prudent-valuation)
 - [European Banking Authority on prudential valuations (Forvis Mazars)](https://www.forvismazars.com/uk/en/industries/financial-services/regulatory-insights/european-banking-authority-on-pva)
-- Internal: `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §6;
-  `docs-reg/model-risk-management.md`.
+- Related: `docs-reg/model-risk-management.md` (shared independent-revaluation
+  engine).

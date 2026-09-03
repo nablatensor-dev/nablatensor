@@ -1,8 +1,7 @@
 # IRRBB — Interest-Rate Risk in the Banking Book — Compute Profile & NablaTensor Fit
 
-> **Analysis note** — companion to
-> `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §7. Not committed scope.
-> **Date:** 2026-09-02.
+> **Analysis note** — where the heaviest computation in IRRBB sits and whether
+> NablaTensor helps. Not committed scope. **Date:** 2026-09-02.
 >
 > **Verdict: Partial fit** — a shocked-curve revaluation grid with embedded
 > optionality, which is AD-friendly; the fit becomes **strong only if the
@@ -73,7 +72,8 @@ Yes, with a real caveat:
 
 ## 4 · If we build it
 
-**Not in the Phase 1–5 plan — a candidate.** It widens the addressable surface
+**Not in the current Phase 1–5 roadmap — a candidate.** It widens the addressable
+surface
 beyond derivatives desks to **ALM / treasury / finance** and fits the
 scenario-DSL narrative. A build would need a banking-book cash-flow engine and
 behavioural-model blocks expressed on the tape, feeding shocked-curve replay and
@@ -88,4 +88,4 @@ onto regulatory curve vertices.
 - [EBA — RTS on IRRBB supervisory outlier tests](https://www.eba.europa.eu/activities/single-rulebook/regulatory-activities/supervisory-review-and-evaluation-process-srep-and)
 - [Second implementation report on the IRRBB heatmap (Banking.Vision, Jan 2026)](https://banking.vision/en/second-implementation-report-on-irrbb-heat-map/)
 - [EBA/GL/2026/06 — revised SREP and supervisory stress-testing guidelines (26 Jun 2026)](https://www.eba.europa.eu/sites/default/files/2026-06/fd5fbfa1-2efb-4122-8e91-4831469d8150/Final%20Report%20on%20revised%20SREP%20and%20supervisory%20stress%20testing%20Guidelines.pdf)
-- Internal: `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §7.
+- Related: `docs-reg/stress-testing.md` (shared scenario-replay capability).

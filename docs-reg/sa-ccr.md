@@ -1,8 +1,7 @@
 # Counterparty Credit Risk — SA-CCR — Compute Profile & NablaTensor Fit
 
-> **Analysis note** — companion to
-> `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §4. Not committed scope.
-> **Date:** 2026-09-02.
+> **Analysis note** — where the heaviest computation in SA-CCR sits and whether
+> NablaTensor helps. Not committed scope. **Date:** 2026-09-02.
 >
 > **Verdict: Marginal** — the base calculation is a closed-form formula and is
 > not compute-bound; there is no deadline pressure.
@@ -65,7 +64,7 @@ Mostly no.
 
 ## 4 · If we build it
 
-**Not currently a build phase.** SA-CCR appears in the internal plan only as a
+**Not currently a build phase.** SA-CCR appears in the roadmap only as a
 downstream input to the output floor (Phase 3), which takes EAD as given. If a
 client optimisation or leverage-ratio use case emerges, the natural home is a
 thin analytic module differentiated by the existing adjoint engine — no new
@@ -78,4 +77,4 @@ subsystem — feeding `com.nablatensor.risk` position arithmetic.
 - [The Standardised Approach for Counterparty Credit Risk — design and calibration (AFME)](https://www.afme.eu/publications/position-papers/the-standardised-approach-for-counterparty-credit-risk-design-and-calibration/)
 - [Recalibration of SA-CCR to mitigate increased hedging costs for end-users (AFME)](https://www.afme.eu/publications/position-papers/recalibration-sa-ccr-to-mitigate-increased-hedging-costs-for-end-users/)
 - [Review of the framework for SA-CCR — EBF position](https://www.ebf.eu/regulation-supervision/review-of-the-framework-for-the-standardised-approach-for-counterparty-credit-risk-sa-ccr-ebf-position/)
-- Internal: `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §4.
+- Related: `docs-reg/output-floor.md` (SA-CCR EAD as a downstream input).

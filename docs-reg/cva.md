@@ -1,11 +1,12 @@
 # CVA Risk Capital (BA-CVA / SA-CVA) — Compute Profile & NablaTensor Fit
 
-> **Analysis note** — companion to
-> `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §3. Not committed scope.
-> **Date:** 2026-09-02.
+> **Analysis note** — where the heaviest computation in CVA risk capital sits and
+> whether NablaTensor helps. **Date:** 2026-09-02. §4 is **implemented** in the
+> `nablatensor-cva` module and the `demo/cva-capital.sh` walk-through; the
+> parameter tables are still indicative.
 >
-> **Verdict: Strong fit** — the widest adjoint-AD margin in the whole drivers
-> document.
+> **Verdict: Strong fit** — the widest adjoint-AD margin of any regime covered in
+> these notes.
 >
 > **Calculators, not sign-off.** This note describes where the computation sits
 > and what NablaTensor could compute — the numbers the rules ask for. Model
@@ -61,7 +62,7 @@ exposure paths for the SA-CVA sensitivity vector.**
 ## 3 · Can NablaTensor help?  **Strong fit**
 
 Yes — this is where bump-and-revalue is most expensive and adjoint AD wins by the
-widest margin in the drivers document.
+widest margin of any regime covered in these notes.
 
 - **Record the netting-set CVA valuation once.** One adjoint reverse sweep
   produces `dCVA/d(risk factor)` for **all** prescribed factors together, instead
@@ -76,17 +77,40 @@ widest margin in the drivers document.
 **What it does not accelerate:** BA-CVA (closed form), the eligibility /
 approval / desk-governance work, and hedge-instrument mapping.
 
-## 4 · If we build it
+## 4 · What is built
 
-Internal implementation plan **Phase 2** (CVA risk capital) — the largest new
-sub-system on the roadmap: it needs a counterparty-exposure engine feeding the
-existing aggregation layer. Extends `com.nablatensor.risk.NestedAggregation`
-(FRTB-style aggregation, already generic) and the adjoint engine in
-`nablatensor-core`; a fuller *Regulation & Implementation Plan* in the style of
-`frtb-sa.md` would supersede this note once Phase 2 is scoped.
+**Phase 2** of the regulatory-calculator build, in the **`nablatensor-cva`**
+module:
 
-Headline comparison artefact: "SA-CVA sensitivities for a real netting set — one
-adjoint sweep vs N re-simulations."
+- **`ExposureSimulation`** — a Monte-Carlo netting-set exposure engine on the
+  adjoint tape: a one-factor Hull-White short rate (`HwShortRate`, analytic
+  `P(t,T)` reconstruction) and a lognormal FX spot drive `InterestRateSwap` and
+  `FxForward` marks at every grid date; a `CollateralAgreement` applies variation
+  margin with a threshold and a margin period of risk.
+- **Unilateral CVA on the tape** against a `HazardCurve` (piecewise-flat forward
+  hazard, bootstrapped from `CdsQuote`s). One `greeks()` run returns the CVA
+  **and its whole risk vector** — IR delta and vega, counterparty CS01 by tenor
+  bucket, recovery, FX — from a single reverse sweep. `SaCvaSensitivities`
+  exposes both routes: `adjoint(...)` (one sweep) and `bumpAndRevalue(...)` (one
+  full exposure re-simulation per prescribed shock, ~14 for a mixed netting set).
+- **`SaCva`** aggregates the CVA sensitivities on the shared
+  `com.nablatensor.risk.NestedAggregation` with `SaCvaParameters` (risk weights,
+  correlations, `m_CVA`), three correlation scenarios, binding-scenario report.
+- **`BaCva`** — reduced and full (`beta` blend, single-name and index `CvaHedge`
+  recognition with `r_hc`), `BaCvaParameters` risk-weight table.
+- **`Cva`** assembler over a portfolio of netting sets; **`PraCvaMethods`** — the
+  three PRA standardised methods (Alternative / Basic / Standardised).
+
+**Headline comparison artefact:** `demo/cva-capital.sh` (backed by
+`com.nablatensor.examples.CvaShowcase`) — the SA-CVA sensitivity vector for a
+real netting set, one adjoint sweep vs 14 exposure re-simulations, reconciled
+factor by factor, on the fastest backend available.
+
+Still indicative: the `SaCvaParameters` / `BaCvaParameters` tables are demo
+values, the EAD proxy is `alpha * EPE` rather than SA-CCR/IMM, and wrong-way
+risk beyond the `alpha` multiplier is out of scope. A fuller *Regulation &
+Implementation Plan* in the style of `frtb-sa.md` would document the calibrated
+tables.
 
 ## References
 
@@ -99,5 +123,4 @@ adjoint sweep vs N re-simulations."
 - [A first view on the new CVA risk capital charge (Quantifi)](https://www.quantifisolutions.com/a-first-view-on-the-new-cva-risk-capital-charge-1/)
 - [FRTB may bite harder for Europe's CVA modellers (Risk.net)](https://www.risk.net/our-take/7961311/frtb-may-bite-harder-for-europes-cva-modellers)
 - [EBA — market, counterparty and CVA risk](https://www.eba.europa.eu/regulation-and-policy/market-counterparty-and-cva-risk)
-- Internal: `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §3,
-  `docs-internal/NABLATENSOR_REG_IMPLEMENTATION_PLAN.md` Phase 2.
+- Related: `docs-reg/frtb-sa.md` (shared aggregation), `docs-reg/output-floor.md`.

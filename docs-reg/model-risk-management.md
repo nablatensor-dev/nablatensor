@@ -1,13 +1,13 @@
 # Model-Risk Management & Internal-Model Approval — Compute Profile & NablaTensor Fit
 
-> **Analysis note** — companion to
-> `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §11. Not committed scope.
-> **Date:** 2026-09-02.
+> **Analysis note** — where the heaviest computation in model-risk management /
+> internal-model approval sits and whether NablaTensor helps. Not committed
+> scope. **Date:** 2026-09-02.
 >
-> **Verdict: Strong fit (strategic)** — the strongest strategic fit in the
-> drivers document; it needs no new regulatory calculator, only NablaTensor's
-> existing independent-replay / oracle machinery, positioned as the challenger /
-> validation engine and **never the book of record**.
+> **Verdict: Strong fit (strategic)** — the strongest strategic fit of any regime
+> covered in these notes; it needs no new regulatory calculator, only
+> NablaTensor's existing independent-replay / oracle machinery, positioned as the
+> challenger / validation engine and **never the book of record**.
 >
 > **Calculators, not sign-off.** This note describes where the computation sits
 > and what NablaTensor could compute. Model validation, parameter attestation and
@@ -74,7 +74,7 @@ exists: the record / replay engine, the bit-repro check and the CPU oracle in
 `nablatensor-validate` (`BitReproTest`, `BumpCrossCheck`). The work is packaging
 and documenting it as a validation workflow — a "challenger / oracle" guide in
 `docs-reg/` — and wiring the tolerance-checked reconciliation report. This
-supports every other phase rather than sitting in the Phase 1–5 sequence.
+supports every other phase rather than sitting in the phased sequence.
 
 ## References
 
@@ -83,5 +83,4 @@ supports every other phase rather than sitting in the Phase 1–5 sequence.
 - [ECB Guide to Internal Models — June 2026 (PDF)](https://www.bankingsupervision.europa.eu/ecb/pub/pdf/ssm.supervisory_guide_egim_202606.en.pdf)
 - [ECB Guide to Internal Models: what changed in the 2026 update (Better Regulation)](https://betterregulation.com/insights/posts/ecb-guide-to-internal-models-2026-update.html)
 - [SR 11-7: Guidance on Model Risk Management (Federal Reserve)](https://www.federalreserve.gov/supervisionreg/srletters/sr1107.htm)
-- Internal: `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md` §11;
-  `nablatensor-validate`, `demo/one-tape-every-backend.sh`.
+- Related: `nablatensor-validate`, `demo/one-tape-every-backend.sh`.

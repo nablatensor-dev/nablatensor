@@ -1,7 +1,6 @@
 # FRTB Standardised Approach — Regulation & Implementation Plan
 
-> **Phase 1** of the regulatory-calculator build. Companion to
-> `docs-internal/NABLATENSOR_REG_IMPLEMENTATION_PLAN.md`.
+> **Phase 1** of the regulatory-calculator build.
 > **Status:** Part I is the regulation; Part II is largely **implemented** in
 > `nablatensor-reg` — SBM for all seven risk classes, DRC, RRAO and the `FrtbSa`
 > assembler, with independent-oracle tests. Still open: the prescribed-bump /
@@ -675,6 +674,5 @@ laptop.
   Final rules* (20 Jan 2026).
 - **ISDA** — FRTB Standardised Approach unit tests / benchmarking materials
   (for reconciliation in [II.9](#ii9--testing--validation)).
-- Internal: `docs-internal/NABLATENSOR_REGULATORY_DRIVERS_2026.md`,
-  `docs-internal/NABLATENSOR_REG_IMPLEMENTATION_PLAN.md`,
-  existing `docs/reg/frtb-sa-sbm.md`.
+- Related: the compute-profile notes in this folder (`cva.md`, `output-floor.md`,
+  `isda-simm.md`, …).
