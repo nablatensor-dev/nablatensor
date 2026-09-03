@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.nablatensor</groupId><artifactId>nablatensor-parent</artifactId><version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>nablatensor-cva</artifactId>
+  <name>nablatensor-cva</name>
+  <description>CVA risk capital (Phase 2): a Monte-Carlo netting-set exposure engine on the adjoint
+    tape, unilateral CVA whose full risk vector — IR, counterparty CS01, recovery — comes off one
+    reverse sweep, plus BA-CVA (reduced and full with CDS hedges), SA-CVA (sensitivities-based
+    charge on the shared NestedAggregation), a collateral model (VM threshold / MTA / MPoR), and
+    the three PRA standardised methods.</description>
+  <dependencies>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-quant</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-risk</artifactId></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId></dependency>
+  </dependencies>
+</project>

@@ -233,18 +233,23 @@ double time(Runnable r) { long t = now(); r.run(); return msSince(t); }
 SETUP
 
   # Ask nablatensor — not the OS — which adjoint backend is really usable, and
-  # in what precision. CUDA/Vulkan/ROCm are fp32; the CPU engines are fp64. The
-  # demos that want a GPU read $ENGINE (the fastest one available here); those
-  # that need fp64 use "cpu-jit".
+  # in what precision. Vulkan is fp32-only; CUDA, ROCm and the CPU engines can
+  # also run fp64. A demo that accumulates in double precision exports
+  # NABLATENSOR_DEMO_FP64=1 before sourcing this file; the probe then only
+  # considers engines that actually honour fp64, so it never hands such a demo
+  # the Vulkan engine (which would throw at build time).
   # Override with NABLATENSOR_DEMO_ENGINE=cuda|vulkan|rocm|cpu-jit.
   local ENGINE=""
+  local DEMO_PRECISION="FLOAT32"
+  [[ -n "${NABLATENSOR_DEMO_FP64:-}" ]] && DEMO_PRECISION="FLOAT64"
   if (( FORCE_CPU )); then
     ENGINE="cpu-jit"
   elif [[ -n "${NABLATENSOR_DEMO_ENGINE:-}" ]]; then
     ENGINE="${NABLATENSOR_DEMO_ENGINE}"
   else
-    ENGINE="$(capture <<'PROBE'
-var _n = AadEngines.discovered().stream().filter(AadEngine::isAvailable).map(AadEngine::name).toList();
+    ENGINE="$(capture <<PROBE
+var _opt = new AadOptions(AadOptions.Precision.${DEMO_PRECISION}, true);
+var _n = AadEngines.available(_opt).stream().map(AadEngine::name).toList();
 System.out.println(_n.contains("cuda") ? "cuda" : _n.contains("vulkan") ? "vulkan" : _n.contains("rocm") ? "rocm" : "cpu-jit");
 PROBE
 )"
