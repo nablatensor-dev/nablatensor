@@ -1,0 +1,147 @@
+# nablatensor demo runner
+# ---------------------------------------------------------------------------
+# Ubuntu 24.04  +  Azul Zulu JDK 26  +  Vulkan (Mesa RADV)  +  minimal ROCm/HIP.
+# Runs the demo/*.sh narrated jshell sessions on cpu-jit / vulkan / rocm.
+#
+# Build:  container/build.sh          (wraps `podman build`; supplies the two
+#                                      extra build contexts jdk= and rocm=,
+#                                      and an isolated fuse-overlayfs store so
+#                                      apt works under rootless podman here)
+# Run:    container/run-demo.sh ...   (wraps `podman run` with GPU passthrough)
+# ---------------------------------------------------------------------------
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# --- 0 · make apt usable under rootless podman ------------------------------
+# This box's podman uses the kernel-native overlay driver; apt can't drop to the
+# unprivileged `_apt` user (setgroups blocked) and the image's cache/list
+# `partial/` dirs come pre-owned by `_apt`. Tell apt to stay root and recreate
+# those dirs so root can write them. (container/build.sh also points podman at an
+# isolated fuse-overlayfs store, without which the recreate itself is denied.)
+RUN echo 'APT::Sandbox::User "root";' > /etc/apt/apt.conf.d/00-no-sandbox \
+ && rm -rf /var/cache/apt/archives/partial /var/lib/apt/lists/partial \
+ && mkdir -p /var/cache/apt/archives/partial /var/lib/apt/lists/partial
+
+# bare ubuntu:24.04 already ships bash, coreutils, findutils, sed, gawk, grep and
+# `clear`, plus the C.utf8 locale — everything demo/_player.sh needs. Nothing to
+# add for the base.
+
+# --- 1 · JDK 26 -----------------------------------------------------------
+# The FULL JDK, not a JRE: the demos drive a `jshell` coprocess, and both jshell
+# and the Class-File API engine nablatensor needs ship only in the JDK.
+# Supplied as an extra build context -> container/build.sh: --build-context jdk=<dir>.
+COPY --from=jdk / /opt/jdk26/
+ENV NABLATENSOR_JDK=/opt/jdk26 \
+    JAVA_HOME=/opt/jdk26 \
+    PATH=/opt/jdk26/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# --- 2 · Vulkan userspace ------------------------------------------------------
+# nablatensor's vulkan backend dlopens libvulkan.so.1 + libshaderc.so.1 and needs
+# a Vulkan ICD; mesa-vulkan-drivers is RADV, the driver for the Radeon 780M
+# (RADV PHOENIX). apt pulls the matching libdrm / libllvm / xcb closure.
+# vulkan-tools is only for the `vulkaninfo` diagnostic.
+#
+# Installing Vulkan drivers from scratch on Debian/Ubuntu:
+#   apt-get install mesa-vulkan-drivers libvulkan1 libshaderc1
+#     mesa-vulkan-drivers ships every Mesa ICD (RADV for AMD, ANV for Intel,
+#     NVK for Nouveau, plus llvmpipe as a CPU fallback) into
+#     /usr/lib/x86_64-linux-gnu/libvulkan_*.so with manifests in
+#     /usr/share/vulkan/icd.d/. The loader (libvulkan1) then enumerates them.
+#   NVIDIA proprietary GPUs instead: install the host's nvidia driver package
+#     (e.g. nvidia-driver-XXX) — it drops its own nvidia_icd.json + libGLX/
+#     libnvidia-glvkspirv; do NOT use mesa's ICD for them.
+#   Pick one ICD explicitly with VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/radeon_icd.x86_64.json
+#   or VK_LOADER_DRIVERS_SELECT=radv ; check with `vulkaninfo --summary`.
+#
+# Host side (nothing to install for AMD/Intel): the in-kernel `amdgpu` (or `i915`)
+# module already exposes /dev/dri/renderD128, which is all Vulkan compute needs.
+# container/run-demo.sh passes it in with `--device /dev/dri/renderD128`.
+RUN du -sxk --apparent-size / 2>/dev/null | awk '{print $1}' > /root/.sz-pre-vulkan \
+ && apt-get update && apt-get install -y --no-install-recommends \
+        mesa-vulkan-drivers libvulkan1 libshaderc1 vulkan-tools \
+ && rm -rf /var/lib/apt/lists/* \
+ && du -sxk --apparent-size / 2>/dev/null | awk '{print $1}' > /root/.sz-post-vulkan
+
+# --- 3 · minimal ROCm / HIP runtime -----------------------------------------
+# The host /opt/rocm is ~22 GB. nablatensor's rocm engine only calls the HIP
+# runtime (libamdhip64) and the runtime kernel compiler (libhiprtc ->
+# libamd_comgr, which statically links LLVM -> ~150 MB by itself), plus the HSA
+# runtime and the amdgcn device-bitcode libs. container/build.sh stages just
+# those into the `rocm` build context; apt adds the few libs they link.
+#
+# Installing ROCm properly from scratch (instead of staging from the host).
+# ROCm is NOT in the Ubuntu repos — use AMD's. On Ubuntu 24.04 (noble),
+# replacing the COPY --from=rocm below:
+#
+#   apt-get install -y wget gnupg
+#   mkdir -p /etc/apt/keyrings
+#   wget -qO- https://repo.radeon.com/rocm/rocm.gpg.key \
+#     | gpg --dearmor > /etc/apt/keyrings/rocm.gpg
+#   echo 'deb [signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/7.2.4 noble main' \
+#     > /etc/apt/sources.list.d/rocm.list
+#   echo 'deb [signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/amdgpu/7.2.4/ubuntu noble main' \
+#     > /etc/apt/sources.list.d/amdgpu.list
+#   apt-get update
+#   # full stack (~5 GB):        apt-get install -y rocm-hip-runtime rocminfo
+#   # what nablatensor needs:    apt-get install -y hip-runtime-amd hsa-rocr comgr rocm-llvm rocminfo
+#   # (comgr pulls rocm-llvm — the ~150 MB LLVM that HIPRTC compiles kernels with)
+#
+# Or AMD's installer (adds --no-dkms so it skips the kernel module, which comes
+# from the host): apt-get install ./amdgpu-install_*.deb from
+# https://repo.radeon.com/amdgpu-install/7.2.4/ubuntu/noble/ then
+#   amdgpu-install --usecase=hiplibsdk --no-dkms
+#
+# Host side: the `amdgpu` kernel module must expose BOTH /dev/dri/renderD128 and
+# /dev/kfd (in-kernel amdgpu is fine on a recent kernel; older kernels need the
+# `amdgpu-dkms` package). The invoking user must be in the `render` and `video`
+# groups. container/run-demo.sh passes `--device /dev/dri/renderD128 --device
+# /dev/kfd`, keeps those groups with `--group-add keep-groups` (needs crun, not
+# runc), and adds `--security-opt seccomp=unconfined` for HSA.
+RUN du -sxk --apparent-size / 2>/dev/null | awk '{print $1}' > /root/.sz-pre-rocm \
+ && apt-get update && apt-get install -y --no-install-recommends \
+        libnuma1 libdrm2 libdrm-amdgpu1 libelf1 \
+ && rm -rf /var/lib/apt/lists/*
+COPY --from=rocm . /opt/rocm/
+ENV ROCM_PATH=/opt/rocm \
+    HIP_PATH=/opt/rocm \
+    LD_LIBRARY_PATH=/opt/rocm/lib
+RUN echo /opt/rocm/lib > /etc/ld.so.conf.d/rocm.conf && ldconfig \
+ && du -sxk --apparent-size / 2>/dev/null | awk '{print $1}' > /root/.sz-post-rocm
+
+# --- 4 · size report -------------------------------------------------------
+RUN pv=$(cat /root/.sz-pre-vulkan); qv=$(cat /root/.sz-post-vulkan); \
+    pr=$(cat /root/.sz-pre-rocm);   qr=$(cat /root/.sz-post-rocm);   \
+    { echo "Library footprint on ubuntu:24.04 (apparent size, this machine)"; \
+      echo; \
+      echo "  Vulkan userspace : $(( (qv - pv) / 1024 )) MiB"; \
+      echo "      mesa RADV driver + Vulkan loader + libshaderc + vulkan-tools,"; \
+      echo "      and their apt closure (libLLVM 20, libdrm, libicu, xcb/X11)."; \
+      dpkg-query -Wf '        ${Installed-Size} KiB  ${Package}\n' \
+        mesa-vulkan-drivers libvulkan1 libshaderc1 vulkan-tools libllvm20 libicu74 2>/dev/null; \
+      echo; \
+      echo "  ROCm userspace   : $(( (qr - pr) / 1024 )) MiB"; \
+      echo "      minimal HIP runtime + HIPRTC + comgr (statically-linked LLVM)"; \
+      echo "      + HSA runtime + amdgcn device bitcode. Staged from the host's"; \
+      echo "      ~22 GB /opt/rocm; apt adds only libnuma1."; \
+      find /opt/rocm/lib -maxdepth 1 -type f -name '*.so*' -printf '        %s %p\n' 2>/dev/null \
+        | sort -rn | awk '{printf "        %8.1f MB  %s\n", $1/1048576, $2}'; \
+      printf '        %8.1f MB  %s\n' "$(du -sm --apparent-size /opt/rocm/amdgcn 2>/dev/null | cut -f1)" /opt/rocm/amdgcn; \
+      echo "      /opt/rocm total: $(du -sh --apparent-size /opt/rocm | cut -f1)"; \
+    } | tee /opt/SIZES.txt
+
+# --- 5 · the project (pre-compiled on the host: */target/classes) ------------
+WORKDIR /opt/nablatensor
+COPY . /opt/nablatensor
+ENV LC_ALL=C.utf8 LANG=C.utf8
+
+# --- 6 · GPU sanity helper ------------------------------------------------
+RUN printf '%s\n' '#!/usr/bin/env bash' \
+  'echo "=== Vulkan (vulkaninfo) ==="' \
+  'vulkaninfo --summary 2>/dev/null | grep -E "deviceName|driverName|driverInfo|apiVersion|deviceType" || echo "  no Vulkan device visible"' \
+  'echo; echo "=== ROCm (rocminfo) ==="' \
+  '/opt/rocm/bin/rocminfo 2>/dev/null | grep -E "^\s*Name:|Marketing Name:|Device Type:|gfx" | head -24 || echo "  no ROCm agent visible"' \
+  'echo; echo "=== library footprint ==="; cat /opt/SIZES.txt' \
+  > /usr/local/bin/nt-gpucheck && chmod +x /usr/local/bin/nt-gpucheck
+
+CMD ["bash"]
