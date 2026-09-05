@@ -11,7 +11,7 @@ first-order Greeks, at roughly the cost of the price alone.
 - **Apache-2.0**, single repo, no CLA.
 - **Clone-and-run.** `mvn -o test` is green on a laptop with no GPU, no native
   library and no incubator flag — the default `cpu-jit` backend is plain Java.
-- **Hackable.** Changing a payoff or a model step is a three-line diff, not a fork.
+- **Customizable.** Changing a payoff or a model step is a three-line diff, not a fork.
 
 > **Not** a deep-learning framework, a market-data platform, or a certified
 > regulatory-capital product. It computes the numbers a regulation asks for;
@@ -137,37 +137,12 @@ dependency of the `cpu-jit` path.
 1. **the payoff/model lambda** — `Product<M>` is a functional interface over any `double`-only market record; write the valuation in `SDouble`.
 2. **`setInput`** — market data and model params are re-settable on a compiled kernel (`mc.run(shockedMarket, …)`).
    `.timeGrid(TimeGrid.of(t1, t2, …))` swaps the schedule (non-uniform sampling) without touching the payoff.
-3. **custom ops** *(P1)* — `CustomOp.registerUnary(name, macro)`; the code generators pick it up on every backend.
-4. **hooks** *(P1)* — `Hooks.antithetic(...)` / `Hooks.controlVariate(...)` wrap a payoff with a transformed draw stream.
-5. **model blocks** *(P1)* — subclass a `*Model` step block; override `drift()` / `diffusion()`.
-6. **scenario DSL** *(P2)* — `ScenarioRunner.run(kernel, base, ScenarioSet.grid(...), …)`; shocks are data.
-7. **aggregation** *(P2)* — record per-trade; `Portfolio.aggregate()` / `byNettingSet()`; compose buckets and correlations outside the tape.
+3. **custom ops** — `CustomOp.registerUnary(name, macro)`; the code generators pick it up on every backend.
+4. **hooks** — `Hooks.antithetic(...)` / `Hooks.controlVariate(...)` wrap a payoff with a transformed draw stream.
+5. **model blocks** — subclass a `*Model` step block; override `drift()` / `diffusion()`.
+6. **scenario DSL** — `ScenarioRunner.run(kernel, base, ScenarioSet.grid(...), …)`; shocks are data.
+7. **aggregation** — record per-trade; `Portfolio.aggregate()` / `byNettingSet()`; compose buckets and correlations outside the tape.
 8. **backend choice** — `.on("cpu-jit" | "simd" | "vulkan" | …)` or `.fastest()`; same tape, same numbers.
-
----
-
-## Roadmap
-
-- **MVP** — engine + `cpu` oracle / `cpu-jit` / `simd` / `vulkan` / `rocm` / `cuda`, vanilla / Asian / lookback, GBM, validation harness, benchmark. ✅
-- **Phase 1** — smoothed indicator + `N(x)`/`erf`/`pow` + custom-op registry; barrier / digital / cliquet / autocallable / floating lookback; caps-floors / swaptions (Hull-White + LMM); FX / quanto; correlated basket; Bermudan *shell*; Heston / SABR / local-vol / Hull-White 1F / LMM step blocks with `drift()`/`diffusion()` hooks; antithetic / control-variate / importance-sampling / path-filter hooks; deposit-FRA-swap curve bootstrap + analytic Jacobian; adjoint-gradient calibration (L-BFGS **and** Levenberg-Marquardt), SABR closed-form and Heston Monte-Carlo fits; `MultiOutput` (one tape → N named measures) and `MultiMetric`. ✅
-- **Phase 2** — ⬤ *slice done*: aggregation layer (`nablatensor-risk`) and scenario DSL (`nablatensor-scenario`), including the FRTB curvature repricing showcase. ⬡ *remaining*: XVA, VaR / ES, AVA, SA-CCR, IRRBB, prescribed-bump/adjoint sensitivity extraction, multi-GPU.
-- **Phase 3** — nested stochastic (Solvency II SCR, VM-22, IFRS 17); LSM early exercise; second-order adjoints.
-
-**Native multiple reverse seeds on one forward sweep** — a tape can now carry
-several `rec.output(name, ...)` calls, and one replay runs the forward sweep once
-and one reverse sweep per output, returning every value, its standard error and
-its full gradient (`MultiOutput` is built on this). Native on `cpu` and
-`cpu-jit`; `simd` / `vulkan` / `rocm` / `cuda` decline a multi-output or
-`rec.randu()` / `rec.stream(...)` tape and selection falls back.
-
-**Still deferred to an engine change:** a *fused* custom op with a hand-written
-`{forward, adjoint}` and per-backend code generation — `CustomOp` is the
-composable-macro form, which is what runs on every backend including GPU. GPU
-support for multi-output and the extended random surface (`randu`, named
-streams). Multi-curve (OIS + tenor basis) curve building and a Bermudan LSM
-continuation estimator are Phase 2/3.
-GPU backends stay `fp32`. `vs-quantlib.md` is structural — the numbered
-comparison needs the QuantLib-Java binding wired into `nablatensor-bench`.
 
 ---
 
