@@ -6,11 +6,17 @@
 #   <engine>   cpu-jit | vulkan | rocm | -      (- = let the probe pick)
 #   command    what to run in the container; default: an interactive bash
 #
+# `container/build.sh` builds a CPU-only image, so only `cpu-jit` works
+# against it out of the box. `vulkan` / `rocm` need an image with that GPU
+# stack installed — see docs/install/gpu-container.md for how to build one
+# (this script's device-passthrough flags below apply unchanged to that
+# image; only $NT_IMAGE needs to point at it, e.g. `NT_IMAGE=... run-demo.sh
+# vulkan ...`).
+#
 # Examples:
-#   container/run-demo.sh -                       # shell; probe picks the engine
-#   container/run-demo.sh vulkan  nt-gpucheck     # show the Vulkan / ROCm devices
-#   container/run-demo.sh rocm    ./demo/one-tape-every-backend.sh --fast
 #   container/run-demo.sh cpu-jit ./demo/isda-simm-full.sh --fast
+#   container/run-demo.sh vulkan  nt-gpucheck     # against a GPU-enabled image
+#   container/run-demo.sh rocm    ./demo/one-tape-every-backend.sh --fast
 #
 # GPU access is rootless podman device passthrough:
 #   vulkan -> /dev/dri/renderD128

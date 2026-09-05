@@ -155,7 +155,7 @@ mvn -o -q test          # green with no GPU, no native lib, no incubator flag
 mvn -o -q install
 ```
 
-## Regulation
+## Risk-capital showcases
 
 - [`docs/reg/frtb-for-dummies.md`](docs/reg/frtb-for-dummies.md) — story-driven introduction to the complete FRTB Standardised Approach
 - [`docs/reg/frtb-buckets-and-hedging.md`](docs/reg/frtb-buckets-and-hedging.md) — when within- and cross-bucket positions really reduce capital
