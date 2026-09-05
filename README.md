@@ -1,5 +1,7 @@
 # NablaTensor
 
+**[nablatensor.com](https://nablatensor.com)**
+
 **Adjoint automatic differentiation for quantitative finance on the JVM. Write the valuation in Java once — get price and every Greek from one reverse sweep, on CPU, SIMD or GPU.**
 
 Record a Monte-Carlo valuation once in plain Java against `SDouble` scalars.
@@ -120,10 +122,10 @@ checked against the scalar oracle).
 | `nablatensor-rocm` | tape → fused HIP kernel, HIPRTC-compiled, for AMD devices (FFM) |
 | `nablatensor-cuda` | tape → fused CUDA kernel, NVRTC-compiled (FFM) |
 | `nablatensor-tensor` / `-backend-{cuda,rocm,vulkan}` | internal: the low-level device runtimes the GPU replay engines dispatch through |
-| `nablatensor-ops` | *(P1)* smoothed `STEP`/`GT`/band indicators, `N(x)` / `erf` / `pow`, a macro-form custom-op registry — all in primitive nodes, exact adjoint, every backend |
-| `nablatensor-quant` | `EquityMarket` + `GbmPath` + `Products` (European / Asian / lookback) + `MonteCarlo` + `BlackScholes`; *(P1)* `ExoticProducts` (barrier / digital / cliquet / autocallable), `HestonModel` · `SabrModel` · `LocalVolModel` · `HullWhite1F` · `LmmModel`, `BasketOption`, `Hooks` (antithetic / control-variate), `CurveBootstrap` + analytic Jacobian, `Calibrator` (adjoint-gradient L-BFGS), `MultiMetric` |
-| `nablatensor-scenario` | *(P2)* Seam 6 — `Shock` / `Scenario` / `Ladder` / `ScenarioSet` / `ScenarioRunner`: declarative shocks → `setInput` + replay, no recompile |
-| `nablatensor-risk` | *(P2)* Seam 7 — `RiskFactor`, `Sensitivities`, `Portfolio` / netting-set composition, `NestedAggregation` (the FRTB/SIMM `√(ΣK² + ΣγSS)` engine), `CorrelationScenario`, `TimeProfile` |
+| `nablatensor-ops` | smoothed `STEP`/`GT`/band indicators, `N(x)` / `erf` / `pow`, a macro-form custom-op registry — all in primitive nodes, exact adjoint, every backend |
+| `nablatensor-quant` | `EquityMarket` + `GbmPath` + `Products` (European / Asian / lookback) + `MonteCarlo` + `BlackScholes`; `ExoticProducts` (barrier / digital / cliquet / autocallable), `HestonModel` · `SabrModel` · `LocalVolModel` · `HullWhite1F` · `LmmModel`, `BasketOption`, `Hooks` (antithetic / control-variate), `CurveBootstrap` + analytic Jacobian, `Calibrator` (adjoint-gradient L-BFGS), `MultiMetric` |
+| `nablatensor-scenario` | `Shock` / `Scenario` / `Ladder` / `ScenarioSet` / `ScenarioRunner`: declarative shocks → `setInput` + replay, no recompile |
+| `nablatensor-risk` | `RiskFactor`, `Sensitivities`, `Portfolio` / netting-set composition, `NestedAggregation` (the FRTB/SIMM `√(ΣK² + ΣγSS)` engine), `CorrelationScenario`, `TimeProfile` |
 | `nablatensor-validate` | replay on every backend at equal seed, diff vs the oracle, bump cross-check → a text **evidence pack** |
 | `nablatensor-examples` | worked demos, each also a test and a docs page |
 | `nablatensor-bench` | the reproducible comparison harness above |
