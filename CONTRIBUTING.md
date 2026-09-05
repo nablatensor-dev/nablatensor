@@ -53,7 +53,7 @@ on a machine with no GPU.
 
 ## Scope
 
-See the [Roadmap](README.md#roadmap) for the MVP / Phase 1 / 2 / 3 breakdown.
-MVP-adjacent contributions (more vanilla/exotic payoffs, more model blocks,
+See [What's in the box](README.md#whats-in-the-box-mvp--phase-1--phase-2-slice)
+for what's already implemented. MVP-adjacent contributions (more vanilla/exotic payoffs, more model blocks,
 tighter validation) are the easiest to land now. Open an issue or a Discussion
 if you're unsure whether something fits.

@@ -96,20 +96,15 @@ increase `bankFactors` only to change the reported projection.
 
 The exact showcase workflow was measured on 2026-09-02 with one million paths,
 252 fixings, seed 42, warm-up, and best-of-three timings. The machine has a
-6-core/12-thread Intel Xeon E-2276M and an NVIDIA Quadro T2000 with 4 GiB VRAM
-(driver 580.159.03).
+6-core/12-thread Intel Xeon E-2276M.
 
 | Backend | Precision | Adjoint delta | Three price replays | Replay speedup | Complete workflow |
 |---|---:|---:|---:|---:|---:|
 | `cpu` | fp64 | 8.4087 s | 20.9039 s | 1.00x | 29.3125 s |
 | `cpu-jit` | fp64 | 5.3097 s | 13.0496 s | 1.60x | 18.3593 s |
 | `simd` | fp64 | 3.5643 s | 6.2855 s | 3.33x | 9.8498 s |
-| `cuda` | fp32 | 0.0630 s | 0.0224 s | 933.21x | 0.0855 s |
 
-The scalar CPU backend supports fp64, while this CUDA backend supports fp32, so
-the table uses each backend's supported native precision. `cpu-jit` and `simd`
-also use fp64. The resulting CVR was `11.560110` on all CPU-family backends and
-`11.560047` on CUDA, a difference of about $6.3\times10^{-5}$.
+All backends above use fp64 and agree on a CVR of `11.560110`.
 
 Reproduce the comparison with:
 
@@ -120,7 +115,3 @@ MAVEN_OPTS="--add-modules jdk.incubator.vector" mvn -q -pl nablatensor-bench exe
   -Dexec.mainClass=com.nablatensor.bench.CurvatureBackendRun \
   -Dscenarios=1000000 -Dsteps=252 -Drounds=3
 ```
-
-The unusually large CUDA replay speedup applies to this highly parallel Monte
-Carlo workload and this scalar CPU baseline. It should not be generalized to
-all FRTB portfolios without measuring their pricing models and transfer costs.
