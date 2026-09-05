@@ -110,7 +110,7 @@ checked against the scalar oracle).
 
 ---
 
-## What's in the box (MVP + Phase 1 + Phase 2 slice)
+## What's in the box
 
 | module | what |
 |---|---|
