@@ -1,0 +1,18 @@
+# keep the build context tiny: only source + the pre-built */target/classes matter
+.git
+.venv
+notebooks
+python
+docs-internal
+*.tar.gz
+*.tgz
+*.zip
+**/target/test-classes
+**/target/generated-sources
+**/target/generated-test-sources
+**/target/maven-status
+**/target/maven-archiver
+**/*.iml
+.idea
+container/.bin
+container/.podman-root

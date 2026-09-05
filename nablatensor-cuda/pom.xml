@@ -10,8 +10,7 @@
   <name>nablatensor-cuda</name>
   <description>CUDA replay engine: a recorded tape is code-generated into a fused
     forward+adjoint CUDA kernel, NVRTC-compiled once, then replayed with one scenario per
-    thread. Also the no-codegen interpreter (cuda-interp) and eager (cuda-eager) variants.
-    Selected automatically when a CUDA device is present.</description>
+    thread. Selected automatically when a CUDA device is present.</description>
   <dependencies>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-backend-cuda</artifactId></dependency>

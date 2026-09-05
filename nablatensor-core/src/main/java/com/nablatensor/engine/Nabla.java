@@ -113,7 +113,7 @@ public final class Nabla {
       return self();
     }
 
-    /** Pins the engine by name: {@code cuda}, {@code cuda-interp}, {@code simd}, {@code cpu}. */
+    /** Pins the engine by name: {@code cuda}, {@code simd}, {@code cpu}. */
     default SELF on(String engineName) {
       engineName(engineName);
       return self();
@@ -122,15 +122,6 @@ public final class Nabla {
     /** Highest-priority engine this machine can actually run. */
     default SELF fastest() {
       engineName(null);
-      return self();
-    }
-
-    /**
-     * Skips per-tape code generation, so the first valuation starts immediately.
-     * Worth it when the model changes nearly as often as it is valued.
-     */
-    default SELF noCompile() {
-      engineName("cuda-interp");
       return self();
     }
 

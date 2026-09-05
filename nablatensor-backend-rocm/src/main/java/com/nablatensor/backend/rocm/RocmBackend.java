@@ -22,10 +22,14 @@ import com.nablatensor.tensor.DeviceType;
 import com.nablatensor.tensor.Op;
 import com.nablatensor.tensor.Shape;
 import com.nablatensor.tensor.expr.Expr;
+import com.nablatensor.tensor.spi.AxisReduction;
+import com.nablatensor.tensor.spi.BroadcastLayout;
 import com.nablatensor.tensor.spi.ComputeBackend;
 import com.nablatensor.tensor.spi.DeviceBuffer;
 import com.nablatensor.tensor.spi.GpuKernel;
 import com.nablatensor.tensor.spi.GpuKernels;
+import com.nablatensor.tensor.spi.GpuLaunch;
+import com.nablatensor.tensor.spi.OpCodes;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,11 +46,9 @@ import java.util.Map;
  */
 public final class RocmBackend implements ComputeBackend {
 
-  private static final int BLOCK = 256;
+  private static final int BLOCK = GpuLaunch.DEFAULT_BLOCK;
   private static final GpuKernel MATMUL = GpuKernels.kernel("matmul_tiled");
   private static final GpuKernel BATCHED_MATMUL = GpuKernels.kernel("batched_matmul_tiled");
-
-  private static final int MAX_BROADCAST_RANK = 4;
 
   private boolean initialized;
   private HipRuntime.DeviceInfo deviceInfo;
@@ -148,7 +150,7 @@ public final class RocmBackend implements ComputeBackend {
     }
     HipBuffer out = alloc(left.shape());
     HipRuntime.launch(functions.get("ew_binary"), grid(n), BLOCK,
-        out.pointer, left.pointer, right.pointer, n, binaryCode(op));
+        out.pointer, left.pointer, right.pointer, n, OpCodes.binary(op));
     return out;
   }
 
@@ -159,7 +161,7 @@ public final class RocmBackend implements ComputeBackend {
     int n = left.count();
     HipBuffer out = alloc(left.shape());
     HipRuntime.launch(functions.get("ew_scalar"), grid(n), BLOCK,
-        out.pointer, left.pointer, (float) value, n, binaryCode(op));
+        out.pointer, left.pointer, (float) value, n, OpCodes.binary(op));
     return out;
   }
 
@@ -169,7 +171,7 @@ public final class RocmBackend implements ComputeBackend {
     HipBuffer left = hip(a);
     int n = left.count();
     HipBuffer out = alloc(left.shape());
-    HipRuntime.launch(functions.get("ew_unary"), grid(n), BLOCK, out.pointer, left.pointer, n, unaryCode(op));
+    HipRuntime.launch(functions.get("ew_unary"), grid(n), BLOCK, out.pointer, left.pointer, n, OpCodes.unary(op));
     return out;
   }
 
@@ -294,57 +296,21 @@ public final class RocmBackend implements ComputeBackend {
     ensureInitialized();
     HipBuffer grad = hip(upstream);
     HipBuffer in = hip(input);
-    Shape shape = in.shape();
-    if (axis < 0 || axis >= shape.rank()) {
-      throw new IllegalArgumentException("axis " + axis + " is out of bounds for shape " + shape);
-    }
-    int outer = 1;
-    for (int i = 0; i < axis; i++) {
-      outer = Math.multiplyExact(outer, shape.dim(i));
-    }
-    int inner = 1;
-    for (int i = axis + 1; i < shape.rank(); i++) {
-      inner = Math.multiplyExact(inner, shape.dim(i));
-    }
-    if (grad.count() != outer * inner) {
-      throw new IllegalArgumentException("maxAxisBackward gradient shape " + grad.shape()
-          + " is incompatible with input " + shape + " and axis " + axis);
-    }
-    HipBuffer out = alloc(shape);
-    HipRuntime.launch(functions.get("reduce_axis_max_backward"), grid(outer * inner), BLOCK,
-        out.pointer, grad.pointer, in.pointer, outer, shape.dim(axis), inner);
+    AxisReduction r = AxisReduction.of(in.shape(), axis);
+    r.requireGradient(grad.shape(), grad.count());
+    HipBuffer out = alloc(in.shape());
+    HipRuntime.launch(functions.get("reduce_axis_max_backward"), grid(r.outputSize()), BLOCK,
+        out.pointer, grad.pointer, in.pointer, r.outer(), r.axisSize(), r.inner());
     return out;
   }
 
   private DeviceBuffer reduceAxis(DeviceBuffer buffer, int axis, boolean keepDims, String kernel) {
     ensureInitialized();
     HipBuffer input = hip(buffer);
-    Shape shape = input.shape();
-    if (axis < 0 || axis >= shape.rank()) {
-      throw new IllegalArgumentException("axis " + axis + " is out of bounds for shape " + shape);
-    }
-    int outer = 1;
-    for (int i = 0; i < axis; i++) {
-      outer = Math.multiplyExact(outer, shape.dim(i));
-    }
-    int inner = 1;
-    for (int i = axis + 1; i < shape.rank(); i++) {
-      inner = Math.multiplyExact(inner, shape.dim(i));
-    }
-    int[] outputDims;
-    if (keepDims) {
-      outputDims = shape.dims();
-      outputDims[axis] = 1;
-    } else {
-      int[] dims = shape.dims();
-      outputDims = new int[dims.length - 1];
-      System.arraycopy(dims, 0, outputDims, 0, axis);
-      System.arraycopy(dims, axis + 1, outputDims, axis, dims.length - axis - 1);
-    }
-    HipBuffer out = alloc(Shape.of(outputDims));
-    int outputSize = outer * inner;
-    HipRuntime.launch(functions.get(kernel), grid(outputSize), BLOCK,
-        out.pointer, input.pointer, outer, shape.dim(axis), inner);
+    AxisReduction r = AxisReduction.of(input.shape(), axis);
+    HipBuffer out = alloc(r.outputShape(keepDims));
+    HipRuntime.launch(functions.get(kernel), grid(r.outputSize()), BLOCK,
+        out.pointer, input.pointer, r.outer(), r.axisSize(), r.inner());
     return out;
   }
 
@@ -464,29 +430,9 @@ public final class RocmBackend implements ComputeBackend {
     if (src.equals(target)) {
       return a;
     }
-    int rank = target.rank();
-    if (rank > MAX_BROADCAST_RANK) {
-      throw new UnsupportedOperationException("broadcastTo supports up to rank " + MAX_BROADCAST_RANK + ", got " + target);
-    }
-    int pad = rank - src.rank();
-    int[] srcDims = new int[rank];
-    for (int i = 0; i < rank; i++) {
-      srcDims[i] = i < pad ? 1 : src.dim(i - pad);
-    }
-    int[] srcStrides = new int[rank];
-    int stride = 1;
-    for (int i = rank - 1; i >= 0; i--) {
-      srcStrides[i] = srcDims[i] == 1 ? 0 : stride;
-      stride *= srcDims[i];
-    }
-    int[] targetDims = target.dims();
-    int leadPad = MAX_BROADCAST_RANK - rank;
-    int[] d = new int[MAX_BROADCAST_RANK];
-    int[] s = new int[MAX_BROADCAST_RANK];
-    for (int i = 0; i < MAX_BROADCAST_RANK; i++) {
-      d[i] = i < leadPad ? 1 : targetDims[i - leadPad];
-      s[i] = i < leadPad ? 0 : srcStrides[i - leadPad];
-    }
+    BroadcastLayout layout = BroadcastLayout.of(src, target);
+    int[] d = layout.dims();
+    int[] s = layout.strides();
     HipBuffer in = hip(a);
     HipBuffer out = alloc(target);
     int n = Math.toIntExact(target.size());
@@ -568,7 +514,7 @@ public final class RocmBackend implements ComputeBackend {
   }
 
   private static int grid(int n) {
-    return n == 0 ? 0 : 1 + (n - 1) / BLOCK;
+    return GpuLaunch.grid1d(n);
   }
 
   private static int gridTiles(int size) {
@@ -606,31 +552,5 @@ public final class RocmBackend implements ComputeBackend {
     throw new IllegalArgumentException("expected a ROCm buffer, got " + buffer.getClass());
   }
 
-  private static int binaryCode(Op op) {
-    return switch (op) {
-      case ADD -> 0;
-      case SUB -> 1;
-      case MUL -> 2;
-      case DIV -> 3;
-      case MAX -> 4;
-      case MIN -> 5;
-      default -> throw new IllegalArgumentException("not a binary/scalar op: " + op);
-    };
-  }
 
-  private static int unaryCode(Op op) {
-    return switch (op) {
-      case NEG -> 0;
-      case EXP -> 1;
-      case LOG -> 2;
-      case SQRT -> 3;
-      case RSQRT -> 4;
-      case TANH -> 5;
-      case SIGMOID -> 6;
-      case RELU -> 7;
-      case ABS -> 8;
-      case SIGN -> 9;
-      default -> throw new IllegalArgumentException("not a unary op: " + op);
-    };
-  }
 }

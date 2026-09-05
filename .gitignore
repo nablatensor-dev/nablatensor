@@ -13,6 +13,10 @@ hs_err_pid*.log
 TODO.txt
 docs-internal
 
+# container/ demo runner: fetched static crun + the isolated podman store
+container/.bin/
+container/.podman-root/
+
 # Python / Jupyter (see notebooks/README.md)
 .venv/
 __pycache__/

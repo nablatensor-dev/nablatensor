@@ -118,7 +118,7 @@ checked against the scalar oracle).
 | `nablatensor-simd` | JDK Vector API replay — opt-in (`--add-modules jdk.incubator.vector`) |
 | `nablatensor-vulkan` | tape → GLSL→SPIR-V fused compute shader, dispatched through the Vulkan loader (FFM) |
 | `nablatensor-rocm` | tape → fused HIP kernel, HIPRTC-compiled, for AMD devices (FFM) |
-| `nablatensor-cuda` | tape → fused CUDA kernel, NVRTC-compiled (+ `cuda-interp` / `cuda-eager`) (FFM) |
+| `nablatensor-cuda` | tape → fused CUDA kernel, NVRTC-compiled (FFM) |
 | `nablatensor-tensor` / `-backend-{cuda,rocm,vulkan}` | internal: the low-level device runtimes the GPU replay engines dispatch through |
 | `nablatensor-ops` | *(P1)* smoothed `STEP`/`GT`/band indicators, `N(x)` / `erf` / `pow`, a macro-form custom-op registry — all in primitive nodes, exact adjoint, every backend |
 | `nablatensor-quant` | `EquityMarket` + `GbmPath` + `Products` (European / Asian / lookback) + `MonteCarlo` + `BlackScholes`; *(P1)* `ExoticProducts` (barrier / digital / cliquet / autocallable), `HestonModel` · `SabrModel` · `LocalVolModel` · `HullWhite1F` · `LmmModel`, `BasketOption`, `Hooks` (antithetic / control-variate), `CurveBootstrap` + analytic Jacobian, `Calibrator` (adjoint-gradient L-BFGS), `MultiMetric` |

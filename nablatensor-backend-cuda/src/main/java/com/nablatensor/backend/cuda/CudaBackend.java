@@ -22,10 +22,14 @@ import com.nablatensor.tensor.DeviceType;
 import com.nablatensor.tensor.Op;
 import com.nablatensor.tensor.Shape;
 import com.nablatensor.tensor.expr.Expr;
+import com.nablatensor.tensor.spi.AxisReduction;
+import com.nablatensor.tensor.spi.BroadcastLayout;
 import com.nablatensor.tensor.spi.ComputeBackend;
 import com.nablatensor.tensor.spi.DeviceBuffer;
 import com.nablatensor.tensor.spi.GpuKernel;
 import com.nablatensor.tensor.spi.GpuKernels;
+import com.nablatensor.tensor.spi.GpuLaunch;
+import com.nablatensor.tensor.spi.OpCodes;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +45,7 @@ import java.util.Map;
  */
 public final class CudaBackend implements ComputeBackend {
 
-  private static final int BLOCK = 256;
+  private static final int BLOCK = GpuLaunch.DEFAULT_BLOCK;
   private static final GpuKernel MATMUL = GpuKernels.kernel("matmul_tiled");
   private static final GpuKernel BATCHED_MATMUL = GpuKernels.kernel("batched_matmul_tiled");
 
@@ -146,7 +150,7 @@ public final class CudaBackend implements ComputeBackend {
     }
     CudaBuffer out = alloc(left.shape());
     CudaRuntime.launch(functions.get("ew_binary"), grid(n), BLOCK,
-        out.pointer, left.pointer, right.pointer, n, binaryCode(op));
+        out.pointer, left.pointer, right.pointer, n, OpCodes.binary(op));
     return out;
   }
 
@@ -157,7 +161,7 @@ public final class CudaBackend implements ComputeBackend {
     int n = left.count();
     CudaBuffer out = alloc(left.shape());
     CudaRuntime.launch(functions.get("ew_scalar"), grid(n), BLOCK,
-        out.pointer, left.pointer, (float) value, n, binaryCode(op));
+        out.pointer, left.pointer, (float) value, n, OpCodes.binary(op));
     return out;
   }
 
@@ -168,7 +172,7 @@ public final class CudaBackend implements ComputeBackend {
     int n = left.count();
     CudaBuffer out = alloc(left.shape());
     CudaRuntime.launch(functions.get("ew_unary"), grid(n), BLOCK,
-        out.pointer, left.pointer, n, unaryCode(op));
+        out.pointer, left.pointer, n, OpCodes.unary(op));
     return out;
   }
 
@@ -296,8 +300,6 @@ public final class CudaBackend implements ComputeBackend {
     return 1 + (size - 1) / MATMUL.blockDimX();
   }
 
-  private static final int MAX_BROADCAST_RANK = 4;
-
   @Override
   public DeviceBuffer reduceSum(DeviceBuffer a) {
     ensureInitialized();
@@ -406,27 +408,12 @@ public final class CudaBackend implements ComputeBackend {
     ensureInitialized();
     CudaBuffer grad = cuda(upstream);
     CudaBuffer in = cuda(input);
-    Shape shape = in.shape();
-    if (axis < 0 || axis >= shape.rank()) {
-      throw new IllegalArgumentException("axis " + axis + " is out of bounds for shape " + shape);
-    }
-    int outer = 1;
-    for (int i = 0; i < axis; i++) {
-      outer = Math.multiplyExact(outer, shape.dim(i));
-    }
-    int inner = 1;
-    for (int i = axis + 1; i < shape.rank(); i++) {
-      inner = Math.multiplyExact(inner, shape.dim(i));
-    }
-    if (grad.count() != outer * inner) {
-      throw new IllegalArgumentException(
-          "maxAxisBackward gradient shape " + grad.shape()
-              + " is incompatible with input " + shape + " and axis " + axis);
-    }
-    CudaBuffer out = alloc(shape);
+    AxisReduction r = AxisReduction.of(in.shape(), axis);
+    r.requireGradient(grad.shape(), grad.count());
+    CudaBuffer out = alloc(in.shape());
     CudaRuntime.launch(
-        functions.get("reduce_axis_max_backward"), grid(outer * inner), BLOCK,
-        out.pointer, grad.pointer, in.pointer, outer, shape.dim(axis), inner);
+        functions.get("reduce_axis_max_backward"), grid(r.outputSize()), BLOCK,
+        out.pointer, grad.pointer, in.pointer, r.outer(), r.axisSize(), r.inner());
     return out;
   }
 
@@ -441,12 +428,10 @@ public final class CudaBackend implements ComputeBackend {
   }
 
   /**
-   * Broadcasts entirely on-device: source strides (0 for dims being
-   * broadcast) and target dims are computed on the host (cheap, just a few
-   * ints) and passed as kernel scalars, capped at {@link #MAX_BROADCAST_RANK}
-   * dims (padded with size-1/stride-0 entries) - every shape this project
-   * produces is rank <= 2. No download/upload round trip, unlike the
-   * previous host-side implementation.
+   * Broadcasts entirely on-device: {@link BroadcastLayout} computes the padded
+   * source strides (0 for broadcast dims) and target dims on the host - a few
+   * ints - and they are passed as kernel scalars. No download/upload round trip,
+   * unlike the previous host-side implementation.
    */
   @Override
   public DeviceBuffer broadcastTo(DeviceBuffer a, Shape target) {
@@ -455,32 +440,9 @@ public final class CudaBackend implements ComputeBackend {
     if (src.equals(target)) {
       return a;
     }
-    int rank = target.rank();
-    if (rank > MAX_BROADCAST_RANK) {
-      throw new UnsupportedOperationException("broadcastTo supports up to rank " + MAX_BROADCAST_RANK + ", got " + target);
-    }
-    int pad = rank - src.rank();
-    int[] srcDims = new int[rank];
-    for (int i = 0; i < rank; i++) {
-      srcDims[i] = i < pad ? 1 : src.dim(i - pad);
-    }
-    int[] srcStrides = new int[rank];
-    int stride = 1;
-    for (int i = rank - 1; i >= 0; i--) {
-      srcStrides[i] = srcDims[i] == 1 ? 0 : stride;
-      stride *= srcDims[i];
-    }
-    int[] targetDims = target.dims();
-
-    // left-pad both dims and strides to MAX_BROADCAST_RANK with size-1/stride-0 entries
-    int leadPad = MAX_BROADCAST_RANK - rank;
-    int[] d = new int[MAX_BROADCAST_RANK];
-    int[] s = new int[MAX_BROADCAST_RANK];
-    for (int i = 0; i < MAX_BROADCAST_RANK; i++) {
-      d[i] = i < leadPad ? 1 : targetDims[i - leadPad];
-      s[i] = i < leadPad ? 0 : srcStrides[i - leadPad];
-    }
-
+    BroadcastLayout layout = BroadcastLayout.of(src, target);
+    int[] d = layout.dims();
+    int[] s = layout.strides();
     CudaBuffer in = cuda(a);
     CudaBuffer out = alloc(target);
     int n = (int) target.size();
@@ -546,7 +508,7 @@ public final class CudaBackend implements ComputeBackend {
   }
 
   private static int grid(int n) {
-    return n == 0 ? 0 : 1 + (n - 1) / BLOCK;
+    return GpuLaunch.grid1d(n);
   }
 
   private static void requirePositiveMatmulDimensions(int... dimensions) {
@@ -580,65 +542,17 @@ public final class CudaBackend implements ComputeBackend {
     throw new IllegalArgumentException("expected a CUDA buffer, got " + buffer.getClass());
   }
 
-  private static int binaryCode(Op op) {
-    return switch (op) {
-      case ADD -> 0;
-      case SUB -> 1;
-      case MUL -> 2;
-      case DIV -> 3;
-      case MAX -> 4;
-      case MIN -> 5;
-      default -> throw new IllegalArgumentException("not a binary/scalar op: " + op);
-    };
-  }
 
-  private static int unaryCode(Op op) {
-    return switch (op) {
-      case NEG -> 0;
-      case EXP -> 1;
-      case LOG -> 2;
-      case SQRT -> 3;
-      case RSQRT -> 4;
-      case TANH -> 5;
-      case SIGMOID -> 6;
-      case RELU -> 7;
-      case ABS -> 8;
-      case SIGN -> 9;
-      default -> throw new IllegalArgumentException("not a unary op: " + op);
-    };
-  }
 
   private DeviceBuffer reduceAxis(
       DeviceBuffer buffer, int axis, boolean keepDims, String kernel) {
     ensureInitialized();
     CudaBuffer input = cuda(buffer);
-    Shape shape = input.shape();
-    if (axis < 0 || axis >= shape.rank()) {
-      throw new IllegalArgumentException("axis " + axis + " is out of bounds for shape " + shape);
-    }
-    int outer = 1;
-    for (int i = 0; i < axis; i++) {
-      outer = Math.multiplyExact(outer, shape.dim(i));
-    }
-    int inner = 1;
-    for (int i = axis + 1; i < shape.rank(); i++) {
-      inner = Math.multiplyExact(inner, shape.dim(i));
-    }
-    int[] outputDims;
-    if (keepDims) {
-      outputDims = shape.dims();
-      outputDims[axis] = 1;
-    } else {
-      int[] dims = shape.dims();
-      outputDims = new int[dims.length - 1];
-      System.arraycopy(dims, 0, outputDims, 0, axis);
-      System.arraycopy(dims, axis + 1, outputDims, axis, dims.length - axis - 1);
-    }
-    CudaBuffer out = alloc(Shape.of(outputDims));
-    int outputSize = outer * inner;
+    AxisReduction r = AxisReduction.of(input.shape(), axis);
+    CudaBuffer out = alloc(r.outputShape(keepDims));
     CudaRuntime.launch(
-        functions.get(kernel), grid(outputSize), BLOCK,
-        out.pointer, input.pointer, outer, shape.dim(axis), inner);
+        functions.get(kernel), grid(r.outputSize()), BLOCK,
+        out.pointer, input.pointer, r.outer(), r.axisSize(), r.inner());
     return out;
   }
 }
