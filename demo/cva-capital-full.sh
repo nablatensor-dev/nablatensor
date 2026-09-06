@@ -3,11 +3,11 @@
 # by stage — the counterparty curves, the exposure model, SA-CVA sensitivities
 # and aggregation, BA-CVA reduced and full, and the three PRA methods.
 #   ./demo/cva-capital-full.sh [--fast] [--cpu]
-# The CVA integrand is accumulated in fp64, so this runs on the fastest
-# fp64-capable adjoint backend (CUDA > ROCm > cpu-jit — never the fp32-only
-# Vulkan engine); override with NABLATENSOR_DEMO_ENGINE=cuda|rocm|cpu-jit.
+# The exposure integrand is non-dimensionalised and the marginal default
+# probability is evaluated in expm1 form, so the single-precision replay holds
+# to Monte-Carlo error. This runs on the fastest adjoint backend available
+# (CUDA > Vulkan > cpu-jit); override with NABLATENSOR_DEMO_ENGINE=cuda|vulkan|cpu-jit.
 DEMO_ARGS=("$@")
-export NABLATENSOR_DEMO_FP64=1
 source "$(dirname "${BASH_SOURCE[0]}")/_player.sh"
 
 player_start "CVA capital in full, on the fastest backend" \

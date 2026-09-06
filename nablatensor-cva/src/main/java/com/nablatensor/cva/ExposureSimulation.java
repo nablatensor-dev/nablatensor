@@ -45,11 +45,22 @@ public final class ExposureSimulation {
   private static final double SHORT_BUCKET = 2.0;
   private static final double MID_BUCKET = 5.0;
 
+  /**
+   * Working unit for the on-tape accumulation. Mark-to-market, exposure and the
+   * CVA integrand are all divided by this before they touch the tape, so the
+   * forward sweep and the reverse sweep both accumulate O(1) quantities instead
+   * of sums that run to 1e10 in reporting currency — the difference between a
+   * stable and an unusable single-precision replay. Price, standard error and
+   * gradient are multiplied back by it on the way out.
+   */
+  private static final double MONEY_UNIT = 1.0e6;
+
   private final NettingSet nettingSet;
   private final int steps;
   private final double horizon;
   private final double dt;
   private String engine = "cpu-jit";
+  private Boolean fp64Override = null;
 
   public ExposureSimulation(NettingSet nettingSet, int steps) {
     if (steps < 2) {
@@ -68,6 +79,21 @@ public final class ExposureSimulation {
 
   public String engine() {
     return engine;
+  }
+
+  /**
+   * Force the replay precision. Left unset, the precision follows the engine:
+   * the Vulkan engine is single-precision, every other engine runs fp64. The
+   * money-scaled integrand and the {@code expm1}-form marginal-default
+   * probability keep the fp32 path within Monte-Carlo error of the fp64 one.
+   */
+  public ExposureSimulation fp64(boolean doublePrecision) {
+    this.fp64Override = doublePrecision;
+    return this;
+  }
+
+  private boolean useFp64() {
+    return fp64Override != null ? fp64Override : !"vulkan".equals(engine);
   }
 
   public int steps() {
@@ -109,12 +135,16 @@ public final class ExposureSimulation {
 
       int marginPeriodSteps = nettingSet.collateral().marginPeriodSteps(dt);
       boolean collateralised = nettingSet.collateral().isCollateralised();
-      double threshold = nettingSet.collateral().threshold();
-      double independentAmount = nettingSet.collateral().independentAmount();
+      double threshold = nettingSet.collateral().threshold() / MONEY_UNIT;
+      double independentAmount = nettingSet.collateral().independentAmount() / MONEY_UNIT;
       SDouble[] pastValue = new SDouble[steps + 1];
 
       SDouble cva = rec.constant(0.0);
+      // S(t_{k-1}) carried as a running product, so the marginal default
+      // probability is never formed as the difference of two nearly-equal
+      // survivals (the dominant single-precision cancellation).
       SDouble survivalPrevious = rec.constant(1.0);
+      double previousTime = 0.0;
 
       for (int k = 1; k <= steps; k++) {
         rateState = model.step(rateState, rec.randn());
@@ -154,6 +184,7 @@ public final class ExposureSimulation {
         for (CvaTrade trade : nettingSet.trades()) {
           value = value.add(trade.markToMarket(path, tk));
         }
+        value = value.mul(1.0 / MONEY_UNIT); // non-dimensionalise onto the tape
         pastValue[k] = value;
 
         SDouble exposure = value;
@@ -169,11 +200,16 @@ public final class ExposureSimulation {
         }
 
         SDouble positiveExposure = exposure.max(0.0);
-        SDouble survivalK = cumulativeHazard(tk, hazardShort, hazardMid, hazardLong).neg().exp();
-        SDouble defaultProbability = survivalPrevious.sub(survivalK);
+        // Marginal default probability over (t_{k-1}, t_k] as
+        //   S(t_{k-1}) * (1 - e^{-deltaLambda})
+        // with deltaLambda the *incremental* cumulative hazard over the step and
+        // (1 - e^{-x}) from its series, so no large survivals are subtracted.
+        SDouble deltaHazard = incrementalHazard(previousTime, tk, hazardShort, hazardMid, hazardLong);
+        SDouble defaultProbability = survivalPrevious.mul(oneMinusExpNeg(deltaHazard));
         SDouble discount = model.discountFactor(currentRate);
         cva = cva.add(positiveExposure.mul(discount).mul(defaultProbability).mul(lossGivenDefault));
-        survivalPrevious = survivalK;
+        survivalPrevious = survivalPrevious.mul(deltaHazard.neg().exp()); // S(t_k)
+        previousTime = tk;
 
         if (emitProfile) {
           rec.output("epe_" + k, positiveExposure);
@@ -188,12 +224,50 @@ public final class ExposureSimulation {
     };
   }
 
-  private static SDouble cumulativeHazard(double t, SDouble hazardShort, SDouble hazardMid,
-                                          SDouble hazardLong) {
-    double shortWidth = Math.min(t, SHORT_BUCKET);
-    double midWidth = Math.max(0.0, Math.min(t, MID_BUCKET) - SHORT_BUCKET);
-    double longWidth = Math.max(0.0, t - MID_BUCKET);
-    return hazardShort.mul(shortWidth).add(hazardMid.mul(midWidth)).add(hazardLong.mul(longWidth));
+  /**
+   * The cumulative forward hazard over {@code (from, to]} from the three
+   * piecewise-flat buckets {@code [0,2y] / [2y,5y] / [5y,+)}. Building the step
+   * increment directly — rather than differencing two integrals from zero —
+   * is what lets the marginal default probability stay accurate in fp32.
+   */
+  private static SDouble incrementalHazard(double from, double to, SDouble hazardShort,
+                                           SDouble hazardMid, SDouble hazardLong) {
+    double shortWidth = overlap(from, to, 0.0, SHORT_BUCKET);
+    double midWidth = overlap(from, to, SHORT_BUCKET, MID_BUCKET);
+    double longWidth = overlap(from, to, MID_BUCKET, Double.POSITIVE_INFINITY);
+    SDouble h = null;
+    if (shortWidth > 0.0) {
+      h = hazardShort.mul(shortWidth);
+    }
+    if (midWidth > 0.0) {
+      h = h == null ? hazardMid.mul(midWidth) : h.add(hazardMid.mul(midWidth));
+    }
+    if (longWidth > 0.0) {
+      h = h == null ? hazardLong.mul(longWidth) : h.add(hazardLong.mul(longWidth));
+    }
+    return h; // to > from guarantees at least one positive width
+  }
+
+  private static double overlap(double from, double to, double lo, double hi) {
+    return Math.max(0.0, Math.min(to, hi) - Math.max(from, lo));
+  }
+
+  /**
+   * {@code 1 - e^{-x}} for small non-negative {@code x}, as the Horner form of
+   * its Maclaurin series {@code x - x^2/2! + x^3/3! - ...}. The direct
+   * {@code 1 - exp(-x)} loses most of its significant digits to cancellation
+   * when {@code x} is small; the series has none. Six terms carry it to double
+   * accuracy for {@code x <= 0.5} and to better than single-precision epsilon
+   * for {@code x} up to ~1 — far beyond the step hazard {@code lambda*dt}
+   * (~1e-2) this is called with.
+   */
+  private static SDouble oneMinusExpNeg(SDouble x) {
+    SDouble s = x.mul(-1.0 / 6.0).add(1.0);
+    s = x.mul(s).mul(-1.0 / 5.0).add(1.0);
+    s = x.mul(s).mul(-1.0 / 4.0).add(1.0);
+    s = x.mul(s).mul(-1.0 / 3.0).add(1.0);
+    s = x.mul(s).mul(-1.0 / 2.0).add(1.0);
+    return x.mul(s);
   }
 
   // ---- runs ---------------------------------------------------------
@@ -217,14 +291,15 @@ public final class ExposureSimulation {
     long scenarios;
     String engineName;
 
+    var model = Nabla.model(market, valuation(false));
     try (Nabla.TypedPricer<CvaMarket> pricer =
-             Nabla.model(market, valuation(false)).fp64().greeks().on(engine).build()) {
+             (useFp64() ? model.fp64() : model.fp32()).greeks().on(engine).build()) {
       buildSeconds = pricer.buildSeconds() + pricer.recordSeconds();
       Nabla.TypedValuation<CvaMarket> valued =
           pricer.value().with(market).scenarios(paths).seed(seed).run();
-      cvaValue = valued.price();
-      standardError = valued.standardError();
-      gradient = valued.greeks();
+      cvaValue = valued.price() * MONEY_UNIT;
+      standardError = valued.standardError() * MONEY_UNIT;
+      gradient = valued.greeks().scale(MONEY_UNIT);
       sweepSeconds = valued.seconds();
       scenariosPerSecond = valued.scenariosPerSecond();
       scenarios = valued.scenarios();
@@ -243,14 +318,16 @@ public final class ExposureSimulation {
         double[] times = new double[steps];
         double[] epe = new double[steps];
         double[] ee = new double[steps];
+        var model = Nabla.model(market, valuation(true));
+        boolean candidateFp64 = fp64Override != null ? fp64Override : !"vulkan".equals(candidate);
         try (Nabla.TypedPricer<CvaMarket> profiler =
-                 Nabla.model(market, valuation(true)).fp64().priceOnly().on(candidate).build()) {
+                 (candidateFp64 ? model.fp64() : model.fp32()).priceOnly().on(candidate).build()) {
           Nabla.Valuation raw =
               profiler.value().with(market).scenarios(paths).seed(seed).run().valuation();
           for (int k = 1; k <= steps; k++) {
             times[k - 1] = k * dt;
-            epe[k - 1] = raw.price("epe_" + k);
-            ee[k - 1] = raw.price("ee_" + k);
+            epe[k - 1] = raw.price("epe_" + k) * MONEY_UNIT;
+            ee[k - 1] = raw.price("ee_" + k) * MONEY_UNIT;
           }
         }
         return new TimeProfile[] {new TimeProfile(times, epe), new TimeProfile(times, ee)};
@@ -266,9 +343,10 @@ public final class ExposureSimulation {
   /** Just the CVA number — the kernel a prescribed-bump sensitivity re-runs. */
   public double cvaOnly(CvaMarket market, long paths, long seed) {
     market.validated();
+    var model = Nabla.model(market, valuation(false));
     try (Nabla.TypedPricer<CvaMarket> pricer =
-             Nabla.model(market, valuation(false)).fp64().priceOnly().on(engine).build()) {
-      return pricer.value().with(market).scenarios(paths).seed(seed).run().price();
+             (useFp64() ? model.fp64() : model.fp32()).priceOnly().on(engine).build()) {
+      return pricer.value().with(market).scenarios(paths).seed(seed).run().price() * MONEY_UNIT;
     }
   }
 }

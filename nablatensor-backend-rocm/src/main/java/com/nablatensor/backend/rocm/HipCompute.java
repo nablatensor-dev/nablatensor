@@ -37,6 +37,39 @@ public final class HipCompute {
     }
   }
 
+  /**
+   * Consumer APU GPU architectures that ROCm recognises and will compile for,
+   * but that are not on AMD's official ROCm support list and wedge the MES
+   * scheduler firmware under sustained compute. Because the same silicon drives
+   * the display, that wedge forces a full-device reset and restarts the desktop
+   * session — see {@code gfx1103} on this dev box.
+   */
+  private static final java.util.Set<String> UNSTABLE_APU_ARCHES = java.util.Set.of(
+      "gfx90c", "gfx1035", "gfx1036", "gfx1037", "gfx1103", "gfx1150", "gfx1151", "gfx1152");
+
+  /**
+   * Whether nablatensor should <em>select</em> the ROCm path automatically here:
+   * a usable device whose architecture is not one of the known-unstable consumer
+   * APUs. Set {@code -Dnablatensor.rocm.allow_unsupported=true} (or env
+   * {@code NABLATENSOR_ROCM_ALLOW_UNSUPPORTED=1}) to opt an APU back in for
+   * deliberate benchmarking. Never throws.
+   */
+  public static boolean reliable() {
+    try {
+      if (!isAvailable()) {
+        return false;
+      }
+      String env = System.getenv("NABLATENSOR_ROCM_ALLOW_UNSUPPORTED");
+      if (Boolean.getBoolean("nablatensor.rocm.allow_unsupported")
+          || "1".equals(env) || "true".equalsIgnoreCase(env)) {
+        return true;
+      }
+      return !UNSTABLE_APU_ARCHES.contains(arch());
+    } catch (Throwable ignored) {
+      return false;
+    }
+  }
+
   /** Device name for diagnostics, or a placeholder if the context is unavailable. */
   public static String deviceName() {
     try {

@@ -2,11 +2,11 @@
 # CVA capital: a netting-set exposure simulation, then the whole SA-CVA risk
 # vector from one adjoint sweep instead of one re-simulation per risk factor.
 #   ./demo/cva-capital.sh [--fast] [--cpu]
-# The CVA integrand is accumulated in fp64, so this runs on the fastest
-# fp64-capable adjoint backend (CUDA > ROCm > cpu-jit — never the fp32-only
-# Vulkan engine); override with NABLATENSOR_DEMO_ENGINE=cuda|rocm|cpu-jit.
+# The exposure integrand is non-dimensionalised and the marginal default
+# probability is evaluated in expm1 form, so the single-precision replay holds
+# to Monte-Carlo error. This runs on the fastest adjoint backend available
+# (CUDA > Vulkan > cpu-jit); override with NABLATENSOR_DEMO_ENGINE=cuda|vulkan|cpu-jit.
 DEMO_ARGS=("$@")
-export NABLATENSOR_DEMO_FP64=1
 source "$(dirname "${BASH_SOURCE[0]}")/_player.sh"
 
 player_start "CVA capital on the fastest backend" \
@@ -65,7 +65,7 @@ for (double t : new double[]{1,3,5,7,10})
       t, curve.survival(t), t, curve.hazardAt(t));
 CODE
 
-banner "3 · Simulate the netting-set exposure on the fastest fp64 backend"
+banner "3 · Simulate the netting-set exposure on the fastest backend"
 say "Each path evolves a Hull-White short rate and an FX spot, values every"
 say "trade at every step from analytic bonds, nets them, and accumulates the"
 say "pathwise CVA integrand against the survival curve."

@@ -33,23 +33,26 @@ mvn -o compile          # once
 ## Backend
 
 `greeks-on-gpu.sh`, `adjoint-vs-bump.sh`, `frtb-curvature-on-cuda.sh`,
-`frtb-full-on-cuda.sh` and `isda-simm-full.sh` pick the fastest adjoint engine
-this machine has — `cuda`, else `vulkan`, else `rocm`, else `cpu-jit` — and say
-which in a dim line under the title. `cva-capital.sh` and `cva-capital-full.sh`
-run the same probe
-but restricted to fp64-capable engines (`cuda`, else `rocm`, else `cpu-jit`),
-because the CVA integrand is accumulated in double precision and the `vulkan`
-engine is fp32-only. `calibrate-a-smile.sh` is a host-side optimiser
-over an analytic formula, so it runs on `cpu-jit` regardless. Override the pick
-with `NABLATENSOR_DEMO_ENGINE=cuda` (or `vulkan` / `rocm` / `cpu-jit`), or pass
+`frtb-full-on-cuda.sh`, `isda-simm-full.sh`, `cva-capital.sh` and
+`cva-capital-full.sh` pick the fastest adjoint engine this machine has —
+`cuda`, else `vulkan`, else `cpu-jit` — and say which in a dim line under the
+title. (`rocm` is discovered and benchmarkable but not auto-selected on the
+unsupported consumer APUs where a sustained launch resets the GPU;
+`NABLATENSOR_ROCM_ALLOW_UNSUPPORTED=1` opts it back in.) The two CVA demos used
+to be restricted to fp64 engines; the exposure integrand is now
+non-dimensionalised and its marginal default probability is evaluated in
+`expm1` form, so the single-precision `vulkan` replay holds to Monte-Carlo
+error. `calibrate-a-smile.sh` is a host-side optimiser over an analytic
+formula, so it runs on `cpu-jit` regardless. Override the pick with
+`NABLATENSOR_DEMO_ENGINE=cuda` (or `vulkan` / `rocm` / `cpu-jit`), or pass
 `--cpu` to force `cpu-jit`.
 
 The two FRTB demos' default workloads are five million and two million paths,
 respectively, at 252 fixings. `cva-capital.sh` and `cva-capital-full.sh` default
 to 200k exposure paths over 28 quarterly steps (`-Dnablatensor.demo.paths=`);
-they are fp64 (the CVA integrand needs the precision), so they select the
-fastest fp64-capable engine — `cuda`, else `rocm`, else `cpu-jit` — and never
-the fp32-only `vulkan`. `isda-simm-full.sh` sweeps a 24-trade netting set at 1.3M
+with the money-scaled integrand and the `expm1`-form default probability they
+run single-precision within Monte-Carlo error, so they select the fastest
+engine — `cuda`, else `vulkan`, else `cpu-jit`. `isda-simm-full.sh` sweeps a 24-trade netting set at 1.3M
 paths over 252 steps per trade on a GPU backend (6 trades × 400k on `cpu-jit`),
 plus a 750-day backtest replay (`-Dnablatensor.demo.book=`,
 `-Dnablatensor.demo.paths=`, `-Dnablatensor.demo.backtest=`); it is fp32, like

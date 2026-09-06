@@ -22,11 +22,14 @@ import com.nablatensor.engine.AadTape;
 import com.nablatensor.backend.rocm.HipCompute;
 
 /**
- * ROCm/HIP replay engine. Priority sits above SIMD and below the Vulkan engine,
- * so on this repo's AMD-APU dev box {@code Nabla.model(...).fastest()} keeps
- * choosing Vulkan (the RADV compute path has proven the more reliable of the
- * two here); ROCm is selected explicitly with {@code -Dnablatensor.engine=rocm}
- * or {@code .on("rocm")}, which is the intended way to benchmark it.
+ * ROCm/HIP replay engine. Priority sits above SIMD and below the Vulkan engine.
+ * {@link #isAvailable()} returns {@code false} on the known-unstable consumer
+ * APUs ({@code gfx1103} and friends), where a sustained-compute launch wedges
+ * the MES firmware and forces a display-killing full-device reset, so
+ * {@code .fastest()} never lands here on this dev box. Opt an APU back in for
+ * deliberate benchmarking with {@code -Dnablatensor.rocm.allow_unsupported=true}
+ * (env {@code NABLATENSOR_ROCM_ALLOW_UNSUPPORTED=1}) and then
+ * {@code -Dnablatensor.engine=rocm} / {@code .on("rocm")}.
  *
  * <p>Holds no reference to {@code libamdhip64} beyond {@link #isAvailable()},
  * which probes through the {@link HipCompute} facade, so merely enumerating
@@ -47,7 +50,7 @@ public final class RocmAadEngine implements AadEngine {
   @Override
   public boolean isAvailable() {
     try {
-      return HipCompute.isAvailable();
+      return HipCompute.reliable();
     } catch (Throwable ignored) {
       return false;
     }

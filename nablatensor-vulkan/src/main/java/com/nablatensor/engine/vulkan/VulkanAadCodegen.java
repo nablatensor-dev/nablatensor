@@ -70,10 +70,14 @@ final class VulkanAadCodegen {
     for (int j = 0; j < nIn; j++) {
       src.append("  float in").append(j).append(" = inp[").append(j).append("];\n");
     }
-    src.append("  float accValue = 0.0;\n");
+    // Per-invocation sums use Kahan compensation: the scenarios one invocation
+    // strides over can number in the thousands, and a naive fp32 running sum
+    // loses the low bits of every later term once the partial sum outgrows a
+    // single term. The compensation term carries those bits forward.
+    src.append("  float accValue = 0.0; float cValue = 0.0;\n");
     if (adjoints) {
       for (int j = 0; j < nIn; j++) {
-        src.append("  float accAdj").append(j).append(" = 0.0;\n");
+        src.append("  float accAdj").append(j).append(" = 0.0; float cAdj").append(j).append(" = 0.0;\n");
       }
     }
 
@@ -88,10 +92,10 @@ final class VulkanAadCodegen {
       emitReverse(src, tape);
     }
 
-    src.append("    accValue += v").append(tape.outputNode()).append(";\n");
+    kahanAdd(src, "accValue", "cValue", "v" + tape.outputNode());
     if (adjoints) {
       for (int j = 0; j < nIn; j++) {
-        src.append("    accAdj").append(j).append(" += d").append(tape.inputNode(j)).append(";\n");
+        kahanAdd(src, "accAdj" + j, "cAdj" + j, "d" + tape.inputNode(j));
       }
     }
     src.append("  }\n");
@@ -109,6 +113,14 @@ final class VulkanAadCodegen {
     }
     src.append("}\n");
     return src.toString();
+  }
+
+  /** {@code acc += rhs} carried in single precision with a Kahan compensation term. */
+  private static void kahanAdd(StringBuilder src, String acc, String comp, String rhs) {
+    src.append("    { float y = ").append(rhs).append(" - ").append(comp).append(";")
+        .append(" float t = ").append(acc).append(" + y;")
+        .append(' ').append(comp).append(" = (t - ").append(acc).append(") - y;")
+        .append(' ').append(acc).append(" = t; }\n");
   }
 
   private static void emitForward(StringBuilder src, AadTape tape) {
