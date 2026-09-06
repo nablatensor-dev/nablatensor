@@ -18,6 +18,7 @@ package com.nablatensor.quant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -83,30 +84,55 @@ class MultiCurveBootstrapTest {
   @Test
   void adjointJacobianMatchesCentralBump() {
     double[] fc = {0.0326, 0.0341, 0.0351, 0.0358, 0.0364};
-    MultiCurveBootstrap.Result base = bootstrap(OIS, fc);
-    double[][] jac = base.jacobian();
+    MultiCurveBootstrap builder = builder(OIS, fc);
+    try (MultiCurveBootstrap.Kernel kernel = builder.kernel()) {
+      MultiCurveBootstrap.Result base = kernel.evaluate(Map.of());
+      double[][] jac = base.jacobian();
+      var labels = base.quoteLabels();
+      var zeroLabels = base.zeroLabels();
+      double h = 1e-6;
 
-    double h = 1e-6;
-    for (int col = 0; col < base.quoteLabels().size(); col++) {
-      double[] oisUp = OIS.clone();
-      double[] fcUp = fc.clone();
-      double[] oisDn = OIS.clone();
-      double[] fcDn = fc.clone();
-      if (col < OIS.length) {
-        oisUp[col] += h;
-        oisDn[col] -= h;
-      } else {
-        fcUp[col - OIS.length] += h;
-        fcDn[col - OIS.length] -= h;
-      }
-      double[][] up = bootstrapZeros(oisUp, fcUp);
-      double[][] dn = bootstrapZeros(oisDn, fcDn);
-      for (int row = 0; row < base.zeroLabels().size(); row++) {
-        double bump = (up[0][row] - dn[0][row]) / (2 * h);
-        assertEquals(bump, jac[row][col], 1e-5 * (1 + Math.abs(bump)),
-            "J[" + base.zeroLabels().get(row) + "][" + base.quoteLabels().get(col) + "]");
+      for (int col = 0; col < labels.size(); col++) {
+        double[] baseZ = zeros(base);
+        // one compiled kernel, re-evaluated at the shifted quote — no re-record.
+        double[] up = zeros(kernel.evaluate(Map.of(labels.get(col), quote(OIS, fc, col) + h)));
+        double[] dn = zeros(kernel.evaluate(Map.of(labels.get(col), quote(OIS, fc, col) - h)));
+        for (int row = 0; row < zeroLabels.size(); row++) {
+          double bump = (up[row] - dn[row]) / (2 * h);
+          assertEquals(bump, jac[row][col], 1e-5 * (1 + Math.abs(bump)),
+              "J[" + zeroLabels.get(row) + "][" + labels.get(col) + "]");
+          assertTrue(Double.isFinite(baseZ[row]));
+        }
       }
     }
+  }
+
+  private static double quote(double[] ois, double[] fc, int col) {
+    return col < ois.length ? ois[col] : fc[col - ois.length];
+  }
+
+  private static MultiCurveBootstrap builder(double[] ois, double[] fc) {
+    MultiCurveBootstrap.Builder b = MultiCurveBootstrap.builder();
+    for (int i = 0; i < ois.length; i++) {
+      b.oisSwap(i + 1, ois[i]);
+    }
+    for (int i = 0; i < fc.length; i++) {
+      b.forecastSwap(T3M, i + 1, fc[i]);
+    }
+    return b.build();
+  }
+
+  private static double[] zeros(MultiCurveBootstrap.Result r) {
+    CurveSet cs = r.curves();
+    double[] z = new double[r.zeroLabels().size()];
+    int k = 0;
+    for (double p : cs.discount().pillars()) {
+      z[k++] = cs.discount().zeroRate(p);
+    }
+    for (double p : cs.forecast(T3M).pillars()) {
+      z[k++] = cs.forecast(T3M).zeroRate(p);
+    }
+    return z;
   }
 
   @Test
@@ -129,18 +155,4 @@ class MultiCurveBootstrapTest {
     assertTrue(crossTerm > 1e-6, "5y forecast zero should react to OIS quotes, got " + crossTerm);
   }
 
-  /** Returns {@code [0]} = zero rates in label order, for the bump cross-check. */
-  private static double[][] bootstrapZeros(double[] ois, double[] fc) {
-    MultiCurveBootstrap.Result r = bootstrap(ois, fc);
-    CurveSet cs = r.curves();
-    double[] z = new double[r.zeroLabels().size()];
-    int k = 0;
-    for (int n = 1; n <= ois.length; n++) {
-      z[k++] = cs.discount().zeroRate(n);
-    }
-    for (int n = 1; n <= fc.length; n++) {
-      z[k++] = cs.forecast(T3M).zeroRate(n);
-    }
-    return new double[][] {z};
-  }
 }

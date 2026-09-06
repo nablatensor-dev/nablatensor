@@ -19,10 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nablatensor.engine.Nabla;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /** The smoothed path-dependent payoffs: in/out parity, the shrinking-width limit, digital vs
  *  the Black-Scholes closed form, and adjoint deltas against a bump of the same smoothed payoff. */
+@Tag("mc")
 class ExoticsTest {
 
   private static final EquityMarket M = EquityMarket.atmOneYear();

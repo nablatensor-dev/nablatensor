@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nablatensor.engine.Nabla;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
  * agree with an independent reference, and the bytecode kernel reproduces the
  * scalar oracle path-for-path.
  */
+@Tag("mc")
 class MvpPricingTest {
 
   private static final long SCENARIOS = 400_000L;

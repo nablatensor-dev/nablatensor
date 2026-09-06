@@ -20,9 +20,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import com.nablatensor.engine.Nabla;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /** Caps/floors, swaptions, FX, quanto, floating lookback and the Bermudan shell. */
+@Tag("mc")
 class NewProductsTest {
 
   @Test

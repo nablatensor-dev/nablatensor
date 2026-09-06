@@ -26,6 +26,7 @@ import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.Nabla;
 import com.nablatensor.engine.SDouble;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -35,6 +36,7 @@ import org.junit.jupiter.api.Test;
  * independent, and a backend that has not grown native support must decline the
  * tape so selection falls back.
  */
+@Tag("mc")
 class RandomStreamsTest {
 
   private static final long N = 400_000L;

@@ -19,10 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nablatensor.engine.SDouble;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /** Antithetic and control-variate hooks: both must leave the price unbiased, and the
  *  beta=0 control variate must be bit-identical to the raw payoff. */
+@Tag("mc")
 class HooksTest {
 
   private static final EquityMarket M = EquityMarket.atmOneYear();

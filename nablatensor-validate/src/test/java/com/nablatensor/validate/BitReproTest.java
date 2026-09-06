@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.Products;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
  * oracle within tolerance, and the oracle's adjoint gradient must agree with a
  * central bump. This is the MVP "definition of done" turned into an assertion.
  */
+@Tag("mc")
 class BitReproTest {
 
   @Test

@@ -24,6 +24,7 @@ import com.nablatensor.engine.SDouble;
 import com.nablatensor.ops.Smooth;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.Test;
  * <em>bit-for-bit</em> — the forward sweep, and therefore every shared node, is
  * literally the same computation.
  */
+@Tag("mc")
 class MultiOutputNativeTest {
 
   private static final long N = 300_000L;
