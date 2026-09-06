@@ -31,7 +31,8 @@ import java.util.Locale;
  */
 public record Report(String product, EquityMarket market, int steps, long scenarios, long seed,
                      boolean fp32, double tolerance, String machine, Nabla.TypedValuation<EquityMarket> oracle,
-                     List<EngineComparison> comparisons, BumpCrossCheck bumpCrossCheck) {
+                     List<EngineComparison> comparisons, BumpCrossCheck bumpCrossCheck,
+                     AnalyticComparison analytic) {
 
   public boolean passed() {
     return comparisons.stream().allMatch(EngineComparison::withinTolerance);
@@ -106,9 +107,27 @@ public record Report(String product, EquityMarket market, int steps, long scenar
     row(b, l, "dV/dT", x.adjoint().maturity(), x.bump().maturity(), x.absDiff().maturity());
     b.append('\n');
 
+    if (analytic != null) {
+      b.append("adjoint price and gradient vs an independent closed form\n");
+      b.append("------------------------------------------------------\n");
+      EquityMarket g = oracle.greeks();
+      b.append(String.format(l, "  %-8s  %16s  %16s  %12s%n", "quantity", "adjoint", "closed form", "absΔ"));
+      arow(b, l, "price", oracle.price(), analytic.reference().price(), analytic.priceAbsDiff());
+      arow(b, l, "delta", g.spot(), analytic.reference().delta(), analytic.deltaAbsDiff());
+      arow(b, l, "vega", g.vol(), analytic.reference().vega(), analytic.vegaAbsDiff());
+      arow(b, l, "rho", g.rate(), analytic.reference().rho(), analytic.rhoAbsDiff());
+      arow(b, l, "dV/dK", g.strike(), analytic.reference().strikeSensitivity(), analytic.strikeAbsDiff());
+      b.append(String.format(l, "  band: 3·SE + 5e-3·|ref|  =>  %s%n", analytic.withinBand() ? "PASS" : "FAIL"));
+      b.append('\n');
+    }
+
     b.append(passed() ? "RESULT: PASS — every backend reproduces the oracle within tolerance.\n"
                       : "RESULT: FAIL — " + firstFailure() + "\n");
     return b.toString();
+  }
+
+  private static void arow(StringBuilder b, Locale l, String name, double adj, double ref, double diff) {
+    b.append(String.format(l, "  %-8s  %+16.8e  %+16.8e  %12.2e%n", name, adj, ref, diff));
   }
 
   private static void row(StringBuilder b, Locale l, String name, double adj, double bump, double diff) {

@@ -41,6 +41,74 @@ class ExamplesSmokeTest {
   }
 
   @Test
+  void analyticVsAdjoint() {
+    System.setProperty("scenarios", "50000");
+    AnalyticVsAdjoint.main(new String[0]);
+  }
+
+  @Test
+  void garchMle() {
+    System.setProperty("obs", "3000");
+    GarchMleShowcase.main(new String[0]);
+  }
+
+  @Test
+  void varEs() {
+    System.setProperty("window", "3000");
+    VarEsShowcase.main(new String[0]);
+  }
+
+  @Test
+  void multiCurveBootstrap() {
+    MultiCurveBootstrapShowcase.main(new String[0]);
+  }
+
+  @Test
+  void hullWhiteCalibration() {
+    HullWhiteCalibrationShowcase.main(new String[0]);
+  }
+
+  @Test
+  void convexityQuanto() {
+    ConvexityQuantoShowcase.main(new String[0]);
+  }
+
+  @Test
+  void jumpDiffusion() {
+    System.setProperty("paths", "40000");
+    System.setProperty("steps", "32");
+    JumpDiffusionShowcase.main(new String[0]);
+  }
+
+  @Test
+  void cosCalibration() {
+    CosCalibrationShowcase.main(new String[0]);
+  }
+
+  @Test
+  void sparkSpread() {
+    System.setProperty("paths", "40000");
+    SparkSpreadShowcase.main(new String[0]);
+  }
+
+  @Test
+  void cdoTranche() {
+    CdoTrancheShowcase.main(new String[0]);
+  }
+
+  @Test
+  void bermudanLsm() {
+    System.setProperty("paths", "20000");
+    System.setProperty("dates", "8");
+    BermudanLsmShowcase.main(new String[0]);
+  }
+
+  @Test
+  void latticeConvergence() {
+    LatticeConvergenceShowcase.main(new String[0]);
+  }
+
+  @Test
   void asianAcrossBackends() {
     System.setProperty("scenarios", "50000");
     System.setProperty("steps", "32");
