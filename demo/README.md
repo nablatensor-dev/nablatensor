@@ -1,11 +1,12 @@
 # `demo/` — narrated jshell sessions
 
-Nine **real** jshell sessions aimed at a trading / quant audience. Nothing is
+Ten **real** jshell sessions aimed at a trading / quant audience. Nothing is
 scripted output: every number on screen came out of the machine you run it on.
 
 ```bash
 mvn -o compile          # once
-./demo/greeks-on-gpu.sh  # then pick one
+./demo/black-scholes-both-ways.sh  # then pick one
+./demo/greeks-on-gpu.sh
 ./demo/frtb-curvature-on-cuda.sh
 ./demo/frtb-full-on-cuda.sh
 ./demo/cva-capital.sh
@@ -20,6 +21,7 @@ mvn -o compile          # once
 | [`cva-capital-full.sh`](cva-capital-full.sh) | **CVA capital in full** — the whole standardised CVA regulation across a two-netting-set portfolio in **twelve stages**: CDS bootstrap to a piecewise-flat hazard, the on-tape exposure model with a variation-margin CSA, the **Monte-Carlo netting-set exposure simulation** (marked in an **orange comment** as the one costly stage), the full CVA risk vector from one sweep, the prescribed bump-and-revalue alternative timed against it and reconciled, SA-CVA weighting/correlation with `LOW`/`MEDIUM`/`HIGH`, **BA-CVA reduced** (closed form) and **BA-CVA full** (CDS hedge recognition), and the **three PRA methods** with the binding charge and CVA RWA. |
 | [`isda-simm-full.sh`](isda-simm-full.sh) | **ISDA SIMM in full** — the whole initial-margin model across a non-cleared book in **twelve stages**: the CRIF sensitivity vector, the **full delta / vega / curvature set from one adjoint sweep** (marked in an **orange comment** as the one costly stage, regenerated daily per counterparty) timed against **one book revaluation per prescribed bump**, the concentration factor `CR_b`, the nested within-/across-bucket aggregation for all six risk classes, the product-class roll-up with the SIMM risk-class correlation, the total SIMM margin, and the annual backtest replayed over history. Uses the same `√(ΣK² + ΣγSS)` engine as FRTB SA. |
 | [`frtb-curvature-on-cuda.sh`](frtb-curvature-on-cuda.sh) | The expensive part of FRTB curvature on **the fastest GPU backend**: one adjoint delta, then base / +30% / -30% full Asian-option repricings with common random numbers. The GPU work is timed before it becomes CVR and a curvature charge in a few lines. |
+| [`black-scholes-both-ways.sh`](black-scholes-both-ways.sh) | The textbook European call, priced **two ways that must agree**: the Black-Scholes-Merton closed form, and **one hundred million paths with price + five Greeks from one reverse sweep** on the fastest backend. In orange: the headline — the sweep run two dozen times, **first call and settled per-run rate reported separately** (no warm-up games), printed as **"_N_ billion Black-Scholes paths/s — with every Greek — on _device_"** (~13 billion on the laptop iGPU here) — then **one reverse sweep vs. eleven bump passes (~9×)**, delta reconciled bump / adjoint / closed form. Then the simulation error checked against the standard error the formula itself predicts, an **implied-vol Newton solve whose vega is a component of that same sweep** (a handful of steps against a bisection's twenty), and put-call parity plus a dividend yield off the closed form. |
 | [`greeks-on-gpu.sh`](greeks-on-gpu.sh) | A down-and-in put written as a plain-Java lambda, recorded once, then **20 M paths priced with price + delta + vega + rho + dV/dK + dV/dT from one reverse sweep** on the Vulkan backend. Then a spot ladder and a crash scenario — same kernel, no rebuild. |
 | [`adjoint-vs-bump.sh`](adjoint-vs-bump.sh) | The same five Greeks on an Asian call, computed **two ways**: central bump-and-revalue (`1 + 2×5` price-only replays) versus **one adjoint sweep**. Identical numbers to Monte-Carlo noise; the adjoint run never does more than this one sweep however many inputs you add. |
 | [`calibrate-a-smile.sh`](calibrate-a-smile.sh) | A SABR `(alpha, rho, nu)` fit to a six-strike vol smile. The objective is recorded once; **every L-BFGS iteration gets its gradient from one reverse sweep** — no finite differences, no hand-coded Hagan derivative. Recovers the parameters to ~1e-13 in a handful of iterations. |
@@ -32,11 +34,11 @@ mvn -o compile          # once
 
 ## Backend
 
-`greeks-on-gpu.sh`, `adjoint-vs-bump.sh`, `frtb-curvature-on-cuda.sh`,
-`frtb-full-on-cuda.sh`, `isda-simm-full.sh`, `cva-capital.sh` and
-`cva-capital-full.sh` pick the fastest adjoint engine this machine has —
-`cuda`, else `vulkan`, else `cpu-jit` — and say which in a dim line under the
-title. (`rocm` is discovered and benchmarkable but not auto-selected on the
+`black-scholes-both-ways.sh`, `greeks-on-gpu.sh`, `adjoint-vs-bump.sh`,
+`frtb-curvature-on-cuda.sh`, `frtb-full-on-cuda.sh`, `isda-simm-full.sh`,
+`cva-capital.sh` and `cva-capital-full.sh` pick the fastest adjoint engine this
+machine has — `cuda`, else `vulkan`, else `cpu-jit` — and say which in a dim
+line under the title. (`rocm` is discovered and benchmarkable but not auto-selected on the
 unsupported consumer APUs where a sustained launch resets the GPU;
 `NABLATENSOR_ROCM_ALLOW_UNSUPPORTED=1` opts it back in.) The two CVA demos used
 to be restricted to fp64 engines; the exposure integrand is now
@@ -58,6 +60,12 @@ plus a 750-day backtest replay (`-Dnablatensor.demo.book=`,
 `-Dnablatensor.demo.paths=`, `-Dnablatensor.demo.backtest=`); it is fp32, like
 the FRTB demos, so it runs on any of the four engines. The sensitivity sweep is
 ~2 s of engine work on this box.
+
+`black-scholes-both-ways.sh` is a single-step European, so its tape is tiny and
+its headline run is 100M paths on a GPU backend (5M on `cpu-jit`), plus a short
+convergence ladder and a ~20M-path implied-vol solve
+(`-Dnablatensor.demo.paths=` overrides the headline count). It is fp32, like the
+FRTB demos.
 
 Needs JDK 24+ for the Class-File API. The scripts ignore `$JAVA_HOME` (often an
 older JDK) and use `/opt/zulu26.32.13-ca-jdk26.0.2-linux_x64`; override with

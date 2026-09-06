@@ -41,8 +41,9 @@ import static java.lang.foreign.ValueLayout.JAVA_LONG;
  * time with {@code vkQueueWaitIdle} between submits. No JNI, no native jars.
  *
  * <p>Buffers are placed in {@code HOST_VISIBLE | HOST_COHERENT} memory (an APU
- * exposes this as device-local too), so upload/download are plain
- * {@code vkMapMemory} + {@code memcpy} with no staging buffers.
+ * exposes this as device-local too) and persistently mapped at allocation, so
+ * upload/download are a bare {@code memcpy} with no staging buffers and no
+ * per-call map/unmap.
  */
 final class VulkanRuntime {
 
@@ -193,6 +194,17 @@ final class VulkanRuntime {
   private static String deviceName = "";
   private static final Arena RT = Arena.ofShared();
   private static final Map<String, Pipeline> PIPELINES = new HashMap<>();
+  /**
+   * Persistent host mapping per device-memory handle. Every buffer this runtime
+   * allocates lives in host-visible coherent memory on the shared-memory APU it
+   * targets, so it is mapped once at {@link #alloc} and stays mapped for the
+   * buffer's life; {@code writeFloats}/{@code readFloats} then reduce to a bare
+   * {@code memcpy} instead of a {@code vkMapMemory}+{@code vkUnmapMemory} round
+   * trip per call. That round trip is a measurable fraction of a small dispatch,
+   * so this is real wall-clock on the many-tiny-dispatch workloads — engine
+   * calibration, scenario ladders, per-node tensor readbacks.
+   */
+  private static final Map<Long, MemorySegment> MAPPED = new HashMap<>();
   private static long shadercCompiler;
 
   // ---- deferred-submit batch state (gap #2) ----
@@ -556,6 +568,12 @@ final class VulkanRuntime {
       check((int) ALLOC_MEM.invoke(device, mai, MemorySegment.NULL, memOut), "vkAllocateMemory");
       long memory = memOut.get(JAVA_LONG, 0);
       check((int) BIND_BUFFER_MEM.invoke(device, buffer, memory, 0L), "vkBindBufferMemory");
+
+      // Map once, for the buffer's whole life (see MAPPED). Coherent memory, so
+      // no explicit flush/invalidate is ever needed around the later copies.
+      MemorySegment mapPtr = a.allocate(ADDRESS);
+      check((int) MAP_MEM.invoke(device, memory, 0L, WHOLE_SIZE, 0, mapPtr), "vkMapMemory");
+      MAPPED.put(memory, mapPtr.get(ADDRESS, 0).reinterpret(size));
       return new long[] {buffer, memory};
     } catch (Throwable failure) {
       throw failure instanceof RuntimeException runtime ? runtime : new RuntimeException(failure);
@@ -569,6 +587,9 @@ final class VulkanRuntime {
       return;
     }
     try {
+      if (MAPPED.remove(memory) != null) {
+        UNMAP_MEM.invoke(device, memory);
+      }
       DESTROY_BUFFER.invoke(device, buffer, MemorySegment.NULL);
       FREE_MEM.invoke(device, memory, MemorySegment.NULL);
     } catch (Throwable failure) {
@@ -578,12 +599,9 @@ final class VulkanRuntime {
 
   static synchronized void writeFloats(long memory, float[] data) {
     flushLocked();   // a pending dispatch may read this buffer
-    try (Arena a = Arena.ofConfined()) {
-      MemorySegment pp = a.allocate(ADDRESS);
-      check((int) MAP_MEM.invoke(device, memory, 0L, WHOLE_SIZE, 0, pp), "vkMapMemory");
-      MemorySegment mapped = pp.get(ADDRESS, 0).reinterpret((long) data.length * Float.BYTES);
+    try {
+      MemorySegment mapped = mappedFor(memory, (long) data.length * Float.BYTES);
       MemorySegment.copy(data, 0, mapped, JAVA_FLOAT, 0, data.length);
-      UNMAP_MEM.invoke(device, memory);
     } catch (Throwable failure) {
       throw failure instanceof RuntimeException runtime ? runtime : new RuntimeException(failure);
     }
@@ -592,16 +610,33 @@ final class VulkanRuntime {
   static synchronized float[] readFloats(long memory, int count) {
     flushLocked();   // the data we want may still be a pending dispatch's output
     float[] out = new float[count];
-    try (Arena a = Arena.ofConfined()) {
-      MemorySegment pp = a.allocate(ADDRESS);
-      check((int) MAP_MEM.invoke(device, memory, 0L, WHOLE_SIZE, 0, pp), "vkMapMemory");
-      MemorySegment mapped = pp.get(ADDRESS, 0).reinterpret((long) count * Float.BYTES);
+    try {
+      MemorySegment mapped = mappedFor(memory, (long) count * Float.BYTES);
       MemorySegment.copy(mapped, JAVA_FLOAT, 0, out, 0, count);
-      UNMAP_MEM.invoke(device, memory);
     } catch (Throwable failure) {
       throw failure instanceof RuntimeException runtime ? runtime : new RuntimeException(failure);
     }
     return out;
+  }
+
+  /**
+   * The persistent host mapping for {@code memory}, sized to at least
+   * {@code bytes}. Falls back to a one-shot {@code vkMapMemory} for any buffer
+   * this runtime did not allocate (there are none today, but the map stays
+   * total).
+   */
+  private static MemorySegment mappedFor(long memory, long bytes) throws Throwable {
+    MemorySegment mapped = MAPPED.get(memory);
+    if (mapped != null) {
+      return mapped.byteSize() >= bytes ? mapped : mapped.reinterpret(bytes);
+    }
+    try (Arena a = Arena.ofConfined()) {
+      MemorySegment pp = a.allocate(ADDRESS);
+      check((int) MAP_MEM.invoke(device, memory, 0L, WHOLE_SIZE, 0, pp), "vkMapMemory");
+      MemorySegment fresh = pp.get(ADDRESS, 0).reinterpret(bytes);
+      MAPPED.put(memory, fresh);
+      return fresh;
+    }
   }
 
   // ---- dispatch ----------------------------------------------------------
@@ -747,6 +782,9 @@ final class VulkanRuntime {
     }
     for (long[] pair : pendingFrees) {
       try {
+        if (MAPPED.remove(pair[1]) != null) {
+          UNMAP_MEM.invoke(device, pair[1]);
+        }
         DESTROY_BUFFER.invoke(device, pair[0], MemorySegment.NULL);
         FREE_MEM.invoke(device, pair[1], MemorySegment.NULL);
       } catch (Throwable ignored) {

@@ -47,6 +47,13 @@ class ExamplesSmokeTest {
   }
 
   @Test
+  void blackScholesBothWays() {
+    System.setProperty("scenarios", "20000");
+    System.setProperty("engine", "cpu-jit");
+    BlackScholesBothWays.main(new String[0]);
+  }
+
+  @Test
   void garchMle() {
     System.setProperty("obs", "3000");
     GarchMleShowcase.main(new String[0]);
