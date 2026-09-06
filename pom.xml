@@ -52,6 +52,8 @@
     <module>nablatensor-scenario</module>
     <module>nablatensor-risk</module>
     <module>nablatensor-cva</module>
+    <module>nablatensor-credit</module>
+    <module>nablatensor-lattice</module>
     <module>nablatensor-validate</module>
     <module>nablatensor-examples</module>
     <module>nablatensor-bench</module>
@@ -137,6 +139,16 @@
       <dependency>
         <groupId>com.nablatensor</groupId>
         <artifactId>nablatensor-cva</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-credit</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-lattice</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

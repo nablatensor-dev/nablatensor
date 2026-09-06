@@ -21,9 +21,11 @@ import com.nablatensor.engine.AadOptions;
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.MonteCarlo;
 import com.nablatensor.quant.Product;
+import com.nablatensor.quant.analytic.AnalyticGreeks;
 import com.nablatensor.engine.Nabla;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Model-validation harness: record one valuation, replay it on every backend
@@ -52,6 +54,7 @@ public final class ModelValidation {
   private boolean fp32 = false;
   private double tolerance = 1e-6;
   private double bump = 5e-3;
+  private Function<EquityMarket, AnalyticGreeks> analyticReference;
 
   private ModelValidation(Product<EquityMarket> product) {
     this.product = product;
@@ -103,6 +106,19 @@ public final class ModelValidation {
     return this;
   }
 
+  /**
+   * Register an independent closed form for this contract. When present, the
+   * evidence pack adds a section diffing the scalar oracle's adjoint price and
+   * gradient against it — see {@link AnalyticComparison}. The function is passed
+   * the same {@link EquityMarket} the run prices, and typically closes over the
+   * option type, e.g. {@code m -> GeneralizedBsm.of(CALL, m.spot(), m.strike(),
+   * m.maturity(), m.rate(), 0.0, m.vol()).greeks()}.
+   */
+  public ModelValidation analyticReference(Function<EquityMarket, AnalyticGreeks> reference) {
+    this.analyticReference = reference;
+    return this;
+  }
+
   public Report run() {
     Nabla.TypedValuation<EquityMarket> oracle;
     try (MonteCarlo<EquityMarket> mc = build("cpu")) {
@@ -124,8 +140,11 @@ public final class ModelValidation {
         product, market, steps, fp32, scenarios, seed, bump,
         oracle.greeks());
 
+    AnalyticComparison analytic = analyticReference == null ? null
+        : AnalyticComparison.of(oracle, analyticReference.apply(market));
+
     return new Report(product.label(), market, steps, scenarios, seed, fp32, tolerance,
-        machineInfo(), oracle, comparisons, crossCheck);
+        machineInfo(), oracle, comparisons, crossCheck, analytic);
   }
 
   private MonteCarlo<EquityMarket> build(String engine) {
