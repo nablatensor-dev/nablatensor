@@ -18,9 +18,11 @@ package com.nablatensor.quant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /** The correlated basket and the curve bootstrap + its analytic Jacobian. */
+@Tag("mc")
 class BasketAndCurveTest {
 
   // ---- basket ------------------------------------------------------------

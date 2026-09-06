@@ -23,6 +23,7 @@ import com.nablatensor.engine.Nabla;
 import com.nablatensor.ops.Smooth;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Test;
  * trick must return each measure's value and its full input gradient, matching a
  * standalone single-output run for that measure.
  */
+@Tag("mc")
 class MultiOutputTest {
 
   private static final long N = 400_000L;

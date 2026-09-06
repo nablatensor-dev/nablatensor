@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Random;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
  * simulated process, the closed-form identities hold exactly, and the PCA
  * reconstructs its input matrix.
  */
+@Tag("mc")
 class EstimateTest {
 
   /** Simulate a zero-mean GARCH(1,1) return series. */

@@ -18,6 +18,7 @@ package com.nablatensor.quant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
  * premium, an American call that does not exercise early, and a sane delta from
  * the same reverse sweep.
  */
+@Tag("mc")
 class BermudanLsmTest {
 
   @Test

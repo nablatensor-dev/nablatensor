@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.Nabla;
 import java.util.function.BiConsumer;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Test;
  * must agree with a central bump-and-revalue on the same seed, and each model's
  * degenerate limit must line up with something known.
  */
+@Tag("mc")
 class ModelsTest {
 
   private static final int STEPS = 48;

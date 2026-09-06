@@ -83,41 +83,68 @@ public final class MultiCurveBootstrap {
   }
 
   public Result solve() {
-    List<String> quoteLabels = new ArrayList<>();
-    List<String> zeroLabels = new ArrayList<>();
-    for (Inst i : ois) {
-      quoteLabels.add(i.label());
-      zeroLabels.add("z:" + i.label());
+    try (Kernel k = kernel()) {
+      return k.evaluate(Map.of());
     }
-    for (var e : forecast.entrySet()) {
-      for (Inst i : e.getValue()) {
+  }
+
+  /**
+   * Records the bootstrap recursion once and keeps the compiled kernel open, so
+   * the curves and Jacobian can be re-evaluated at shifted quotes (a bump
+   * cross-check, a scenario) without re-recording. Close it when done.
+   */
+  public Kernel kernel() {
+    return new Kernel();
+  }
+
+  /** A compiled, reusable bootstrap. */
+  public final class Kernel implements AutoCloseable {
+    private final List<String> quoteLabels = new ArrayList<>();
+    private final List<String> zeroLabels = new ArrayList<>();
+    private final MultiOutput mo;
+
+    private Kernel() {
+      for (Inst i : ois) {
         quoteLabels.add(i.label());
         zeroLabels.add("z:" + i.label());
       }
+      for (var e : forecast.entrySet()) {
+        for (Inst i : e.getValue()) {
+          quoteLabels.add(i.label());
+          zeroLabels.add("z:" + i.label());
+        }
+      }
+      this.mo = MultiOutput.of(rec -> record(rec)).on("cpu").build();
     }
 
-    MultiOutput.Measures measures = rec -> record(rec);
-    Map<String, Double> values;
-    Map<String, Map<String, Double>> grads = new LinkedHashMap<>();
-    try (MultiOutput mo = MultiOutput.of(measures).on("cpu").build()) {
-      MultiOutput.Result r = mo.run(1L, 0L);
-      values = new LinkedHashMap<>();
+    /** Re-evaluate with {@code quoteOverrides} (label -> quote); an empty map uses the base quotes. */
+    public Result evaluate(Map<String, Double> quoteOverrides) {
+      MultiOutput.Result r = mo.run(quoteOverrides, 1L, 0L);
+      Map<String, Double> values = new LinkedHashMap<>();
+      Map<String, Map<String, Double>> grads = new LinkedHashMap<>();
       for (String z : zeroLabels) {
         values.put(z, r.value(z));
         grads.put(z, r.gradient(z));
       }
-    }
-
-    CurveSet curves = assembleCurves(values);
-
-    double[][] jac = new double[zeroLabels.size()][quoteLabels.size()];
-    for (int rIdx = 0; rIdx < zeroLabels.size(); rIdx++) {
-      Map<String, Double> g = grads.get(zeroLabels.get(rIdx));
-      for (int cIdx = 0; cIdx < quoteLabels.size(); cIdx++) {
-        jac[rIdx][cIdx] = g.getOrDefault(quoteLabels.get(cIdx), 0.0);
+      CurveSet curves = assembleCurves(values);
+      double[][] jac = new double[zeroLabels.size()][quoteLabels.size()];
+      for (int rIdx = 0; rIdx < zeroLabels.size(); rIdx++) {
+        Map<String, Double> g = grads.get(zeroLabels.get(rIdx));
+        for (int cIdx = 0; cIdx < quoteLabels.size(); cIdx++) {
+          jac[rIdx][cIdx] = g.getOrDefault(quoteLabels.get(cIdx), 0.0);
+        }
       }
+      return new Result(curves, jac, zeroLabels, quoteLabels);
     }
-    return new Result(curves, jac, zeroLabels, quoteLabels);
+
+    public List<String> quoteLabels() {
+      return List.copyOf(quoteLabels);
+    }
+
+    @Override
+    public void close() {
+      mo.close();
+    }
   }
 
   // ---- the recorded two-stage recursion --------------------------------

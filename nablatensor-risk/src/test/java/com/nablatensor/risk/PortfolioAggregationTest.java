@@ -23,6 +23,7 @@ import com.nablatensor.quant.Products;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Test;
  * to a full one-factor-at-a-time bump grid on the whole book — the Phase-2
  * definition-of-done for the aggregation layer.
  */
+@Tag("mc")
 class PortfolioAggregationTest {
 
   private static final long N = 120_000L;

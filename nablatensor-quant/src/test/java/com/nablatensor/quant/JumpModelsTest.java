@@ -24,6 +24,7 @@ import com.nablatensor.quant.analytic.GeneralizedBsm;
 import com.nablatensor.quant.analytic.MertonJumpDiffusion;
 import java.util.Arrays;
 import java.util.function.BiConsumer;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.Test;
  * intensity vanishes and satisfy put-call parity, and their adjoint spot delta
  * matches a central bump.
  */
+@Tag("mc")
 class JumpModelsTest {
 
   private static <M extends Record> double price(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> v,

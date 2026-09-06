@@ -24,6 +24,7 @@ import com.nablatensor.quant.analytic.KirkSpreadOption;
 import com.nablatensor.quant.analytic.Margrabe;
 import java.util.Arrays;
 import java.util.function.BiConsumer;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Test;
  * correlated-GBM Monte-Carlo, the Schwartz futures price matches its simulation,
  * and the seasonality fit recovers its coefficients.
  */
+@Tag("mc")
 class CommoditySpreadTest {
 
   private static <M extends Record> double price(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> v,

@@ -25,6 +25,7 @@ import com.nablatensor.quant.OptionType;
 import com.nablatensor.quant.analytic.GeneralizedBsm;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -33,6 +34,7 @@ import org.junit.jupiter.api.Test;
  * rate vanishes, and its Heston surface calibration recovers the generating
  * parameters.
  */
+@Tag("mc")
 class CosMethodTest {
 
   @Test
