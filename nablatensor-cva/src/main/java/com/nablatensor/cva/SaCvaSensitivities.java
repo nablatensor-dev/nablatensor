@@ -17,6 +17,7 @@ package com.nablatensor.cva;
 
 import com.nablatensor.risk.RiskFactor;
 import com.nablatensor.risk.Sensitivities;
+import java.util.function.DoubleUnaryOperator;
 
 /**
  * The SA-CVA sensitivity vector for a netting set, produced two ways:
@@ -26,14 +27,15 @@ import com.nablatensor.risk.Sensitivities;
  *       sweep in {@link CvaResult#gradient()}. {@code O(1)} regardless of how
  *       many risk factors the netting set touches.</li>
  *   <li><b>Route A — {@link #bumpAndRevalue}</b>: the letter-compliant
- *       prescribed bump — re-simulate the whole netting-set exposure once per
- *       shocked risk factor and central-difference. {@code O(#risk factors)}
- *       re-simulations; this is the cost the adjoint sweep removes.</li>
+ *       prescribed bump — re-simulate the whole netting-set exposure per shocked
+ *       risk factor and take a Richardson-extrapolated central difference (steps
+ *       {@code h} and {@code 2h}, four re-simulations per factor). {@code
+ *       O(#risk factors)}; this is the cost the adjoint sweep removes.</li>
  * </ul>
  *
  * <p>Both return a {@code Sensitivities} keyed by {@link RiskFactor}, fed
  * straight into {@link SaCva}. On common random numbers the two agree to the
- * bump's own {@code O(h^2)} error — the reconciliation the benchmark rests on.
+ * bump's own {@code O(h^4)} error — the reconciliation the benchmark rests on.
  */
 public final class SaCvaSensitivities {
 
@@ -80,47 +82,68 @@ public final class SaCvaSensitivities {
   public static BumpResult bumpAndRevalue(ExposureSimulation simulation, CvaMarket base,
                                           long paths, long seed, CvaRiskFactors keys) {
     long start = System.nanoTime();
-    int revaluations = 0;
+    int[] revaluations = {0};
     double lgd = keys.counterparty().lossGivenDefault();
     Sensitivities.Builder out = Sensitivities.builder();
 
-    double irUp = simulation.cvaOnly(base.withCurveLevel(base.r0() + BP, base.hwLevel() + BP), paths, seed);
-    double irDown = simulation.cvaOnly(base.withCurveLevel(base.r0() - BP, base.hwLevel() - BP), paths, seed);
-    revaluations += 2;
-    out.add(keys.irDelta(), 0.5 * (irUp - irDown));
+    // Each factor's slope d(CVA)/d(offset) is a Richardson-extrapolated central
+    // difference (steps h and 2h, O(h^4) residual) on common random numbers.
+    // The extrapolation lifts the finite difference well clear of the fp32
+    // round-off floor, so the bump reconciles with the adjoint sweep even when
+    // both run single-precision.
+    DoubleUnaryOperator ir = a -> {
+      revaluations[0]++;
+      return simulation.cvaOnly(base.withCurveLevel(base.r0() + a, base.hwLevel() + a), paths, seed);
+    };
+    out.add(keys.irDelta(), slope(ir, BP) * BP);
 
     double sig = base.hwSigma();
-    double vegaUp = simulation.cvaOnly(base.withRateVol(sig * (1.0 + RELATIVE)), paths, seed);
-    double vegaDown = simulation.cvaOnly(base.withRateVol(sig * (1.0 - RELATIVE)), paths, seed);
-    revaluations += 2;
-    out.add(keys.irVega(), (vegaUp - vegaDown) / (2.0 * RELATIVE));
+    DoubleUnaryOperator rateVol = a -> {
+      revaluations[0]++;
+      return simulation.cvaOnly(base.withRateVol(sig * (1.0 + a)), paths, seed);
+    };
+    out.add(keys.irVega(), slope(rateVol, RELATIVE)); // slope in relative units == dCVA/dsigma * sigma
 
     double[] hazard = {base.hazardShort(), base.hazardMid(), base.hazardLong()};
     double dHazard = BP / lgd;
     for (int v = 0; v < hazard.length; v++) {
-      double[] up = hazard.clone();
-      double[] down = hazard.clone();
-      up[v] += dHazard;
-      down[v] -= dHazard;
-      double csUp = simulation.cvaOnly(base.withHazards(up[0], up[1], up[2]), paths, seed);
-      double csDown = simulation.cvaOnly(base.withHazards(down[0], down[1], down[2]), paths, seed);
-      revaluations += 2;
-      out.add(keys.counterpartySpreadDelta(v), 0.5 * (csUp - csDown));
+      int vertex = v;
+      DoubleUnaryOperator cs = a -> {
+        revaluations[0]++;
+        double[] h = hazard.clone();
+        h[vertex] += a;
+        return simulation.cvaOnly(base.withHazards(h[0], h[1], h[2]), paths, seed);
+      };
+      out.add(keys.counterpartySpreadDelta(v), slope(cs, dHazard) * dHazard);
     }
 
     double fx = base.fxSpot();
-    double fxUp = simulation.cvaOnly(base.withFxSpot(fx * (1.0 + RELATIVE)), paths, seed);
-    double fxDown = simulation.cvaOnly(base.withFxSpot(fx * (1.0 - RELATIVE)), paths, seed);
-    revaluations += 2;
-    out.add(keys.fxDelta(), 0.5 * (fxUp - fxDown));
+    DoubleUnaryOperator fxSpot = a -> {
+      revaluations[0]++;
+      return simulation.cvaOnly(base.withFxSpot(fx * (1.0 + a)), paths, seed);
+    };
+    out.add(keys.fxDelta(), slope(fxSpot, RELATIVE) * RELATIVE);
 
     double fxSig = base.fxVol();
-    double fxVegaUp = simulation.cvaOnly(base.withFxVol(fxSig * (1.0 + RELATIVE)), paths, seed);
-    double fxVegaDown = simulation.cvaOnly(base.withFxVol(fxSig * (1.0 - RELATIVE)), paths, seed);
-    revaluations += 2;
-    // (up - down) / (2 * rel) already equals dCVA/dsigma * sigma, the FRTB vega convention
-    out.add(keys.fxVega(), (fxVegaUp - fxVegaDown) / (2.0 * RELATIVE));
+    DoubleUnaryOperator fxVol = a -> {
+      revaluations[0]++;
+      return simulation.cvaOnly(base.withFxVol(fxSig * (1.0 + a)), paths, seed);
+    };
+    out.add(keys.fxVega(), slope(fxVol, RELATIVE)); // FRTB vega convention, as above
 
-    return new BumpResult(out.build(), revaluations, (System.nanoTime() - start) / 1.0e9);
+    return new BumpResult(out.build(), revaluations[0], (System.nanoTime() - start) / 1.0e9);
+  }
+
+  /**
+   * Richardson-extrapolated central-difference estimate of {@code d f / d a} at
+   * {@code a = 0}: {@code (4*D(h) - D(2h)) / 3}, where {@code D(s)} is the
+   * two-sided difference at step {@code s}. Cancels the {@code O(h^2)} term of a
+   * plain central difference, leaving {@code O(h^4)}. Four evaluations of
+   * {@code f}.
+   */
+  private static double slope(DoubleUnaryOperator f, double h) {
+    double dHalf = (f.applyAsDouble(h) - f.applyAsDouble(-h)) / (2.0 * h);
+    double dFull = (f.applyAsDouble(2.0 * h) - f.applyAsDouble(-2.0 * h)) / (4.0 * h);
+    return (4.0 * dHalf - dFull) / 3.0;
   }
 }

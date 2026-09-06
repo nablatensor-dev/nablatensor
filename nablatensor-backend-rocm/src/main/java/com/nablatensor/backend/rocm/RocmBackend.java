@@ -67,11 +67,10 @@ public final class RocmBackend implements ComputeBackend {
 
   @Override
   public boolean isAvailable() {
-    try {
-      return HipRuntime.probe();
-    } catch (Throwable failure) {
-      return false;
-    }
+    // Gated off on the known-unstable consumer APUs (gfx1103 &c.): they compile
+    // and run small launches, then wedge the GPU under load and reset the whole
+    // device — display included. Override with NABLATENSOR_ROCM_ALLOW_UNSUPPORTED.
+    return HipCompute.reliable();
   }
 
   @Override

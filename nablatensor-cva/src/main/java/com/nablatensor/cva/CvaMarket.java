@@ -96,4 +96,15 @@ public record CvaMarket(double r0, double hwLevel, double hwMeanReversion, doubl
     return new CvaMarket(r0, hwLevel, hwMeanReversion, hwSigma,
         hazardShort, hazardMid, hazardLong, recovery, fxSpot, fxVol, fxForeignRate);
   }
+
+  /**
+   * Every component multiplied by {@code factor}. Used to lift a gradient that
+   * was differentiated against a non-dimensionalised (money-scaled) CVA back
+   * into reporting-currency units: {@code d(scale*CVA)/dx = scale * dCVA/dx}.
+   */
+  public CvaMarket scale(double factor) {
+    return new CvaMarket(r0 * factor, hwLevel * factor, hwMeanReversion * factor, hwSigma * factor,
+        hazardShort * factor, hazardMid * factor, hazardLong * factor, recovery * factor,
+        fxSpot * factor, fxVol * factor, fxForeignRate * factor);
+  }
 }
