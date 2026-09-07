@@ -203,6 +203,20 @@ class ExamplesSmokeTest {
   }
 
   @Test
+  void saCvaShowcase() {
+    System.setProperty("paths", "2000");
+    SaCvaShowcase.main(new String[0]);
+  }
+
+  @Test
+  void cvaShowcase() {
+    System.setProperty("engine", "cpu-jit");
+    System.setProperty("paths", "2000");
+    System.setProperty("steps", "8");
+    CvaShowcase.main(new String[0]);
+  }
+
+  @Test
   void mnistMlp() throws Exception {
     assumeTrue(!NablaTensors.devices().isEmpty(),
         "MnistMlp needs a tensor compute backend (Vulkan / ROCm / CUDA)");

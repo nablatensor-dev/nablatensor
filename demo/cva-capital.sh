@@ -170,5 +170,5 @@ System.out.printf(Locale.ROOT, "   adjoint work %.2f s across %d netting sets; t
 CODE
 
 finale "The exposure simulation is the only expensive stage." \
-       "One sweep gave every CVA sensitivity; the bump route re-ran it 14 times." \
+       "One sweep gave every CVA sensitivity; the bump route re-ran it 28 times." \
        "SA-CVA, BA-CVA reduced and full, and the three PRA methods, end to end."

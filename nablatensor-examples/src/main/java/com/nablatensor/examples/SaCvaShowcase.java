@@ -29,10 +29,11 @@ import com.nablatensor.cva.SaCvaParameters;
 import com.nablatensor.cva.SaCvaResult;
 import com.nablatensor.cva.SaCvaSensitivities;
 import com.nablatensor.risk.RiskFactor;
+import com.nablatensor.risk.RiskMeasure;
 import com.nablatensor.risk.Sensitivities;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * The SA-CVA sensitivity vector for a small netting set, produced two ways:
@@ -40,17 +41,21 @@ import java.util.Map;
  * adjoint sweep replaces. Both feed the same {@link SaCva} capital formula.
  *
  * <p>Run: {@code mvn -q -o -pl nablatensor-examples exec:java
- * -Dexec.mainClass=com.nablatensor.examples.SaCvaShowcase}
+ * -Dexec.mainClass=com.nablatensor.examples.SaCvaShowcase} ({@code -Dpaths=}
+ * overrides the 30,000-path exposure count).
+ *
+ * <p>{@link CvaShowcase} is the portfolio-scale companion: two netting sets,
+ * one under a daily-margined CSA, plus BA-CVA and the three PRA methods.
  */
 public final class SaCvaShowcase {
 
-  private static final long PATHS = 30_000L;
   private static final long SEED = 20260902L;
 
   private SaCvaShowcase() {
   }
 
   public static void main(String[] args) {
+    final long paths = Long.getLong("paths", 30_000L);
     CreditName counterparty = new CreditName("CPTY-A",
         HazardCurve.fromFlatSpread(150.0, 0.40, 10.0), 0.40,
         CreditName.Rating.BBB, CreditName.Sector.FINANCIAL);
@@ -62,12 +67,12 @@ public final class SaCvaShowcase {
 
     System.out.printf(Locale.ROOT,
         "Netting set NS-CPTY-A: 2 interest-rate swaps + 1 FX forward, one BBB counterparty%n");
-    System.out.printf(Locale.ROOT, "%,d exposure paths, seed %d, engine cpu-jit%n%n", PATHS, SEED);
+    System.out.printf(Locale.ROOT, "%,d exposure paths, seed %d, engine cpu-jit%n%n", paths, SEED);
 
     ExposureSimulation simulation = new ExposureSimulation(nettingSet, 20).on("cpu-jit");
     CvaMarket base = CvaMarket.demo();
 
-    CvaResult swept = simulation.run(base, PATHS, SEED);
+    CvaResult swept = simulation.run(base, paths, SEED);
     System.out.printf(Locale.ROOT, "unilateral CVA           %,.2f  (se %.2f)%n",
         swept.value(), swept.standardError());
     System.out.printf(Locale.ROOT, "adjoint sweep            %.3f s  (value + full CvaMarket gradient)%n%n",
@@ -75,14 +80,15 @@ public final class SaCvaShowcase {
 
     Sensitivities adjoint = SaCvaSensitivities.adjoint(swept, keys);
     SaCvaSensitivities.BumpResult bump =
-        SaCvaSensitivities.bumpAndRevalue(simulation, base, PATHS, SEED, keys);
+        SaCvaSensitivities.bumpAndRevalue(simulation, base, paths, SEED, keys);
 
-    System.out.printf(Locale.ROOT, "%-32s %14s %14s%n", "risk factor", "adjoint", "bump");
-    for (Map.Entry<RiskFactor, Double> entry : bump.sensitivities().asMap().entrySet()) {
-      double bumped = entry.getValue();
-      double swept1 = adjoint.get(entry.getKey());
-      System.out.printf(Locale.ROOT, "%-32s %14.4f %14.4f%n", entry.getKey(), swept1, bumped);
-    }
+    System.out.printf(Locale.ROOT, "%-34s %14s %14s%n", "risk factor", "adjoint", "bump");
+    bump.sensitivities().asMap().keySet().stream()
+        .sorted(Comparator.comparingInt((RiskFactor f) -> f.riskClass().ordinal())
+            .thenComparingInt(f -> f.measure().ordinal())
+            .thenComparingDouble(RiskFactor::tenor))
+        .forEach(factor -> System.out.printf(Locale.ROOT, "%-34s %14.4f %14.4f%n",
+            label(factor), adjoint.get(factor), bump.sensitivities().get(factor)));
     System.out.printf(Locale.ROOT, "%nbump-and-revalue         %d netting-set re-simulations, %.3f s%n",
         bump.revaluations(), bump.seconds());
     System.out.printf(Locale.ROOT, "speedup                  %.1fx%n%n",
@@ -94,5 +100,27 @@ public final class SaCvaShowcase {
         fromAdjoint.total(), fromAdjoint.selected());
     System.out.printf(Locale.ROOT, "SA-CVA charge  from prescribed bump %,.2f  (scenario %s)%n",
         fromBump.total(), fromBump.selected());
+  }
+
+  /** A readable name for one bucketed SA-CVA risk factor (the raw record is a wide toString). */
+  private static String label(RiskFactor f) {
+    boolean vega = f.measure() == RiskMeasure.VEGA;
+    return switch (f.riskClass()) {
+      case GIRR -> vega
+          ? f.bucket() + " rate vega, " + trimYears(f.tenor())
+          : f.bucket() + " " + f.name() + " rate delta, " + trimYears(f.tenor());
+      case CSR_NON_SEC, CSR_SEC, CSR_SEC_CTP -> f.csrIssuer() + " " + f.csrCurve()
+          + " spread delta, " + trimYears(f.tenor());
+      case FX -> vega
+          ? f.bucket() + " vega, " + trimYears(f.tenor())
+          : f.bucket() + " spot delta";
+      default -> f.riskClass() + " " + f.measure() + " " + f.name();
+    };
+  }
+
+  private static String trimYears(double years) {
+    return years == Math.rint(years)
+        ? String.format(Locale.ROOT, "%.0fY", years)
+        : String.format(Locale.ROOT, "%.1fY", years);
   }
 }
