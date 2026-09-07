@@ -41,7 +41,9 @@ public record AadOptions(Precision precision, boolean adjoints, int threads, Jit
                          Map<String, Map<String, String>> engineOptions) {
 
   public enum Precision {
+    /** Single precision — the GPU replay path (e.g. Vulkan) computes in fp32. */
     FLOAT32,
+    /** Double precision — the CPU / SIMD default. */
     FLOAT64
   }
 

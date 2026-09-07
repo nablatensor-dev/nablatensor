@@ -41,7 +41,12 @@ import java.util.Locale;
 public record FxForward(String id, Side side, double foreignNotional, double strike, double settlementYears)
     implements CvaTrade {
 
-  public enum Side { BUY_FOREIGN, SELL_FOREIGN }
+  public enum Side {
+    /** Pay the reporting currency, receive the foreign notional at settlement. */
+    BUY_FOREIGN,
+    /** Deliver the foreign notional, receive the reporting currency at settlement. */
+    SELL_FOREIGN
+  }
 
   public FxForward {
     if (!(foreignNotional > 0.0) || !(strike > 0.0) || !(settlementYears > 0.0)) {

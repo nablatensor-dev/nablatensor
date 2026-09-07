@@ -17,8 +17,39 @@ package com.nablatensor.tensor;
 
 /** Primitive operation kinds dispatched to the compute backends. */
 public enum Op {
-  // binary elementwise
-  ADD, SUB, MUL, DIV, MAX, MIN,
-  // unary elementwise
-  NEG, EXP, LOG, SQRT, RSQRT, TANH, SIGMOID, RELU, ABS, SIGN
+  // ---- binary elementwise ----
+  /** Elementwise addition, {@code a + b}. */
+  ADD,
+  /** Elementwise subtraction, {@code a - b}. */
+  SUB,
+  /** Elementwise multiplication, {@code a * b}. */
+  MUL,
+  /** Elementwise division, {@code a / b}. */
+  DIV,
+  /** Elementwise maximum, {@code max(a, b)}. */
+  MAX,
+  /** Elementwise minimum, {@code min(a, b)}. */
+  MIN,
+
+  // ---- unary elementwise ----
+  /** Negation, {@code -a}. */
+  NEG,
+  /** Natural exponential, {@code e^a}. */
+  EXP,
+  /** Natural logarithm, {@code ln a}. */
+  LOG,
+  /** Square root, {@code sqrt(a)}. */
+  SQRT,
+  /** Reciprocal square root, {@code 1 / sqrt(a)}. */
+  RSQRT,
+  /** Hyperbolic tangent. */
+  TANH,
+  /** Logistic sigmoid, {@code 1 / (1 + e^-a)}. */
+  SIGMOID,
+  /** Rectified linear unit, {@code max(a, 0)}. */
+  RELU,
+  /** Absolute value, {@code |a|}. */
+  ABS,
+  /** Sign, {@code -1 / 0 / +1}. */
+  SIGN
 }

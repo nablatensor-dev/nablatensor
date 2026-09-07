@@ -119,7 +119,12 @@ public record RiskFactor(RiskClass riskClass, RiskMeasure measure, String bucket
   }
 
   /** Bond vs CDS credit-spread curve — the CSR "basis" pair. */
-  public enum CsrCurve { BOND, CDS }
+  public enum CsrCurve {
+    /** Spread implied by the issuer's cash bonds. */
+    BOND,
+    /** Spread quoted in the issuer's credit default swaps. */
+    CDS
+  }
 
   /** The issuer part of a CSR factor name ({@code "<issuer>|BOND"} -> {@code "<issuer>"}). */
   public String csrIssuer() {

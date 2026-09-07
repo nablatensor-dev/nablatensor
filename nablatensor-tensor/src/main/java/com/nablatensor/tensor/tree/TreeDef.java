@@ -24,7 +24,20 @@ public final class TreeDef {
 
   /** The kind of node described by this definition. */
   public enum Kind {
-    LEAF, NULL, LIST, MAP, ARRAY, RECORD, CUSTOM
+    /** A leaf value carried through unflattened. */
+    LEAF,
+    /** A {@code null} slot in the tree. */
+    NULL,
+    /** A {@link java.util.List} node. */
+    LIST,
+    /** A {@link java.util.Map} node (children ordered by key). */
+    MAP,
+    /** A Java array node. */
+    ARRAY,
+    /** A {@code record} node (children are its components). */
+    RECORD,
+    /** A node handled by a registered custom pytree adapter. */
+    CUSTOM
   }
 
   private final Kind kind;

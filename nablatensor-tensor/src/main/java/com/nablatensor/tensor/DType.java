@@ -17,7 +17,20 @@ package com.nablatensor.tensor;
 
 /** Numeric element types supported by nablatensor tensors. */
 public enum DType {
-  F32(4), F64(8), F16(2), I8(1), I32(4), I64(8), BOOL(1);
+  /** 32-bit IEEE-754 float. */
+  F32(4),
+  /** 64-bit IEEE-754 float. */
+  F64(8),
+  /** 16-bit IEEE-754 half float. */
+  F16(2),
+  /** 8-bit signed integer. */
+  I8(1),
+  /** 32-bit signed integer. */
+  I32(4),
+  /** 64-bit signed integer. */
+  I64(8),
+  /** Boolean, stored in one byte. */
+  BOOL(1);
 
   private final int bytes;
 

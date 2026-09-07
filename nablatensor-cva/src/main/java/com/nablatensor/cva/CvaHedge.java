@@ -32,7 +32,12 @@ package com.nablatensor.cva;
 public record CvaHedge(Kind kind, String referenceId, double notional, double maturityYears,
                        double riskWeight, double correlation) {
 
-  public enum Kind { SINGLE_NAME_CDS, INDEX_CDS }
+  public enum Kind {
+    /** A CDS referencing one counterparty; eligible for r_hc credit against that name. */
+    SINGLE_NAME_CDS,
+    /** A CDS index hedge; correlation to any single counterparty is fixed at 1.0. */
+    INDEX_CDS
+  }
 
   public CvaHedge {
     if (!(notional >= 0.0) || !(maturityYears > 0.0) || !(riskWeight >= 0.0)) {

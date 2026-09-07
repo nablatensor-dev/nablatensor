@@ -16,4 +16,11 @@
 package com.nablatensor.risk;
 
 /** Whether a sensitivity is a first-order delta, a vega, or a curvature (CVR). */
-public enum RiskMeasure { DELTA, VEGA, CURVATURE }
+public enum RiskMeasure {
+  /** First-order sensitivity to a risk factor (price move per unit factor move). */
+  DELTA,
+  /** Sensitivity to implied volatility. */
+  VEGA,
+  /** Curvature (CVR): the second-order risk left over after the delta hedge. */
+  CURVATURE
+}

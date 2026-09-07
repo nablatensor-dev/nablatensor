@@ -19,7 +19,16 @@ import java.util.Locale;
 
 /** User-facing backend selector for {@code jit}/{@code function} builders. */
 public enum Backend {
-  AUTO, CPU, CUDA, ROCM, VULKAN;
+  /** Let the registry pick the highest-priority available backend. */
+  AUTO,
+  /** Force the host CPU backend. */
+  CPU,
+  /** Force the CUDA backend (NVIDIA). */
+  CUDA,
+  /** Force the ROCm backend (AMD). */
+  ROCM,
+  /** Force the Vulkan compute backend. */
+  VULKAN;
 
   public static Backend parse(String value) {
     try {

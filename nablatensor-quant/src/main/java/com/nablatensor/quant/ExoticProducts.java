@@ -30,7 +30,16 @@ import com.nablatensor.ops.Smooth;
 public final class ExoticProducts {
 
   /** Up/down and knock-in/out. */
-  public enum Barrier { UP_OUT, UP_IN, DOWN_OUT, DOWN_IN }
+  public enum Barrier {
+    /** Barrier above spot; the option dies if the barrier is touched. */
+    UP_OUT,
+    /** Barrier above spot; the option only activates if the barrier is touched. */
+    UP_IN,
+    /** Barrier below spot; the option dies if the barrier is touched. */
+    DOWN_OUT,
+    /** Barrier below spot; the option only activates if the barrier is touched. */
+    DOWN_IN
+  }
 
   private ExoticProducts() {
   }

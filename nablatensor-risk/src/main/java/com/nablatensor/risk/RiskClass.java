@@ -17,5 +17,18 @@ package com.nablatensor.risk;
 
 /** The FRTB / SIMM risk classes. Phase-2 slice implements EQUITY end to end. */
 public enum RiskClass {
-  GIRR, CSR_NON_SEC, CSR_SEC, CSR_SEC_CTP, EQUITY, COMMODITY, FX
+  /** General interest-rate risk: yield-curve, inflation and cross-currency-basis factors. */
+  GIRR,
+  /** Credit-spread risk on non-securitisation positions (bonds, single-name / index CDS). */
+  CSR_NON_SEC,
+  /** Credit-spread risk on securitisations outside the correlation-trading portfolio. */
+  CSR_SEC,
+  /** Credit-spread risk on securitisations in the correlation-trading portfolio (n-th-to-default, bespoke tranches). */
+  CSR_SEC_CTP,
+  /** Equity risk: spot and repo-rate factors. */
+  EQUITY,
+  /** Commodity risk: forward-price factors keyed by commodity and delivery location. */
+  COMMODITY,
+  /** Foreign-exchange risk: one factor per currency pair. */
+  FX
 }

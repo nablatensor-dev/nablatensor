@@ -101,9 +101,13 @@ public final class SimmShowcase {
 
   /** The four SIMM product classes and the risk classes each rolls up. */
   public enum ProductClass {
+    /** Interest-rate and FX products; rolls up GIRR and FX. */
     RATES_FX(RiskClass.GIRR, RiskClass.FX),
+    /** Credit products; rolls up non-securitisation and securitisation CSR. */
     CREDIT(RiskClass.CSR_NON_SEC, RiskClass.CSR_SEC),
+    /** Equity products; rolls up the equity risk class. */
     EQUITY(RiskClass.EQUITY),
+    /** Commodity products; rolls up the commodity risk class. */
     COMMODITY(RiskClass.COMMODITY);
 
     private final List<RiskClass> riskClasses;

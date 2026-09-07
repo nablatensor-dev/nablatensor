@@ -37,7 +37,16 @@ import com.nablatensor.quant.OptionType;
 public final class BarrierAnalytic {
 
   /** Knock direction. */
-  public enum Kind { UP_IN, UP_OUT, DOWN_IN, DOWN_OUT }
+  public enum Kind {
+    /** Barrier above spot; the option only activates once the barrier is hit. */
+    UP_IN,
+    /** Barrier above spot; the option is extinguished once the barrier is hit. */
+    UP_OUT,
+    /** Barrier below spot; the option only activates once the barrier is hit. */
+    DOWN_IN,
+    /** Barrier below spot; the option is extinguished once the barrier is hit. */
+    DOWN_OUT
+  }
 
   private BarrierAnalytic() {
   }

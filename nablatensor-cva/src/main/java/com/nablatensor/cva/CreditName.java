@@ -40,8 +40,40 @@ public record CreditName(String id, HazardCurve curve, double recovery,
   }
 
   /** Credit-quality buckets used by the BA-CVA risk-weight table (MAR50.5). */
-  public enum Rating { AAA, AA, A, BBB, BB, B, CCC, UNRATED }
+  public enum Rating {
+    /** Prime — highest credit quality. */
+    AAA,
+    /** High grade. */
+    AA,
+    /** Upper medium grade. */
+    A,
+    /** Lower medium grade — the lowest investment-grade bucket. */
+    BBB,
+    /** Non-investment-grade / speculative. */
+    BB,
+    /** Highly speculative. */
+    B,
+    /** Substantial risk — near or in default. */
+    CCC,
+    /** No external rating available; treated at the highest risk weight. */
+    UNRATED
+  }
 
   /** Sector buckets used by the BA-CVA risk weights and the SA-CVA correlations. */
-  public enum Sector { SOVEREIGN, LOCAL_GOVERNMENT, FINANCIAL, CORPORATE, CONSUMER, TECH, OTHER }
+  public enum Sector {
+    /** Central governments and central banks. */
+    SOVEREIGN,
+    /** Regional and local governments, and government-backed non-financial entities. */
+    LOCAL_GOVERNMENT,
+    /** Banks, broker-dealers, insurers and other financial institutions. */
+    FINANCIAL,
+    /** Non-financial corporates outside the sectors called out separately. */
+    CORPORATE,
+    /** Consumer goods and services, healthcare, transport. */
+    CONSUMER,
+    /** Technology and telecommunications. */
+    TECH,
+    /** Anything not covered by the other buckets. */
+    OTHER
+  }
 }

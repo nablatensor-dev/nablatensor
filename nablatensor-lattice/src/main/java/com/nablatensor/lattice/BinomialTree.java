@@ -36,7 +36,14 @@ import com.nablatensor.quant.OptionType;
  */
 public final class BinomialTree {
 
-  public enum Method { CRR, JARROW_RUDD, LEISEN_REIMER }
+  public enum Method {
+    /** Cox-Ross-Rubinstein: {@code u = e^{sigma sqrt(dt)}}, {@code O(1/n)} with even/odd oscillation. */
+    CRR,
+    /** Jarrow-Rudd: equal up/down probabilities, drift carried in the step sizes. */
+    JARROW_RUDD,
+    /** Leisen-Reimer: Peizer-Pratt inversion of {@code d1}/{@code d2}, smooth {@code O(1/n^2)}, odd step count, vanilla only. */
+    LEISEN_REIMER
+  }
 
   private final double spot;
   private final double rate;

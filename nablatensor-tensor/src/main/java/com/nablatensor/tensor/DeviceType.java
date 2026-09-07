@@ -17,5 +17,12 @@ package com.nablatensor.tensor;
 
 /** Kinds of compute devices nablatensor can target. */
 public enum DeviceType {
-  CPU, CUDA, ROCM, VULKAN
+  /** Host CPU (scalar or SIMD). */
+  CPU,
+  /** NVIDIA GPU via CUDA. */
+  CUDA,
+  /** AMD GPU via ROCm/HIP. */
+  ROCM,
+  /** Any GPU via a Vulkan compute backend. */
+  VULKAN
 }

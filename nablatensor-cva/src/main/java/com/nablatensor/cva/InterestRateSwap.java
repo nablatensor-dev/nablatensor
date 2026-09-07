@@ -44,7 +44,12 @@ public record InterestRateSwap(String id, Side side, double notional, double fix
                                double startYears, double maturityYears, double accrualYears)
     implements CvaTrade {
 
-  public enum Side { RECEIVE_FIXED, PAY_FIXED }
+  public enum Side {
+    /** Receive the fixed coupon, pay the floating leg. */
+    RECEIVE_FIXED,
+    /** Pay the fixed coupon, receive the floating leg. */
+    PAY_FIXED
+  }
 
   public InterestRateSwap {
     if (!(notional > 0.0) || !(accrualYears > 0.0) || !(maturityYears > startYears)) {

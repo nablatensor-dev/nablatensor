@@ -17,7 +17,9 @@ package com.nablatensor.quant;
 
 /** Call or put. */
 public enum OptionType {
+  /** Right to buy the underlying at the strike; payoff {@code max(S - K, 0)}. */
   CALL,
+  /** Right to sell the underlying at the strike; payoff {@code max(K - S, 0)}. */
   PUT;
 
   /** {@code +1} for a call, {@code -1} for a put; the payoff sign on {@code (underlying - strike)}. */
