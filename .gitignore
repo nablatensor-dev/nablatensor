@@ -11,6 +11,7 @@ hs_err_pid*.log
 *.dump
 *.dumpstream
 TODO.txt
+HOW-TO-RELEASE.md
 docs-internal
 docs-reg
 

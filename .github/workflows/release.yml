@@ -1,0 +1,66 @@
+name: Release
+
+# Manual: Actions -> Release -> Run workflow. Builds the given version, runs the
+# full test suite, then creates a git tag and a GitHub Release with the module
+# jars attached. It does NOT commit a version bump to main -- the poms keep their
+# -SNAPSHOT version and the release version is set only for the build.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (no -SNAPSHOT)'
+        required: true
+        default: '0.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish ${{ inputs.version }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '25'
+          cache: maven
+
+      - name: Set release version (build only, not committed)
+        run: mvn -B -q versions:set -DnewVersion=${{ inputs.version }} -DgenerateBackupPoms=false
+
+      - name: Full test suite (all groups, with SIMD)
+        env:
+          MAVEN_OPTS: --add-modules jdk.incubator.vector
+        run: mvn -B clean verify -P mc
+
+      - name: Package
+        run: mvn -B -q package -DskipTests
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist
+          find . -path '*/target/nablatensor-*.jar' \
+            ! -name '*-tests.jar' ! -name 'original-*' -exec cp -v {} dist/ \;
+          (cd dist && sha256sum *.jar | tee SHA256SUMS.txt)
+          zip -j "nablatensor-${{ inputs.version }}-jars.zip" dist/*
+
+      - name: Tag
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ inputs.version }}" -m "NablaTensor ${{ inputs.version }}"
+          git push origin "v${{ inputs.version }}"
+
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: NablaTensor ${{ inputs.version }}
+          generate_release_notes: true
+          files: |
+            nablatensor-${{ inputs.version }}-jars.zip
+            dist/SHA256SUMS.txt

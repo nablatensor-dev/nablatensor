@@ -2,6 +2,8 @@
 
 **[nablatensor.com](https://nablatensor.com)**
 
+[![CI](https://github.com/nablatensor-dev/nablatensor/actions/workflows/ci.yml/badge.svg)](https://github.com/nablatensor-dev/nablatensor/actions/workflows/ci.yml)
+
 **Adjoint automatic differentiation for quantitative finance on the JVM. Write the valuation in Java once — get price and every Greek from one reverse sweep, on CPU, SIMD or GPU.**
 
 Record a Monte-Carlo valuation once in plain Java against `SDouble` scalars.
