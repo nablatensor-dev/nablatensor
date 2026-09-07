@@ -554,10 +554,24 @@ final class CudaRuntime {
     return buffer.getString(0);
   }
 
+  /**
+   * Writes the generated PTX out when {@code NABLATENSOR_DUMP_PTX} is set. The variable's value is
+   * the target path; setting it to {@code 1} picks an owner-only temp file and reports where it
+   * went.
+   */
+  private static void dumpPtx(String dest, byte[] ptx) throws java.io.IOException {
+    Path file = dest.isBlank() || dest.equals("1") || dest.equalsIgnoreCase("true")
+        ? Files.createTempFile("nablatensor-kernels-", ".ptx")
+        : Path.of(dest);
+    Files.write(file, ptx);
+    System.err.println("nablatensor: PTX dumped to " + file);
+  }
+
   static long loadFunction(byte[] ptx, String kernelName) {
     try (Arena arena = Arena.ofConfined()) {
-      if (System.getenv("NABLATENSOR_DUMP_PTX") != null) {
-        java.nio.file.Files.write(java.nio.file.Path.of("/tmp/nablatensor_kernels.ptx"), ptx);
+      String dump = System.getenv("NABLATENSOR_DUMP_PTX");
+      if (dump != null) {
+        dumpPtx(dump, ptx);
       }
       MemorySegment image = arena.allocate(ptx.length + 1);
       MemorySegment.copy(ptx, 0, image, JAVA_BYTE, 0, ptx.length);

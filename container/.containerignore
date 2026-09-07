@@ -4,6 +4,7 @@
 notebooks
 python
 docs-internal
+docs-reg
 *.tar.gz
 *.tgz
 *.zip

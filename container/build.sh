@@ -27,12 +27,26 @@ command -v fuse-overlayfs >/dev/null  || { echo "fuse-overlayfs not installed"  
 # bundled static crun — runc can't keep host groups, which a ROCm run needs
 # for /dev/kfd access (see docs/install/gpu-container.md); harmless to fetch
 # even when only running the CPU-only image built here.
+# Pinned by version and digest. Upstream also publishes a detached signature
+# (`<asset>.asc`) if you prefer to check it with gpg.
+CRUN_VERSION=1.29.1
+CRUN_SHA256=0a5ea25cafe618bbfbf1c747871155063619f18025ccdd8ad648c97633f35d57
 if [ ! -x "$here/.bin/crun" ]; then
-  echo ">> fetching static crun -> container/.bin/crun"
+  echo ">> fetching static crun $CRUN_VERSION -> container/.bin/crun"
   mkdir -p "$here/.bin"
-  curl -fsSL -o "$here/.bin/crun" \
-    https://github.com/containers/crun/releases/download/1.29.1/crun-1.29.1-linux-amd64
-  chmod +x "$here/.bin/crun"
+  tmp=$(mktemp "$here/.bin/.crun.XXXXXX")
+  trap 'rm -f "$tmp"' EXIT
+  curl -fsSL -o "$tmp" \
+    "https://github.com/containers/crun/releases/download/$CRUN_VERSION/crun-$CRUN_VERSION-linux-amd64"
+  echo "$CRUN_SHA256  $tmp" | sha256sum -c --status || {
+    echo "crun checksum mismatch — refusing to use the download" >&2
+    echo "  expected $CRUN_SHA256" >&2
+    echo "  got      $(sha256sum "$tmp" | cut -d' ' -f1)" >&2
+    exit 1
+  }
+  chmod +x "$tmp"
+  mv "$tmp" "$here/.bin/crun"
+  trap - EXIT
 fi
 . "$here/_env.sh"   # re-source now that .bin/crun exists, so $PODMAN picks it up
 

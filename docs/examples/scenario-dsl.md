@@ -41,5 +41,5 @@ try (MonteCarlo mc = MonteCarlo.of(Products.europeanCall())
   difference at the money matches the adjoint delta there to `5e-3`.
 
 The FRTB curvature charge is exactly this pattern: two `RELATIVE` shocks (`±RW·x`)
-per risk factor, re-priced on the compiled kernel — see
-[FRTB SA-SBM](../reg/frtb-sa-sbm.md).
+per risk factor, re-priced on the compiled kernel — see the
+[curvature showcase](frtb-curvature-showcase.md).

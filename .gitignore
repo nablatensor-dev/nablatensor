@@ -12,6 +12,7 @@ hs_err_pid*.log
 *.dumpstream
 TODO.txt
 docs-internal
+docs-reg
 
 # container/ demo runner: fetched static crun + the isolated podman store
 container/.bin/

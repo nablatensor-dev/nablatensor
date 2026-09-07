@@ -159,10 +159,6 @@ mvn -o -q install
 
 ## Risk-capital showcases
 
-- [`docs/reg/frtb-for-dummies.md`](docs/reg/frtb-for-dummies.md) — story-driven introduction to the complete FRTB Standardised Approach
-- [`docs/reg/frtb-buckets-and-hedging.md`](docs/reg/frtb-buckets-and-hedging.md) — when within- and cross-bucket positions really reduce capital
-- [`docs/reg/frtb-sa-sbm.md`](docs/reg/frtb-sa-sbm.md) — FRTB SA Sensitivities-Based Method, equity
-- [`docs/reg/isda-simm.md`](docs/reg/isda-simm.md) — ISDA SIMM, equity
 - [`docs/examples/frtb-curvature-showcase.md`](docs/examples/frtb-curvature-showcase.md) — executable shocked-repricing showcase
 - [`docs/examples/frtb-curvature-for-beginners.md`](docs/examples/frtb-curvature-for-beginners.md) — illustrated beginner's guide to the calculation
 - [`docs/examples/portfolio-aggregation.md`](docs/examples/portfolio-aggregation.md) · [`docs/examples/scenario-dsl.md`](docs/examples/scenario-dsl.md)
