@@ -22,6 +22,19 @@
     </license>
   </licenses>
 
+  <developers>
+    <developer>
+      <id>petrpravda</id>
+      <name>Petr Pravda</name>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/nablatensor-dev/nablatensor.git</connection>
+    <developerConnection>scm:git:git@github.com:nablatensor-dev/nablatensor.git</developerConnection>
+    <url>https://github.com/nablatensor-dev/nablatensor</url>
+  </scm>
+
   <!--
     Java 25 language level (an LTS), built and run with the JDK that Maven itself
     runs on. The default replay path (cpu-jit) is plain Java: no incubator module,
@@ -207,6 +220,102 @@
       <properties>
         <nt.test.excludedGroups></nt.test.excludedGroups>
       </properties>
+    </profile>
+
+    <!--
+      `mvn -P release deploy` publishes to Maven Central through the Sonatype
+      Central Portal. It attaches -sources and -javadoc jars, GPG-signs every
+      artifact, and uploads one bundle for the whole reactor to
+      central.sonatype.com (server id `central` in ~/.m2/settings.xml; GPG
+      passphrase from the MAVEN_GPG_PASSPHRASE env var). autoPublish is off, so
+      the upload waits in the portal's "Deployments" view for a manual Publish;
+      the build blocks until Central has finished validating it. The examples
+      and bench modules set maven.deploy.skip and stay out of the bundle. This
+      profile is inert for normal build/install.
+    -->
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.3.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals><goal>jar-no-fork</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.11.2</version>
+            <executions>
+              <execution>
+                <id>attach-javadoc</id>
+                <goals><goal>jar</goal></goals>
+              </execution>
+            </executions>
+            <configuration>
+              <quiet>true</quiet>
+              <doclint>none</doclint>
+              <!-- simd module references jdk.incubator.vector types -->
+              <additionalOptions>--add-modules jdk.incubator.vector</additionalOptions>
+              <!-- a warnings-only failure must not block the release -->
+              <failOnError>false</failOnError>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.2.7</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals><goal>sign</goal></goals>
+              </execution>
+            </executions>
+            <configuration>
+              <!-- headless signing in CI with MAVEN_GPG_PASSPHRASE set -->
+              <gpgArguments>
+                <arg>--pinentry-mode</arg>
+                <arg>loopback</arg>
+              </gpgArguments>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.8.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>false</autoPublish>
+              <!--
+                Stop right after a successful upload; do not poll the Portal for
+                the VALIDATED state. The poll response deserialises into a fixed
+                model that older plugin builds choke on when Central adds a new
+                field ("Unrecognized field \"warnings\""). autoPublish is off
+                anyway, so validation and the final Publish happen in the
+                Portal's Deployments view: https://central.sonatype.com/publishing/deployments
+              -->
+              <waitUntil>UPLOADED</waitUntil>
+              <!--
+                Belt-and-braces with the maven.deploy.skip in these two modules:
+                central-publishing matches excludeArtifacts by bare artifactId
+                and, unlike maven.deploy.skip, always honours it.
+              -->
+              <excludeArtifacts>
+                <excludeArtifact>nablatensor-examples</excludeArtifact>
+                <excludeArtifact>nablatensor-bench</excludeArtifact>
+              </excludeArtifacts>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 </project>

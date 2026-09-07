@@ -12,6 +12,12 @@
   <name>nablatensor-examples</name>
   <description>Worked, tested demos: each main() is also a docs page. Vanilla European Greeks,
     Asian Greeks with a backend switch, and "swap the payoff" showing the seam.</description>
+
+  <!-- demos, not a consumable library artifact: kept out of the Maven Central bundle -->
+  <properties>
+    <maven.deploy.skip>true</maven.deploy.skip>
+  </properties>
+
   <dependencies>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-cpu</artifactId></dependency>

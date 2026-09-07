@@ -28,6 +28,14 @@ jobs:
           distribution: zulu
           java-version: '25'
           cache: maven
+          # generates ~/.m2/settings.xml with a `central` server whose
+          # credentials come from the env vars named below, and imports the
+          # signing key so the `release` profile's maven-gpg-plugin can sign.
+          server-id: central
+          server-username: MAVEN_CENTRAL_USERNAME
+          server-password: MAVEN_CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       - name: Set release version (build only, not committed)
         run: mvn -B -q versions:set -DnewVersion=${{ inputs.version }} -DgenerateBackupPoms=false
@@ -39,6 +47,18 @@ jobs:
 
       - name: Package
         run: mvn -B -q package -DskipTests
+
+      # Publishes -sources/-javadoc + signatures for every library module to the
+      # Sonatype Central Portal. autoPublish is off in the `release` profile, so
+      # this uploads and validates the bundle but leaves the final "Publish" as
+      # a manual click at https://central.sonatype.com/publishing/deployments .
+      # Runs before Tag so a Central rejection stops the release cleanly.
+      - name: Publish to Maven Central
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+        run: mvn -B -P release -DskipTests deploy
 
       - name: Collect artifacts
         run: |

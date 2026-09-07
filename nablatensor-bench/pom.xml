@@ -12,6 +12,12 @@
   <name>nablatensor-bench</name>
   <description>Reproducible comparison harness: adjoint Greeks vs bump-and-revalue, and one
     tape replayed across every available backend. Prints the machine, the seeds and a table.</description>
+
+  <!-- benchmark harness, not a consumable library artifact: kept out of the Maven Central bundle -->
+  <properties>
+    <maven.deploy.skip>true</maven.deploy.skip>
+  </properties>
+
   <dependencies>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-cpu</artifactId></dependency>
