@@ -59,7 +59,6 @@
     <module>nablatensor-tensor</module>
     <module>nablatensor-core</module>
     <module>nablatensor-cpu</module>
-    <module>nablatensor-jit-cpu</module>
     <module>nablatensor-simd</module>
     <module>nablatensor-ops</module>
     <module>nablatensor-backend-cuda</module>
@@ -71,14 +70,9 @@
     <module>nablatensor-vulkan</module>
     <module>nablatensor-opencl</module>
     <module>nablatensor-quant</module>
-    <module>nablatensor-scenario</module>
     <module>nablatensor-risk</module>
     <module>nablatensor-cva</module>
-    <module>nablatensor-credit</module>
-    <module>nablatensor-lattice</module>
-    <module>nablatensor-validate</module>
     <module>nablatensor-examples</module>
-    <module>nablatensor-bench</module>
   </modules>
 
   <dependencyManagement>
@@ -145,11 +139,6 @@
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-jit-cpu</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
         <artifactId>nablatensor-simd</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -160,32 +149,12 @@
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-scenario</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
         <artifactId>nablatensor-risk</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
         <artifactId>nablatensor-cva</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-credit</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-lattice</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-validate</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -322,7 +291,6 @@
               -->
               <excludeArtifacts>
                 <excludeArtifact>nablatensor-examples</excludeArtifact>
-                <excludeArtifact>nablatensor-bench</excludeArtifact>
               </excludeArtifacts>
             </configuration>
           </plugin>

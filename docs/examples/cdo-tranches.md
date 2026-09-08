@@ -3,10 +3,10 @@
 *Keywords: cdo tranche pricing java, gaussian copula java, andersen sidenius basu java, base correlation java, portfolio loss distribution java, correlation delta java*
 
 Feature **F9**. Portfolio credit — the loss distribution of a pool and the
-tranches carved out of it — sits in a new `nablatensor-credit` module, separate
+tranches carved out of it — sits in the `com.nablatensor.credit` package of `nablatensor-quant`, separate
 from the counterparty-exposure code in `nablatensor-cva`.
 
-Source: [`nablatensor-credit/`](../../nablatensor-credit/src/main/java/com/nablatensor/credit/)
+Source: [`nablatensor-quant/.../credit/`](../../nablatensor-quant/src/main/java/com/nablatensor/credit/)
 · example [`CdoTrancheShowcase.java`](../../nablatensor-examples/src/main/java/com/nablatensor/examples/CdoTrancheShowcase.java)
 
 ## What's in the module

@@ -8,7 +8,7 @@ the Philox random stream with every other backend **path-for-path**. So an
 accelerated result can be checked against it at an equal seed with no
 statistical allowance — any difference is arithmetic reordering, not noise.
 
-`nablatensor-validate` turns that into a one-call harness:
+The `com.nablatensor.validate` harness (in `nablatensor-examples`) turns that into one call:
 
 ```java
 Report report = ModelValidation.of(Products.asianCall())
@@ -34,7 +34,7 @@ It does two things:
 
 ```bash
 mvn -o -q install
-MAVEN_OPTS="--add-modules jdk.incubator.vector" mvn -o -q -pl nablatensor-validate exec:java \
+MAVEN_OPTS="--add-modules jdk.incubator.vector" mvn -o -q -pl nablatensor-examples exec:java \
   -Dexec.mainClass=com.nablatensor.validate.EvidenceMain -Dscenarios=2000000 -Dsteps=252
 ```
 

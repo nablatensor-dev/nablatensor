@@ -59,7 +59,7 @@ bare laptop.
 
 ```bash
 mvn -o -q install
-mvn -o -q -pl nablatensor-bench exec:java \
+mvn -o -q -pl nablatensor-examples exec:java \
   -Dexec.mainClass=com.nablatensor.bench.Benchmarks \
   -Dscenarios=2000000 -Dsteps=252
 ```
@@ -117,20 +117,16 @@ checked against the scalar oracle).
 | module | what |
 |---|---|
 | `nablatensor-core` | `SDouble`, `AadRecorder`, `AadTape`, the `AadEngine` SPI, `AadResult`, Philox plumbing, the shared CUDA-C tape codegen |
-| `nablatensor-cpu` | scalar JVM replay — always available, the deterministic **oracle** |
-| `nablatensor-jit-cpu` | tape → straight-line JVM **bytecode** via the Class-File API — the LTS-clean default |
+| `nablatensor-cpu` | CPU replay — a scalar interpreter (the always-available deterministic **oracle**) and a tape→straight-line JVM **bytecode** engine via the Class-File API (the LTS-clean default) |
 | `nablatensor-simd` | JDK Vector API replay — opt-in (`--add-modules jdk.incubator.vector`) |
 | `nablatensor-vulkan` | tape → GLSL→SPIR-V fused compute shader, dispatched through the Vulkan loader (FFM) |
 | `nablatensor-rocm` | tape → fused HIP kernel, HIPRTC-compiled, for AMD devices (FFM) |
 | `nablatensor-cuda` | tape → fused CUDA kernel, NVRTC-compiled (FFM) |
-| `nablatensor-tensor` / `-backend-{cuda,rocm,vulkan}` | internal: the low-level device runtimes the GPU replay engines dispatch through |
+| `nablatensor-tensor` / `-backend-{cuda,rocm,vulkan,opencl}` | internal: the low-level device runtimes the GPU replay engines dispatch through |
 | `nablatensor-ops` | smoothed `STEP`/`GT`/band indicators, `N(x)` / `erf` / `pow`, a macro-form custom-op registry — all in primitive nodes, exact adjoint, every backend |
-| `nablatensor-quant` | `EquityMarket` + `GbmPath` + `Products` (European / Asian / lookback) + `MonteCarlo` + `BlackScholes`; `ExoticProducts` (barrier / digital / cliquet / autocallable), `HestonModel` · `SabrModel` · `LocalVolModel` · `HullWhite1F` · `LmmModel`, `BasketOption`, `Hooks` (antithetic / control-variate), `CurveBootstrap` + analytic Jacobian, `Calibrator` (adjoint-gradient L-BFGS), `MultiMetric` |
-| `nablatensor-scenario` | `Shock` / `Scenario` / `Ladder` / `ScenarioSet` / `ScenarioRunner`: declarative shocks → `setInput` + replay, no recompile |
+| `nablatensor-quant` | `EquityMarket` + `GbmPath` + `Products` (European / Asian / lookback) + `MonteCarlo` + `BlackScholes`; `ExoticProducts` (barrier / digital / cliquet / autocallable), `HestonModel` · `SabrModel` · `LocalVolModel` · `HullWhite1F` · `LmmModel`, `BasketOption`, `Hooks` (antithetic / control-variate), `CurveBootstrap` + analytic Jacobian, `Calibrator` (adjoint-gradient L-BFGS), `MultiMetric`; the `Shock` / `Scenario` / `Ladder` / `ScenarioRunner` ladder runner (`setInput` + replay, no recompile); the `BinomialTree` lattice convergence check; the one-factor Gaussian-copula credit / `CdoTranche` pricers |
 | `nablatensor-risk` | `RiskFactor`, `Sensitivities`, `Portfolio` / netting-set composition, `NestedAggregation` (the FRTB/SIMM `√(ΣK² + ΣγSS)` engine), `CorrelationScenario`, `TimeProfile` |
-| `nablatensor-validate` | replay on every backend at equal seed, diff vs the oracle, bump cross-check → a text **evidence pack** |
-| `nablatensor-examples` | worked demos, each also a test and a docs page |
-| `nablatensor-bench` | the reproducible comparison harness above |
+| `nablatensor-examples` | worked demos (each also a test and a docs page); the `com.nablatensor.bench` comparison harness above; the `com.nablatensor.validate` evidence pack (replay on every backend at equal seed, diff vs the oracle, bump cross-check → text report) |
 
 Every GPU backend compiles with or without its toolchain present and gates at
 runtime through `AadEngine.isAvailable()`; none is a build- or test-time

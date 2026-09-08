@@ -109,9 +109,9 @@ All backends above use fp64 and agree on a CVR of `11.560110`.
 Reproduce the comparison with:
 
 ```bash
-MAVEN_OPTS="--add-modules jdk.incubator.vector" mvn -q -pl nablatensor-bench -am install -DskipTests
+MAVEN_OPTS="--add-modules jdk.incubator.vector" mvn -q -pl nablatensor-examples -am install -DskipTests
 
-MAVEN_OPTS="--add-modules jdk.incubator.vector" mvn -q -pl nablatensor-bench exec:java \
+MAVEN_OPTS="--add-modules jdk.incubator.vector" mvn -q -pl nablatensor-examples exec:java \
   -Dexec.mainClass=com.nablatensor.bench.CurvatureBackendRun \
   -Dscenarios=1000000 -Dsteps=252 -Drounds=3
 ```

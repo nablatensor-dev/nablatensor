@@ -5,7 +5,7 @@
 Declare shocks as data; the runner expands them onto `setInput` + replay of an
 **already-compiled kernel** — no re-record, no recompile.
 
-## Building blocks (`nablatensor-scenario`)
+## Building blocks (`com.nablatensor.scenario`, in `nablatensor-quant`)
 
 | type | role |
 |---|---|

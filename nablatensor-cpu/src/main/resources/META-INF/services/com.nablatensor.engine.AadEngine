@@ -1,1 +1,2 @@
 com.nablatensor.engine.cpu.CpuAadEngine
+com.nablatensor.engine.jit.JitAadEngine

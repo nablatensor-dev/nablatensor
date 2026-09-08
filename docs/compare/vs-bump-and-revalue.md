@@ -14,11 +14,11 @@ reverse sweep that costs a small constant on top of the price.
 - Adjoint: one `MonteCarlo` built with `.greeks()`, one `run()` → value + 5 Greeks.
 - Bump: one `MonteCarlo` built with `.priceOnly()`, `1 + 2×5 = 11` runs, central.
 - Both on `cpu-jit`, both timed best-of-3, common random numbers.
-- Harness: [`nablatensor-bench/.../Benchmarks.java`](../../nablatensor-bench/src/main/java/com/nablatensor/bench/Benchmarks.java).
+- Harness: [`.../bench/Benchmarks.java`](../../nablatensor-examples/src/main/java/com/nablatensor/bench/Benchmarks.java).
 
 ```bash
 mvn -o -q install
-mvn -o -q -pl nablatensor-bench exec:java \
+mvn -o -q -pl nablatensor-examples exec:java \
   -Dexec.mainClass=com.nablatensor.bench.Benchmarks -Dscenarios=2000000 -Dsteps=252
 ```
 
@@ -45,10 +45,10 @@ adjoint: price=5.301676 delta=0.561932 vega=22.389375 rho=23.603735
 
 `price + delta + vega + rho + dV/dK + dV/dT` from one adjoint sweep vs the
 `1 + 2×5` central-bump grid, per payoff. 1,000,000 scenarios, 128 steps, seed 42,
-`cpu-jit`. Harness: [`nablatensor-bench/.../ProductBench.java`](../../nablatensor-bench/src/main/java/com/nablatensor/bench/ProductBench.java).
+`cpu-jit`. Harness: [`.../bench/ProductBench.java`](../../nablatensor-examples/src/main/java/com/nablatensor/bench/ProductBench.java).
 
 ```bash
-mvn -o -q -pl nablatensor-bench exec:java \
+mvn -o -q -pl nablatensor-examples exec:java \
   -Dexec.mainClass=com.nablatensor.bench.ProductBench -Dscenarios=1000000 -Dsteps=128
 ```
 

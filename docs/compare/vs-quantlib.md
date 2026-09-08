@@ -32,7 +32,7 @@ once, replayed adjoint-accelerated on a bytecode / SIMD / GPU kernel.**
 ## Reproducible numbers
 
 A like-for-like Greeks-and-throughput comparison against `QuantLib-Java` needs
-the SWIG binding and its native library wired into `nablatensor-bench`; that is
+the SWIG binding and its native library wired into `nablatensor-examples`; that is
 tracked as a follow-up. What is reproducible today:
 
 - [`vs-bump-and-revalue.md`](vs-bump-and-revalue.md) — the cost model adjoint replaces (`~10x` on the Asian-Greeks run).

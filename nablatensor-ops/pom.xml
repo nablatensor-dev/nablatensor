@@ -15,7 +15,6 @@
   <dependencies>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-cpu</artifactId></dependency>
-    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-jit-cpu</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-simd</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-vulkan</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-rocm</artifactId></dependency>

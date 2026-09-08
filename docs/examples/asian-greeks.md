@@ -64,7 +64,7 @@ The `AadEngines.available(...)` filter above is fp64, so `vulkan` and `cuda`
 
 ```bash
 # the fp32 / GPU matrix + the 1e10 projection
-MAVEN_OPTS="--add-modules jdk.incubator.vector" mvn -o -q -pl nablatensor-bench exec:java \
+MAVEN_OPTS="--add-modules jdk.incubator.vector" mvn -o -q -pl nablatensor-examples exec:java \
   -Dexec.mainClass=com.nablatensor.bench.AsianRiskRun -Dprobe=1000000 -Dsteps=252
 ```
 

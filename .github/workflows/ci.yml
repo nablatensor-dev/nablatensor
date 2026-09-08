@@ -56,6 +56,6 @@ jobs:
       - name: Validation evidence pack (with SIMD)
         run: >
           MAVEN_OPTS="--add-modules jdk.incubator.vector"
-          mvn -B -q -pl nablatensor-validate exec:java
+          mvn -B -q -pl nablatensor-examples exec:java
           -Dexec.mainClass=com.nablatensor.validate.EvidenceMain
           -Dscenarios=500000 -Dsteps=64

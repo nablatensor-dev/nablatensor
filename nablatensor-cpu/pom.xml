@@ -10,9 +10,13 @@
   </parent>
   <artifactId>nablatensor-cpu</artifactId>
   <name>nablatensor-cpu</name>
-  <description>Scalar JVM replay engine. Plain Java, no optional runtime dependency, so it is
-    always available: the portable fallback and the deterministic reference (CPU oracle) an
-    accelerated result is checked against, path-for-path on the same Philox stream.</description>
+  <description>CPU replay engines, plain Java with no optional runtime dependency so they are
+    always available. Two paths: a scalar interpreter (the portable fallback and the
+    deterministic CPU oracle an accelerated result is checked against, path-for-path on the
+    same Philox stream), and a bytecode-generating engine that emits the tape as a
+    tape-specific class via the Class-File API (final since JDK 24) — straight-line forward
+    and reverse sweeps, segmented to stay inside HotSpot C2 limits. No incubator module, no
+    native library; the LTS-Java-clean default fast path.</description>
   <dependencies>
     <dependency>
       <groupId>com.nablatensor</groupId>

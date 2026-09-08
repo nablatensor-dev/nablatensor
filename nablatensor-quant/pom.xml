@@ -14,12 +14,13 @@
     Hull-White 1F, LMM), a payoff vocabulary (European / Asian / lookback / barrier / digital /
     cliquet / autocallable / FX / quanto / basket / caps-swaptions / Bermudan shell), the
     MonteCarlo and MultiOutput drivers, variance-reduction hooks, a curve bootstrap with
-    analytic Jacobian, and an adjoint-gradient Calibrator (L-BFGS and Levenberg-Marquardt).</description>
+    analytic Jacobian, and an adjoint-gradient Calibrator (L-BFGS and Levenberg-Marquardt).
+    Also carries the scenario-ladder runner, the binomial-lattice convergence check, and the
+    Gaussian-copula credit / CDO-tranche pricers.</description>
   <dependencies>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-ops</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-cpu</artifactId></dependency>
-    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-jit-cpu</artifactId></dependency>
     <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId></dependency>
   </dependencies>
 </project>

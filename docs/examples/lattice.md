@@ -4,10 +4,10 @@
 
 Feature **F11**. Binomial trees and backward induction are a curriculum topic in
 their own right, and the one valuation the record-and-replay Monte-Carlo engine
-cannot do. They live in a small `nablatensor-lattice` module — plain
+cannot do. They live in the `com.nablatensor.lattice` package of `nablatensor-quant` — plain
 `double`, `O(n^2)`, no tape — that exists precisely to cover that material.
 
-Source: [`nablatensor-lattice/`](../../nablatensor-lattice/src/main/java/com/nablatensor/lattice/)
+Source: [`nablatensor-quant/.../lattice/`](../../nablatensor-quant/src/main/java/com/nablatensor/lattice/)
 · example [`LatticeConvergenceShowcase.java`](../../nablatensor-examples/src/main/java/com/nablatensor/examples/LatticeConvergenceShowcase.java)
 
 ## What's in the module

@@ -25,21 +25,19 @@ mvn -o -q install
 ```
 
 The `simd` backend needs `--add-modules jdk.incubator.vector`; the
-`nablatensor-validate` and `nablatensor-examples` test runs add it so `simd` is
-exercised where present, but nothing else depends on it.
+`nablatensor-examples` test run adds it so `simd` is exercised where present,
+but nothing else depends on it.
 
 ## Layout
 
 | module | add here |
 |---|---|
-| `nablatensor-core` | engine internals + shared CUDA-C tape codegen — rare, discuss first |
-| `nablatensor-cpu` / `-jit-cpu` / `-simd` | CPU backend replay paths |
-| `nablatensor-vulkan` / `-rocm` / `-cuda` | GPU replay engines (device codegen + dispatch) |
+| `nablatensor-core` | engine internals + shared CUDA-C tape codegen + `DeviceAadExecutable` — rare, discuss first |
+| `nablatensor-cpu` / `-simd` | CPU replay paths (`-cpu` holds both the scalar interpreter and the bytecode engine) |
+| `nablatensor-vulkan` / `-rocm` / `-cuda` / `-opencl` | GPU replay engines (device codegen + dispatch) |
 | `nablatensor-tensor` / `-backend-*` | low-level device runtimes — rare, discuss first |
-| `nablatensor-quant` | products, model blocks, the `MonteCarlo` driver |
-| `nablatensor-validate` | validation / evidence tooling |
-| `nablatensor-examples` | a worked demo (+ its docs page + smoke test) |
-| `nablatensor-bench` | a reproducible comparison |
+| `nablatensor-quant` | products, model blocks, the `MonteCarlo` driver, the scenario ladder, lattice convergence, copula credit |
+| `nablatensor-examples` | a worked demo (+ its docs page + smoke test), the `com.nablatensor.bench` comparison harness, and the `com.nablatensor.validate` evidence tooling |
 
 A GPU backend must compile with its toolchain absent and gate at runtime via
 `AadEngine.isAvailable()` (which must never throw) — `mvn -o test` stays green

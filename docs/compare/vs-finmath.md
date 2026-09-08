@@ -33,7 +33,7 @@ kernel.**
 ## Reproducible comparison
 
 A like-for-like Asian-Greeks bench against `finmath` `RandomVariableDifferentiable`
-is Phase 1 (it needs the finmath dependency wired into `nablatensor-bench`).
+is Phase 1 (it needs the finmath dependency wired into `nablatensor-examples`).
 Until then, the honest artifacts are:
 
 - [vs bump-and-revalue](vs-bump-and-revalue.md) — the cost model adjoint replaces.
