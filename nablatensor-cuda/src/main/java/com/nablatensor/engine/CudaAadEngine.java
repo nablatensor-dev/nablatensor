@@ -60,6 +60,25 @@ public final class CudaAadEngine implements AadEngine {
   public AadExecutable compile(AadTape tape, AadOptions options) {
     AadEngine.requireBasicRandom(tape, "cuda");
     AadEngine.requireSingleOutput(tape, "cuda");
-    return AadKernel.compile(tape, options);
+    if (!CudaJit.isAvailable()) {
+      throw new IllegalStateException("no CUDA device available for the AAD replay kernel");
+    }
+    return DeviceAadExecutable.compile(tape, options, "cuda", CudaDeviceRuntime.INSTANCE,
+        DeviceAadExecutable.CUDA_C, maxLaunchSeconds());
+  }
+
+  /**
+   * The GPU is the one backend where an overlong dispatch is actively
+   * dangerous: when the device also drives a display the driver's
+   * {@code KERNEL_EXEC_TIMEOUT} watchdog recovers by resetting the GPU, so the
+   * budget there is an order of magnitude below the watchdog. Override with
+   * {@code -Dnablatensor.maxLaunchSeconds}.
+   */
+  private static double maxLaunchSeconds() {
+    String override = System.getProperty("nablatensor.maxLaunchSeconds");
+    if (override != null) {
+      return Double.parseDouble(override);
+    }
+    return CudaJit.kernelTimeoutEnabled() ? 0.2 : 2.0;
   }
 }

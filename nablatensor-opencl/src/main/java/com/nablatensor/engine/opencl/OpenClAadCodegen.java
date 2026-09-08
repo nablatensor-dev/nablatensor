@@ -46,9 +46,6 @@ import com.nablatensor.engine.CudaAadCodegen;
  */
 final class OpenClAadCodegen {
 
-  static final String KERNEL_NAME = CudaAadCodegen.KERNEL_NAME;
-  static final int BLOCK = CudaAadCodegen.BLOCK;
-
   private OpenClAadCodegen() {
   }
 

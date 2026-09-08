@@ -24,10 +24,11 @@ import com.nablatensor.annotation.Internal;
  * in-thread so a replay touches no memory beyond the handful of inputs and the
  * per-block reduction.
  *
- * <p>The emitted source is portable CUDA C: {@code AadKernel} compiles it with
- * NVRTC, and the ROCm engine ({@code com.nablatensor.engine.rocm}) compiles the exact
- * same string with HIPRTC, which accepts it unchanged. Kept {@code public} for
- * that second consumer; not part of the supported API.
+ * <p>The emitted source is portable CUDA C: the CUDA engine compiles it with
+ * NVRTC and the ROCm engine ({@code com.nablatensor.engine.rocm}) compiles the
+ * exact same string with HIPRTC, which accepts it unchanged; the OpenCL engine
+ * runs it through a small dialect rewrite. Driven by {@link DeviceAadExecutable}.
+ * Kept {@code public} for those consumers; not part of the supported API.
  */
 @Internal
 public final class CudaAadCodegen {

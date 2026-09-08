@@ -19,6 +19,7 @@ import com.nablatensor.engine.AadEngine;
 import com.nablatensor.engine.AadExecutable;
 import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadTape;
+import com.nablatensor.engine.DeviceAadExecutable;
 import com.nablatensor.backend.rocm.HipCompute;
 
 /**
@@ -74,6 +75,20 @@ public final class RocmAadEngine implements AadEngine {
   public AadExecutable compile(AadTape tape, AadOptions options) {
     AadEngine.requireBasicRandom(tape, "rocm");
     AadEngine.requireSingleOutput(tape, "rocm");
-    return RocmAadKernel.compile(tape, options);
+    if (!HipCompute.isAvailable()) {
+      throw new IllegalStateException("no ROCm/HIP device available for the AAD replay kernel");
+    }
+    return DeviceAadExecutable.compile(tape, options, "rocm", RocmDeviceRuntime.INSTANCE,
+        DeviceAadExecutable.CUDA_C, maxLaunchSeconds());
+  }
+
+  /**
+   * An integrated GPU shares the DRM scheduler with the display; a wedged
+   * kernel there can take the driver down, so a dispatch is kept well below the
+   * seconds-range hang check. Override with {@code -Dnablatensor.maxLaunchSeconds}.
+   */
+  private static double maxLaunchSeconds() {
+    String override = System.getProperty("nablatensor.maxLaunchSeconds");
+    return override != null ? Double.parseDouble(override) : 0.5;
   }
 }

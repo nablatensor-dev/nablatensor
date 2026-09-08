@@ -16,10 +16,13 @@
 package com.nablatensor.engine.opencl;
 
 import com.nablatensor.backend.opencl.OpenClCompute;
+import com.nablatensor.engine.AadCheckpointPlan;
 import com.nablatensor.engine.AadEngine;
 import com.nablatensor.engine.AadExecutable;
 import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadTape;
+import com.nablatensor.engine.CudaAadCodegen;
+import com.nablatensor.engine.DeviceAadExecutable;
 
 /**
  * OpenCL replay engine: the recorded tape becomes a fused forward+adjoint
@@ -56,7 +59,7 @@ public final class OpenClAadEngine implements AadEngine {
     try {
       return OpenClCompute.isAvailable()
           && OpenClCompute.supportsFp64()
-          && OpenClCompute.maxWorkGroupSize() >= OpenClAadCodegen.BLOCK;
+          && OpenClCompute.maxWorkGroupSize() >= CudaAadCodegen.BLOCK;
     } catch (Throwable ignored) {
       return false;
     }
@@ -80,6 +83,27 @@ public final class OpenClAadEngine implements AadEngine {
   public AadExecutable compile(AadTape tape, AadOptions options) {
     AadEngine.requireBasicRandom(tape, "opencl");
     AadEngine.requireSingleOutput(tape, "opencl");
-    return OpenClAadKernel.compile(tape, options);
+    if (!OpenClCompute.isAvailable() || !OpenClCompute.supportsFp64()) {
+      throw new IllegalStateException(
+          "no OpenCL device with cl_khr_fp64 available for the AAD replay kernel");
+    }
+    return DeviceAadExecutable.compile(tape, options, "opencl", OpenClDeviceRuntime.INSTANCE,
+        OpenClAadEngine::generateSource, maxLaunchSeconds());
+  }
+
+  private static String generateSource(AadTape tape, AadOptions options, AadCheckpointPlan plan) {
+    return plan != null
+        ? OpenClAadCodegen.generateCheckpointed(tape, options, plan)
+        : OpenClAadCodegen.generate(tape, options);
+  }
+
+  /**
+   * The default OpenCL device is usually a GPU that also drives the display, so
+   * a dispatch is kept well below the seconds-range hang check. Override with
+   * {@code -Dnablatensor.maxLaunchSeconds}.
+   */
+  private static double maxLaunchSeconds() {
+    String override = System.getProperty("nablatensor.maxLaunchSeconds");
+    return override != null ? Double.parseDouble(override) : 0.5;
   }
 }
