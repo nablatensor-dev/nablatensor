@@ -116,7 +116,7 @@ The Radeon 780M's `gfx1103` is not in ROCm's officially supported list.
 Ordinarily that means passing `HSA_OVERRIDE_GFX_VERSION` at runtime to make
 the ROCm runtime treat the agent as a supported architecture (see
 [`rocm.md`](rocm.md#supported-hardware)). nablatensor's own ROCm backend
-(`HipRuntime`/`HipCompute` in `nablatensor-backend-rocm`) already does the
+(`HipRuntime`/`HipCompute` in `nablatensor-rocm`) already does the
 equivalent at the application level — it detects an unrecognized `gfxNNNN`
 token and compiles the HIPRTC kernel with `--offload-arch=gfx1100` instead of
 the literal reported target — so running nablatensor itself against this

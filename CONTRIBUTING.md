@@ -34,8 +34,8 @@ but nothing else depends on it.
 |---|---|
 | `nablatensor-core` | engine internals + shared CUDA-C tape codegen + `DeviceAadExecutable` — rare, discuss first |
 | `nablatensor-cpu` / `-simd` | CPU replay paths (`-cpu` holds both the scalar interpreter and the bytecode engine) |
-| `nablatensor-vulkan` / `-rocm` / `-cuda` / `-opencl` | GPU replay engines (device codegen + dispatch) |
-| `nablatensor-tensor` / `-backend-*` | low-level device runtimes — rare, discuss first |
+| `nablatensor-vulkan` / `-rocm` / `-cuda` / `-opencl` | one module per accelerator: the FFM runtime, the tensor `ComputeBackend`, and the replay engine (device codegen + dispatch) |
+| `nablatensor-tensor` | the tensor-op SPI the GPU modules implement — rare, discuss first |
 | `nablatensor-quant` | products, model blocks, the `MonteCarlo` driver, the scenario ladder, lattice convergence, copula credit |
 | `nablatensor-examples` | a worked demo (+ its docs page + smoke test), the `com.nablatensor.bench` comparison harness, and the `com.nablatensor.validate` evidence tooling |
 

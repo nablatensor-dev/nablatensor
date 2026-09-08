@@ -1,6 +1,6 @@
 # Installing ROCm (for AMD GPUs)
 
-`nablatensor-rocm` and `nablatensor-backend-rocm` call the HIP runtime
+`nablatensor-rocm` calls the HIP runtime
 (`libamdhip64`) and its runtime kernel compiler (`libhiprtc`, which itself
 depends on `libamd_comgr` — AMD's Code Object Manager, statically linking
 LLVM) purely by `dlopen`, again through Java's Foreign Function & Memory API.
@@ -8,7 +8,7 @@ There is no vendor SDK compiled against, no `hipcc`/CMake step in the build —
 only a working ROCm *userspace* and a kernel that exposes the right device
 nodes need to exist on the machine that runs it. ROCm is AMD's platform only —
 there is no ROCm path for Intel or NVIDIA hardware (the closest NVIDIA
-equivalent, driven by `nablatensor-cuda`/`nablatensor-backend-cuda`, is CUDA,
+equivalent, driven by `nablatensor-cuda`, is CUDA,
 which is a separate installation entirely and not covered here). The
 [`container/`](../../container/README.md) directory shows one concrete,
 already-working example (a Radeon 780M APU, ROCm 7.2.4) — this document

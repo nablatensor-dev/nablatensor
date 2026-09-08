@@ -8,12 +8,13 @@
   </parent>
   <artifactId>nablatensor-opencl</artifactId>
   <name>nablatensor-opencl</name>
-  <description>OpenCL replay engine: the recorded tape becomes a fused forward+adjoint OpenCL C
-    kernel, built once with clBuildProgram and replayed one scenario per work-item. Shares
-    the CUDA engine's code generator, lightly rewritten to OpenCL C, so any conformant
-    OpenCL 1.2+ device with cl_khr_fp64 can run it.</description>
+  <description>Everything OpenCL: the java.lang.foreign runtime (ICD loader dlopen,
+    clBuildProgram, 1-D clEnqueueNDRangeKernel, no JNI, no native jar) and the replay engine
+    — the recorded tape becomes a fused forward+adjoint OpenCL C kernel (the CUDA code
+    generator, lightly rewritten to OpenCL C), so any conformant OpenCL 1.2+ device with
+    cl_khr_fp64 can run it. Gates at runtime.</description>
   <dependencies>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
-    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-backend-opencl</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-tensor</artifactId></dependency>
   </dependencies>
 </project>

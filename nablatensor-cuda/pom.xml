@@ -8,11 +8,13 @@
   </parent>
   <artifactId>nablatensor-cuda</artifactId>
   <name>nablatensor-cuda</name>
-  <description>CUDA replay engine: a recorded tape is code-generated into a fused
-    forward+adjoint CUDA kernel, NVRTC-compiled once, then replayed with one scenario per
-    thread. Selected automatically when a CUDA device is present.</description>
+  <description>Everything CUDA: the java.lang.foreign runtime (NVRTC compile + dispatch, no
+    JNI, no native jar), the tensor ComputeBackend, and the replay engine — a recorded tape
+    code-generated into a fused forward+adjoint CUDA kernel, NVRTC-compiled once, replayed
+    one scenario per thread. Compiles with or without the CUDA toolchain present; gates at
+    runtime.</description>
   <dependencies>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
-    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-backend-cuda</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-tensor</artifactId></dependency>
   </dependencies>
 </project>

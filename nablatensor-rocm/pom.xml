@@ -8,11 +8,12 @@
   </parent>
   <artifactId>nablatensor-rocm</artifactId>
   <name>nablatensor-rocm</name>
-  <description>ROCm/HIP replay engine: the recorded tape becomes a fused forward+adjoint HIP
-    kernel, HIPRTC-compiled once and replayed one scenario per work-item. Mirrors the CUDA
-    engine for AMD devices; selected automatically on a machine with a HIP runtime.</description>
+  <description>Everything ROCm/HIP: the java.lang.foreign runtime (HIPRTC compile + dispatch,
+    no JNI, no native jar), the tensor ComputeBackend, and the replay engine — the recorded
+    tape becomes a fused forward+adjoint HIP kernel, HIPRTC-compiled once, replayed one
+    scenario per work-item. Mirrors the CUDA module for AMD devices; gates at runtime.</description>
   <dependencies>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
-    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-backend-rocm</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-tensor</artifactId></dependency>
   </dependencies>
 </project>

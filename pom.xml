@@ -61,10 +61,6 @@
     <module>nablatensor-cpu</module>
     <module>nablatensor-simd</module>
     <module>nablatensor-ops</module>
-    <module>nablatensor-backend-cuda</module>
-    <module>nablatensor-backend-rocm</module>
-    <module>nablatensor-backend-vulkan</module>
-    <module>nablatensor-backend-opencl</module>
     <module>nablatensor-cuda</module>
     <module>nablatensor-rocm</module>
     <module>nablatensor-vulkan</module>
@@ -85,26 +81,6 @@
       <dependency>
         <groupId>com.nablatensor</groupId>
         <artifactId>nablatensor-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-backend-cuda</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-backend-rocm</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-backend-vulkan</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-backend-opencl</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

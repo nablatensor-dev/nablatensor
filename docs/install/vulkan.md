@@ -1,6 +1,6 @@
 # Installing Vulkan (for any GPU)
 
-`nablatensor-vulkan` and the tensor backend `nablatensor-backend-vulkan` talk to
+`nablatensor-vulkan` talks to
 whatever GPU is in the box through the standard Vulkan loader — they `dlopen`
 `libvulkan.so.1` and `libshaderc.so.1` (via Java's Foreign Function & Memory
 API) and never link against a vendor SDK. This means the *installation* step is

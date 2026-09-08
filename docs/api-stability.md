@@ -24,7 +24,7 @@ packages**:
   change or vanish in any release, with no deprecation cycle. Examples:
   `AbstractAadExecutable`, `CudaAadCodegen`, `AadCheckpointPlan`, the per-backend
   `*Replay` / `*Kernel` / `*Codegen` classes.
-- **`nablatensor-backend-{cuda,rocm,vulkan}`** — the low-level device runtimes the
+- **the `com.nablatensor.backend.*` packages in `nablatensor-{cuda,rocm,vulkan,opencl}`** — the low-level device runtimes the
   GPU replay engines dispatch through. Entirely internal.
 - **Most of `nablatensor-tensor` beyond the types listed above** — the module
   exists for the replay backends and the MNIST-scale example. `BackendRegistry`,

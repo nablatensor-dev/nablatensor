@@ -119,10 +119,11 @@ checked against the scalar oracle).
 | `nablatensor-core` | `SDouble`, `AadRecorder`, `AadTape`, the `AadEngine` SPI, `AadResult`, Philox plumbing, the shared CUDA-C tape codegen |
 | `nablatensor-cpu` | CPU replay — a scalar interpreter (the always-available deterministic **oracle**) and a tape→straight-line JVM **bytecode** engine via the Class-File API (the LTS-clean default) |
 | `nablatensor-simd` | JDK Vector API replay — opt-in (`--add-modules jdk.incubator.vector`) |
-| `nablatensor-vulkan` | tape → GLSL→SPIR-V fused compute shader, dispatched through the Vulkan loader (FFM) |
-| `nablatensor-rocm` | tape → fused HIP kernel, HIPRTC-compiled, for AMD devices (FFM) |
-| `nablatensor-cuda` | tape → fused CUDA kernel, NVRTC-compiled (FFM) |
-| `nablatensor-tensor` / `-backend-{cuda,rocm,vulkan,opencl}` | internal: the low-level device runtimes the GPU replay engines dispatch through |
+| `nablatensor-vulkan` | everything Vulkan (FFM runtime + tensor backend + replay engine): tape → GLSL→SPIR-V fused compute shader, dispatched through the Vulkan loader |
+| `nablatensor-rocm` | everything ROCm/HIP: tape → fused HIP kernel, HIPRTC-compiled, for AMD devices |
+| `nablatensor-cuda` | everything CUDA: tape → fused CUDA kernel, NVRTC-compiled |
+| `nablatensor-opencl` | everything OpenCL: tape → fused OpenCL C kernel (CUDA codegen, rewritten), `clBuildProgram` |
+| `nablatensor-tensor` | internal: the tensor-op SPI (`ComputeBackend`, `DeviceBuffer`, `Shape`) the GPU modules implement |
 | `nablatensor-ops` | smoothed `STEP`/`GT`/band indicators, `N(x)` / `erf` / `pow`, a macro-form custom-op registry — all in primitive nodes, exact adjoint, every backend |
 | `nablatensor-quant` | `EquityMarket` + `GbmPath` + `Products` (European / Asian / lookback) + `MonteCarlo` + `BlackScholes`; `ExoticProducts` (barrier / digital / cliquet / autocallable), `HestonModel` · `SabrModel` · `LocalVolModel` · `HullWhite1F` · `LmmModel`, `BasketOption`, `Hooks` (antithetic / control-variate), `CurveBootstrap` + analytic Jacobian, `Calibrator` (adjoint-gradient L-BFGS), `MultiMetric`; the `Shock` / `Scenario` / `Ladder` / `ScenarioRunner` ladder runner (`setInput` + replay, no recompile); the `BinomialTree` lattice convergence check; the one-factor Gaussian-copula credit / `CdoTranche` pricers |
 | `nablatensor-risk` | `RiskFactor`, `Sensitivities`, `Portfolio` / netting-set composition, `NestedAggregation` (the FRTB/SIMM `√(ΣK² + ΣγSS)` engine), `CorrelationScenario`, `TimeProfile` |
