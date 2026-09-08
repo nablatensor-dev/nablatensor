@@ -25,6 +25,7 @@
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-simd</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-vulkan</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-rocm</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-opencl</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-cuda</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-quant</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-scenario</artifactId></dependency>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.nablatensor</groupId><artifactId>nablatensor-parent</artifactId><version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>nablatensor-backend-opencl</artifactId>
+  <name>nablatensor-backend-opencl</name>
+  <description>OpenCL compute runtime via java.lang.foreign: the ICD loader is dlopened at
+    runtime, kernels are built from source with clBuildProgram, and dispatch is a 1-D
+    clEnqueueNDRangeKernel. No JNI and no native jar; compiles with or without an OpenCL
+    runtime present and reports itself unavailable when the loader or a device is missing.</description>
+  <dependencies>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-tensor</artifactId></dependency>
+  </dependencies>
+</project>
