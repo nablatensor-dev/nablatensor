@@ -87,7 +87,10 @@ and `simd` differ only by reduction/rounding order. `vulkan` and
 `cuda` are `fp32`-only — pass `.fp32()` to `ModelValidation` to include them; on
 this box `vulkan` reproduces the oracle's price and delta to five decimal places
 (see the [Asian backend matrix](examples/asian-greeks.md)). `cuda` needs an
-NVIDIA device, absent here, so it is skipped rather than failed.
+NVIDIA device, absent here, so it is skipped rather than failed — but a separate
+Colab **Tesla T4** run ([`notebooks/engine-benchmark.ipynb`](../notebooks/engine-benchmark.ipynb))
+reproduces the fp64 oracle's price and delta to `~1e-5` at fp32, the same order
+as `vulkan`.
 
 The adjoint gradient agrees with the bump to the bump's own `O(h²)` error —
 `rho` is the loosest because the payoff's rate dependence is the most nonlinear

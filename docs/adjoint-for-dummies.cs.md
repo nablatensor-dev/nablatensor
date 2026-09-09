@@ -130,7 +130,7 @@ NablaTensor nepočítá derivace symbolicky ani je neodhaduje numericky
 "poštrcháváním" vstupů. Zaznamená přesnou posloupnost operací z předchozí
 kapitoly jako plochý seznam uzlů — **pásku** (tape) — a pak přesně provede
 dopředný/zpětný průchod, který jste si právě spočítali ručně, jen v kódu.
-Pravidla pro jednotlivé operace (`nablatensor-cpu`, třída `ScalarReplay` —
+Pravidla pro jednotlivé operace (`nablatensor-engine-cpu`, třída `ScalarReplay` —
 stejná pravidla implementuje každý backend: CPU, SIMD, Vulkan, ROCm, CUDA)
 jsou:
 

@@ -8,8 +8,8 @@
     <artifactId>nablatensor-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>nablatensor-simd</artifactId>
-  <name>nablatensor-simd</name>
+  <artifactId>nablatensor-engine-simd</artifactId>
+  <name>nablatensor-engine-simd</name>
   <description>SIMD replay engine, vectorising across scenarios with the incubating JDK Vector
     API. Opt-in: the jar can be absent, or present while the incubator module is not resolved,
     and in both cases the engine reports itself unavailable and selection falls back.</description>

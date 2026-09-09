@@ -6,13 +6,12 @@
   <parent>
     <groupId>com.nablatensor</groupId><artifactId>nablatensor-parent</artifactId><version>0.1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>nablatensor-opencl</artifactId>
-  <name>nablatensor-opencl</name>
-  <description>Everything OpenCL: the java.lang.foreign runtime (ICD loader dlopen,
-    clBuildProgram, 1-D clEnqueueNDRangeKernel, no JNI, no native jar) and the replay engine
-    — the recorded tape becomes a fused forward+adjoint OpenCL C kernel (the CUDA code
-    generator, lightly rewritten to OpenCL C), so any conformant OpenCL 1.2+ device with
-    cl_khr_fp64 can run it. Gates at runtime.</description>
+  <artifactId>nablatensor-engine-rocm</artifactId>
+  <name>nablatensor-engine-rocm</name>
+  <description>Everything ROCm/HIP: the java.lang.foreign runtime (HIPRTC compile + dispatch,
+    no JNI, no native jar), the tensor ComputeBackend, and the replay engine — the recorded
+    tape becomes a fused forward+adjoint HIP kernel, HIPRTC-compiled once, replayed one
+    scenario per work-item. Mirrors the CUDA module for AMD devices; gates at runtime.</description>
   <dependencies>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-tensor</artifactId></dependency>

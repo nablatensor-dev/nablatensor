@@ -21,14 +21,17 @@ import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadTape;
 
 /**
- * Bytecode-generating replay engine. Priority 7 — below the scalar {@code cpu}
- * engine, so {@code fastest()} never picks it; request it by name ({@code
- * -Dnablatensor.engine=cpu-jit} / {@code .on("cpu-jit")}). fp64 and fp32: the
- * generated kernel's arithmetic is in the
- * requested precision, with per-scenario totals always accumulated in double.
+ * Bytecode-generating replay engine. Priority 25 — above the scalar {@code cpu}
+ * engine (10) and below {@code simd} (50), so on a host with no GPU and no
+ * Vector API it is what {@code fastest()} selects: the LTS-clean default
+ * (pure Java, no native library, no incubator flag). Pin it explicitly with
+ * {@code -Dnablatensor.engine=cpu-jit} / {@code .on("cpu-jit")}. fp64 and fp32:
+ * the generated kernel's arithmetic is in the requested precision, with
+ * per-scenario totals always accumulated in double.
  *
  * <p>Needs the Class-File API, final since JDK 24, so it runs unflagged on
- * Java 25 LTS; on an older JDK it reports itself unavailable.
+ * Java 25 LTS; on an older JDK it reports itself unavailable — selection then
+ * falls back to the scalar {@code cpu} engine.
  */
 public final class JitAadEngine implements AadEngine {
 
@@ -51,7 +54,7 @@ public final class JitAadEngine implements AadEngine {
 
   @Override
   public int priority() {
-    return 7;
+    return 25;
   }
 
   @Override

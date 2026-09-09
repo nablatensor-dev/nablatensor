@@ -4,11 +4,25 @@
 |---|---|---|
 | [`greeks-on-gpu.ipynb`](greeks-on-gpu.ipynb) | [`demo/greeks-on-gpu.sh`](../demo/greeks-on-gpu.sh) | A down-and-in put written as a plain-Java lambda, recorded once, then **20 M paths priced with price + delta + vega + rho + dV/dK + dV/dT from one reverse sweep** — plus a spot ladder (with a plot) and a crash scenario on the same compiled kernel. |
 | [`frtb-full-on-cuda.ipynb`](frtb-full-on-cuda.ipynb) | [`demo/frtb-full-on-cuda.sh`](../demo/frtb-full-on-cuda.sh) | The FRTB standardised approach in **ten stages**: market/trade/rulebook loading, 89 parameter buckets, one adjoint delta and **three full shocked repricings on CUDA**, the CVR arithmetic, netting, `LOW`/`MEDIUM`/`HIGH` aggregation for all seven risk classes, DRC, RRAO, capital bridge and sign-off — plus a plot of what curvature actually measures. |
+| [`futures-markets-and-ccps.ipynb`](futures-markets-and-ccps.ipynb) | — (standalone) | A plain-language tour of futures-market plumbing — contract specs, price limits, basis convergence, margin accounts, clearing houses, CCPs vs bilateral, quote boards, order types, regulation, forward-vs-futures — with every figure reconstructed in `matplotlib`. One optional section reframes a **maintenance-margin breach as a daily-monitored down-and-in barrier** and gets its premium + Greeks from one reverse sweep; it auto-skips if the bridge is unavailable. |
+| [`engine-benchmark.ipynb`](engine-benchmark.ipynb) | — (standalone) | Runs one fixed workload (252-step down-and-in put, `fp32`, price + 5 Greeks) on **every available adjoint engine**, each in its **own subprocess / JVM** so one engine crashing can't take down the rest. Prints a result table (build / warm time, Mpaths/s, price parity vs an fp64 reference) and a plain-ASCII report. Built for a Colab **GPU runtime** so `cuda` is in the comparison; `SKIP_ENGINES` defaults to `{"rocm"}`. |
 
-The notebook drives the **same Java code** as the shell demo. A small package,
+The first two notebooks drive the **same Java code** as their shell demo. A small package,
 [`python/nablatensor`](../python/nablatensor), boots one JDK 25 JVM through
 [JPype](https://jpype.readthedocs.io) against the checkout's compiled
 `*/target/classes` and forwards every call to `com.nablatensor.quant.*`.
+
+## Run on Google Colab
+
+`greeks-on-gpu.ipynb` needs no local setup on Colab. Upload it (or open it from
+GitHub), then *Runtime ▸ Run all*. Its first code cell detects Colab and, only
+there, installs JDK 25 + Maven, clones this repo, builds `*/target/classes` and
+`pip`-installs the bridge — a few minutes, once per runtime. The same cell is a
+no-op off Colab, so the notebook stays runnable from a local venv unchanged.
+
+For the `cuda` engine pick a GPU runtime (*Runtime ▸ Change runtime type ▸ T4
+GPU*) before running; without one the notebook falls back to the pure-Java
+`cpu-jit` and every cell still produces the same numbers, only slower.
 
 ## Setup (venv)
 
@@ -76,6 +90,10 @@ all cells.
 - Its regulatory tables, sample trades and sign-off roles are **illustrative
   demo data** in `FrtbFullShowcase` — a compute demonstration, not a
   regulatory implementation.
+- **`futures-markets-and-ccps.ipynb` is self-contained** — it needs only
+  `numpy` and `matplotlib` (both in `notebooks/requirements.txt`). Its one
+  `nablatensor` section is wrapped in `try/except`, so the notebook runs start
+  to finish with or without a built checkout.
 - **Non-default checkout / JDK.**
   `nt.start(project_root="/path/to/nablatensor", jdk_home="/path/to/jdk")`.
 - The bridge is a convenience for these examples, not a supported public API —

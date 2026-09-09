@@ -37,6 +37,25 @@ import java.util.Arrays;
  * 136 KB per scenario, which is why the first version of this engine lost to
  * the scalar one. Split into per-opcode methods, the same arithmetic allocates
  * nothing.
+ *
+ * <p>The same limit is why {@link #forward} and {@link #reverse} are separate
+ * methods rather than two loops in {@link #runRange}. Held together they made
+ * {@code runRange} 1,023 bytes of bytecode, and folding fourteen opcode helpers
+ * and the generator into a body that size exhausts what C2 will inline in one
+ * pass — eight lanes to a vector means each helper unrolls to four vector
+ * operations, twice what the single-precision sweep expands to — so the rest is
+ * deferred to incremental inlining. Vector calls resolved that late lose the
+ * constant folding the Vector API relies on: the operator argument of
+ * {@code lanewise} is no longer a constant when the branch that routes
+ * transcendentals to the vector math library is parsed, so {@code EXP} takes
+ * the general path instead and reaches code that does not expect a math-library
+ * opcode. On JDK 25 that aborts the compiler thread outright, and roughly a
+ * quarter of fresh JVMs running the adjoint sweep died that way; short of the
+ * crash it costs throughput and makes it depend on which compilation happened
+ * to win, which is how the fault first showed up — a benchmark row quotable
+ * only as a range. Split, each sweep is compiled on its own instead of through
+ * a driver too large to carry it, which is both stable and faster than the one
+ * body ever was.
  */
 final class VectorReplayF64 extends BatchedReplay {
 
@@ -46,8 +65,11 @@ final class VectorReplayF64 extends BatchedReplay {
   private static final boolean SKIP_RNG = "zero".equals(System.getProperty("nablatensor.simd.randn"));
   private static final boolean SKIP_EXP = "none".equals(System.getProperty("nablatensor.simd.exp"));
 
+  private final boolean adjoints;
+
   VectorReplayF64(AadTape tape, AadOptions options) {
     super(tape, options);
+    this.adjoints = options.adjoints();
   }
 
   @Override
@@ -59,10 +81,8 @@ final class VectorReplayF64 extends BatchedReplay {
   Accumulator runRange(long pathFrom, long count, long seed, Draws crn) {
     final int n = ops.length;
     final double[] v = new double[n * BATCH];
-    final double[] d = new double[n * BATCH];
+    final double[] d = adjoints ? new double[n * BATCH] : null;
     final double[] draws = new double[BATCH];
-    final double[] in = inputs;
-    final boolean adjoints = options.adjoints();
     final VectorPhilox rng = new VectorPhilox();
     final Accumulator acc = new Accumulator(inputRow.length);
 
@@ -70,37 +90,7 @@ final class VectorReplayF64 extends BatchedReplay {
       final int alive = (int) Math.min(BATCH, count - done);
       final long base = pathFrom + done;
 
-      for (int i = 0; i < n; i++) {
-        final int row = i * BATCH;
-        final int a = rowA[i];
-        final int b = rowB[i];
-        switch (ops[i]) {
-          case CONST -> Arrays.fill(v, row, row + BATCH, constants[i]);
-          case INPUT -> Arrays.fill(v, row, row + BATCH, in[argA[i]]);
-          case RANDN -> {
-            if (crn.read()) {
-              System.arraycopy(crn.cache, crn.index(base, argA[i]), v, row, BATCH);
-            } else if (!SKIP_RNG) {
-              rng.normals(draws, base, seed, argA[i], BATCH);
-              System.arraycopy(draws, 0, v, row, BATCH);
-              if (crn.write) {
-                System.arraycopy(draws, 0, crn.cache, crn.index(base, argA[i]), BATCH);
-              }
-            }
-          }
-          case ADD -> fwdAdd(v, a, b, row);
-          case SUB -> fwdSub(v, a, b, row);
-          case MUL -> fwdMul(v, a, b, row);
-          case DIV -> fwdDiv(v, a, b, row);
-          case NEG -> fwdNeg(v, a, row);
-          case EXP -> { if (!SKIP_EXP) fwdExp(v, a, row); else System.arraycopy(v, a, v, row, BATCH); }
-          case LOG -> fwdLog(v, a, row);
-          case SQRT -> fwdSqrt(v, a, row);
-          case ABS -> fwdAbs(v, a, row);
-          case MAX -> fwdMax(v, a, b, row);
-          case MIN -> fwdMin(v, a, b, row);
-        }
-      }
+      forward(v, draws, rng, base, seed, crn);
       for (int p = 0; p < alive; p++) {
         acc.value += v[outRow + p];
       }
@@ -110,30 +100,8 @@ final class VectorReplayF64 extends BatchedReplay {
       }
       Arrays.fill(d, 0.0);
       Arrays.fill(d, outRow, outRow + BATCH, 1.0);
+      reverse(v, d);
 
-      for (int i = n - 1; i >= 0; i--) {
-        if (!active[i]) {
-          continue;
-        }
-        final int row = i * BATCH;
-        final int a = rowA[i];
-        final int b = rowB[i];
-        switch (ops[i]) {
-          case CONST, INPUT, RANDN, RANDU -> {
-          }
-          case ADD -> revAdd(d, a, b, row);
-          case SUB -> revSub(d, a, b, row);
-          case MUL -> revMul(v, d, a, b, row);
-          case DIV -> revDiv(v, d, a, b, row);
-          case NEG -> revNeg(d, a, row);
-          case EXP -> revExp(v, d, a, row);
-          case LOG -> revLog(v, d, a, row);
-          case SQRT -> revSqrt(v, d, a, row);
-          case ABS -> revAbs(v, d, a, row);
-          case MAX -> revMax(v, d, a, b, row);
-          case MIN -> revMin(v, d, a, b, row);
-        }
-      }
       for (int j = 0; j < acc.gradient.length; j++) {
         final int from = inputRow[j];
         double sum = 0.0;
@@ -144,6 +112,67 @@ final class VectorReplayF64 extends BatchedReplay {
       }
     }
     return acc;
+  }
+
+  private void forward(double[] v, double[] draws, VectorPhilox rng, long base, long seed, Draws crn) {
+    final double[] in = inputs;
+    for (int i = 0, n = ops.length; i < n; i++) {
+      final int row = i * BATCH;
+      final int a = rowA[i];
+      final int b = rowB[i];
+      switch (ops[i]) {
+        case CONST -> Arrays.fill(v, row, row + BATCH, constants[i]);
+        case INPUT -> Arrays.fill(v, row, row + BATCH, in[argA[i]]);
+        case RANDN -> {
+          if (crn.read()) {
+            System.arraycopy(crn.cache, crn.index(base, argA[i]), v, row, BATCH);
+          } else if (!SKIP_RNG) {
+            rng.normals(draws, base, seed, argA[i], BATCH);
+            System.arraycopy(draws, 0, v, row, BATCH);
+            if (crn.write) {
+              System.arraycopy(draws, 0, crn.cache, crn.index(base, argA[i]), BATCH);
+            }
+          }
+        }
+        case ADD -> fwdAdd(v, a, b, row);
+        case SUB -> fwdSub(v, a, b, row);
+        case MUL -> fwdMul(v, a, b, row);
+        case DIV -> fwdDiv(v, a, b, row);
+        case NEG -> fwdNeg(v, a, row);
+        case EXP -> { if (!SKIP_EXP) fwdExp(v, a, row); else System.arraycopy(v, a, v, row, BATCH); }
+        case LOG -> fwdLog(v, a, row);
+        case SQRT -> fwdSqrt(v, a, row);
+        case ABS -> fwdAbs(v, a, row);
+        case MAX -> fwdMax(v, a, b, row);
+        case MIN -> fwdMin(v, a, b, row);
+      }
+    }
+  }
+
+  private void reverse(double[] v, double[] d) {
+    for (int i = ops.length - 1; i >= 0; i--) {
+      if (!active[i]) {
+        continue;
+      }
+      final int row = i * BATCH;
+      final int a = rowA[i];
+      final int b = rowB[i];
+      switch (ops[i]) {
+        case CONST, INPUT, RANDN, RANDU -> {
+        }
+        case ADD -> revAdd(d, a, b, row);
+        case SUB -> revSub(d, a, b, row);
+        case MUL -> revMul(v, d, a, b, row);
+        case DIV -> revDiv(v, d, a, b, row);
+        case NEG -> revNeg(d, a, row);
+        case EXP -> revExp(v, d, a, row);
+        case LOG -> revLog(v, d, a, row);
+        case SQRT -> revSqrt(v, d, a, row);
+        case ABS -> revAbs(v, d, a, row);
+        case MAX -> revMax(v, d, a, b, row);
+        case MIN -> revMin(v, d, a, b, row);
+      }
+    }
   }
 
   private static DoubleVector ld(double[] array, int index) {

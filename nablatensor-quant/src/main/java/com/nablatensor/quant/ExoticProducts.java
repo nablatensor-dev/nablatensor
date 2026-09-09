@@ -201,5 +201,10 @@ public final class ExoticProducts {
     public void record(AadRecorder rec, Nabla.Inputs<EquityMarket> in, TimeGrid grid) {
       body.record(rec, in, grid);
     }
+
+    @Override
+    public String toString() {
+      return label;
+    }
   }
 }

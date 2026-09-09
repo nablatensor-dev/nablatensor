@@ -6,12 +6,13 @@
   <parent>
     <groupId>com.nablatensor</groupId><artifactId>nablatensor-parent</artifactId><version>0.1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>nablatensor-rocm</artifactId>
-  <name>nablatensor-rocm</name>
-  <description>Everything ROCm/HIP: the java.lang.foreign runtime (HIPRTC compile + dispatch,
-    no JNI, no native jar), the tensor ComputeBackend, and the replay engine — the recorded
-    tape becomes a fused forward+adjoint HIP kernel, HIPRTC-compiled once, replayed one
-    scenario per work-item. Mirrors the CUDA module for AMD devices; gates at runtime.</description>
+  <artifactId>nablatensor-engine-vulkan</artifactId>
+  <name>nablatensor-engine-vulkan</name>
+  <description>Everything Vulkan: the java.lang.foreign runtime (libshaderc GLSL→SPIR-V
+    compile + loader dispatch, no JNI, no native jar), the tensor ComputeBackend, and the
+    replay engine — the recorded tape becomes a GLSL compute shader (unrolled forward +
+    adjoint, on-device Philox), single precision. The GPU path for machines with no CUDA/HIP
+    device; gates at runtime.</description>
   <dependencies>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-tensor</artifactId></dependency>
