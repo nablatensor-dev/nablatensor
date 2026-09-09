@@ -46,7 +46,15 @@ risk run (`1,000,000 × 10,000`), projected from a `1e6` probe:
 | `simd` | fp64 | 4.0×10⁶ | 42 min | JDK Vector API, 8×fp64/lane (`--add-modules jdk.incubator.vector`) |
 | `rocm` | fp32 | 1.3×10⁷ | 13 min | fused forward+adjoint HIP kernel, HIPRTC-compiled |
 | `vulkan` | fp32 | 1.6×10⁷ | **10 min** | fused GLSL→SPIR-V compute shader, on-device Philox |
-| `cuda` | fp32 | *(no NVIDIA device on this box)* | — | fused forward+adjoint CUDA kernel, NVRTC-compiled |
+| `cuda` | fp32 | *(no NVIDIA device on this box — see below)* | — | fused forward+adjoint CUDA kernel, NVRTC-compiled |
+
+The dev box has no NVIDIA GPU. On a separate **Tesla T4** run of a heavier
+benchmark — a 252-step down-and-in barrier, 4057-node tape, `value + 5 Greeks`
+([`notebooks/engine-benchmark.ipynb`](notebooks/engine-benchmark.ipynb)) —
+`cuda` does **1.3×10⁷ scenarios/s** (20 M in 1.5 s, warm), ~1.4× ahead of the
+same T4's `opencl` path, with the fp32 result reconciling to the fp64 oracle to
+~1×10⁻⁵. Not directly comparable to the rows above (different tape, different
+machine), but it places `cuda` in the GPU tier as expected.
 
 All backends reproduce the scalar oracle **path-for-path** at equal seed
 (`cpu-jit` bit-exact, the rest to reduction/rounding order; `rocm`/`vulkan`
