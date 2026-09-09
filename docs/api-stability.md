@@ -35,7 +35,7 @@ packages**:
 
 A JPMS module descriptor would enforce the boundary at compile time, but:
 
-1. `nablatensor-cuda` currently shares the `com.nablatensor.engine` package with
+1. `nablatensor-engine-cuda` currently shares the `com.nablatensor.engine` package with
    `nablatensor-core` (a split package JPMS forbids). Relocating that module into
    `com.nablatensor.engine.cuda` is a prerequisite and has not been done.
 2. `Nabla.model(marketRecord, …)` reflects over the **caller's** record type

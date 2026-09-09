@@ -14,10 +14,10 @@
     adjoint is exact and every backend runs them unchanged.</description>
   <dependencies>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
-    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-cpu</artifactId></dependency>
-    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-simd</artifactId></dependency>
-    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-vulkan</artifactId></dependency>
-    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-rocm</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-engine-cpu</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-engine-simd</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-engine-vulkan</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-engine-rocm</artifactId></dependency>
     <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId></dependency>
   </dependencies>
   <build>

@@ -20,7 +20,7 @@
   <dependencies>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-ops</artifactId></dependency>
-    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-cpu</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-engine-cpu</artifactId></dependency>
     <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId></dependency>
   </dependencies>
 </project>

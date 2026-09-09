@@ -126,7 +126,7 @@ NablaTensor doesn't do calculus symbolically and it doesn't guess numerically
 by bumping inputs. It records the exact sequence of operations above as a flat
 array of nodes — the **tape** — and then runs precisely the forward/backward
 walk you just did by hand, in code. The rules per operation
-(`nablatensor-cpu`'s `ScalarReplay`, the same rules every backend — CPU,
+(`nablatensor-engine-cpu`'s `ScalarReplay`, the same rules every backend — CPU,
 SIMD, Vulkan, ROCm, CUDA — implements) are:
 
 | op | forward | backward (adjoint rule) | icon |

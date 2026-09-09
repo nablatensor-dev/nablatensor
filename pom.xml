@@ -58,13 +58,13 @@
   <modules>
     <module>nablatensor-tensor</module>
     <module>nablatensor-core</module>
-    <module>nablatensor-cpu</module>
-    <module>nablatensor-simd</module>
+    <module>nablatensor-engine-cpu</module>
+    <module>nablatensor-engine-simd</module>
     <module>nablatensor-ops</module>
-    <module>nablatensor-cuda</module>
-    <module>nablatensor-rocm</module>
-    <module>nablatensor-vulkan</module>
-    <module>nablatensor-opencl</module>
+    <module>nablatensor-engine-cuda</module>
+    <module>nablatensor-engine-rocm</module>
+    <module>nablatensor-engine-vulkan</module>
+    <module>nablatensor-engine-opencl</module>
     <module>nablatensor-quant</module>
     <module>nablatensor-risk</module>
     <module>nablatensor-cva</module>
@@ -85,22 +85,22 @@
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-cuda</artifactId>
+        <artifactId>nablatensor-engine-cuda</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-rocm</artifactId>
+        <artifactId>nablatensor-engine-rocm</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-vulkan</artifactId>
+        <artifactId>nablatensor-engine-vulkan</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-opencl</artifactId>
+        <artifactId>nablatensor-engine-opencl</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -110,12 +110,12 @@
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-cpu</artifactId>
+        <artifactId>nablatensor-engine-cpu</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-simd</artifactId>
+        <artifactId>nablatensor-engine-simd</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -187,7 +187,7 @@
       passphrase from the MAVEN_GPG_PASSPHRASE env var). autoPublish is off, so
       the upload waits in the portal's "Deployments" view for a manual Publish;
       the build blocks until Central has finished validating it. The examples
-      and bench modules set maven.deploy.skip and stay out of the bundle. This
+      module sets maven.deploy.skip and stays out of the bundle. This
       profile is inert for normal build/install.
     -->
     <profile>

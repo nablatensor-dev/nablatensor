@@ -8,8 +8,8 @@
     <artifactId>nablatensor-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>nablatensor-cpu</artifactId>
-  <name>nablatensor-cpu</name>
+  <artifactId>nablatensor-engine-cpu</artifactId>
+  <name>nablatensor-engine-cpu</name>
   <description>CPU replay engines, plain Java with no optional runtime dependency so they are
     always available. Two paths: a scalar interpreter (the portable fallback and the
     deterministic CPU oracle an accelerated result is checked against, path-for-path on the
