@@ -84,13 +84,13 @@ RESULT: PASS — every backend reproduces the oracle within tolerance.
 
 `cpu-jit` matches the oracle bit-for-bit; `rocm` (a HIPRTC-compiled GPU kernel)
 and `simd` differ only by reduction/rounding order. `vulkan` and
-`cuda` are `fp32`-only — pass `.fp32()` to `ModelValidation` to include them; on
-this box `vulkan` reproduces the oracle's price and delta to five decimal places
-(see the [Asian backend matrix](examples/asian-greeks.md)). `cuda` needs an
-NVIDIA device, absent here, so it is skipped rather than failed — but a separate
-Colab **Tesla T4** run ([`notebooks/engine-benchmark.ipynb`](../notebooks/engine-benchmark.ipynb))
-reproduces the fp64 oracle's price and delta to `~1e-5` at fp32, the same order
-as `vulkan`.
+`cuda` is `fp32`-only through `ModelValidation` (pass `.fp32()`); on this box
+`vulkan` reproduces the oracle's price and delta to five decimal places (see the
+[Asian backend matrix](examples/asian-greeks.md)). `cuda` needs an NVIDIA
+device, absent here, so it is skipped rather than failed — but a Colab **Tesla
+T4** run of [`notebooks/gpu-bench.ipynb`](../notebooks/gpu-bench.ipynb) has
+`cuda` reproducing the fp64 oracle bit-for-bit at `fp64` (price 5.31067) and to
+`~9×10⁻⁶` at `fp32` (5.31062), the same order as `vulkan`.
 
 The adjoint gradient agrees with the bump to the bump's own `O(h²)` error —
 `rho` is the loosest because the payoff's rate dependence is the most nonlinear

@@ -52,8 +52,8 @@ This box has an AMD APU, so `rocm` runs a real HIP GPU kernel at fp64; on an APU
 that is only ~1.2× the SIMD path — a discrete card, or the `fp32` shaders below,
 is where the GPU pulls ahead.
 
-The `AadEngines.available(...)` filter above is fp64, so `vulkan` and `cuda`
-(both `fp32`-only) don't appear. At `fp32` the picture on this box:
+The `AadEngines.available(...)` filter above is fp64, so `vulkan` (`fp32`-only)
+does not appear. At `fp32` the picture on this box:
 
 | engine | scenarios/s | 1e10-path Asian risk run (projected) |
 |---|--:|--:|
@@ -62,12 +62,23 @@ The `AadEngines.available(...)` filter above is fp64, so `vulkan` and `cuda`
 | `simd` | 5.0×10⁶ | ~34 min |
 | `cpu-jit` | 1.8×10⁶ | ~1.5 h |
 
-`cuda` has no device on this box. On a Colab **Tesla T4**,
-[`notebooks/engine-benchmark.ipynb`](../../notebooks/engine-benchmark.ipynb) — a
-heavier workload (a 4057-node barrier tape, not this 1536-node Asian) — runs
-`cuda` at `1.3×10⁷` value+5-Greeks scenarios/s (≈ `1.4×` the same T4's `opencl`),
-i.e. in the `vulkan` / `rocm` tier. Not directly comparable to the rows above;
-re-run the notebook on a GPU runtime for the exact figure.
+### On a Colab Tesla T4
+
+The dev box has no NVIDIA GPU. Running the same `AsianRiskRun` on a **Colab
+Tesla T4** (2 vCPU, `notebooks/gpu-bench.ipynb`) — `cuda` runs *both*
+precisions here, not just `fp32`:
+
+| engine | precision | scenarios/s | 1e10 projection | price vs fp64 oracle |
+|---|---|--:|--:|--:|
+| `cuda` | fp32 | 3.8×10⁷ | ~4.4 min | 5.31062 (−9×10⁻⁶) |
+| `opencl` | fp32 | 1.9×10⁷ | ~9 min | 5.31062 (−9×10⁻⁶) |
+| `cuda` | fp64 | 4.6×10⁶ | ~36 min | 5.31067 (exact) |
+| `opencl` | fp64 | 4.2×10⁶ | ~40 min | 5.31067 (exact) |
+
+Different machine from the rows above, so read the GPU numbers against each
+other, not against the 780M. The `fp32` result reconciles to the `fp64` scalar
+oracle to `~1×10⁻⁵`. The `cuda` `fp64` kernel pays a ~40 s one-off NVRTC compile
+(vs ~3 s at `fp32`), amortised over the run.
 
 ```bash
 # the fp32 / GPU matrix + the 1e10 projection

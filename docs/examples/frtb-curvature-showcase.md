@@ -106,6 +106,21 @@ The exact showcase workflow was measured on 2026-09-02 with one million paths,
 
 All backends above use fp64 and agree on a CVR of `11.560110`.
 
+The dev box has no NVIDIA GPU. On a **Colab Tesla T4** (2 vCPU), the same
+`CurvatureBackendRun` at 200k paths adds a `cuda` row — `fp32`, so a smaller
+CVR difference rather than a match:
+
+| Backend | Precision | Adjoint delta | Three price replays | Replay vs `cpu` | CVR | Complete workflow |
+|---|---:|---:|---:|---:|---:|---:|
+| `cpu` | fp64 | 3.6623 s | 7.0957 s | 1.00x | 11.547636 | 10.7580 s |
+| `cpu-jit` | fp64 | 2.1627 s | 4.2822 s | 1.66x | 11.547636 | 6.4449 s |
+| `simd` | fp64 | 0.9416 s | 2.0783 s | 3.41x | 11.547636 | 3.0199 s |
+| **`cuda`** | fp32 | 0.0055 s | 0.0026 s | **~2700x** | 11.547399 | 0.0081 s |
+
+The shocked repricing — the one expensive stage — drops from seconds to
+milliseconds on the GPU; the `fp32` CVR (`11.5474`) differs from the fp64
+backends' (`11.5476`) only by rounding, well inside Monte-Carlo noise.
+
 Reproduce the comparison with:
 
 ```bash

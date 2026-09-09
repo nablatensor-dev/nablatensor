@@ -67,6 +67,11 @@ The smoothed path-dependent payoffs (barrier, digital, cliquet, autocallable)
 get a *usable* adjoint delta this way — a raw-discontinuity bump of those is
 dominated by variance, not just slower.
 
+The ratio is a property of the workload, not the CPU: the same `ProductBench` on
+a Colab **Tesla T4** (`fp64`, `notebooks/gpu-bench.ipynb`) gives **6–10×** across
+the eight products (adjoint 0.03–0.06 s, the 11-replay bump 0.33–0.42 s) — the
+adjoint sweep still costs about one price pass, the bump still costs eleven.
+
 ## When bump still wins
 
 - **One or two Greeks, tiny tape.** The adjoint overhead isn't amortised.
