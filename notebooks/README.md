@@ -10,6 +10,18 @@ The notebook drives the **same Java code** as the shell demo. A small package,
 [JPype](https://jpype.readthedocs.io) against the checkout's compiled
 `*/target/classes` and forwards every call to `com.nablatensor.quant.*`.
 
+## Run on Google Colab
+
+`greeks-on-gpu.ipynb` needs no local setup on Colab. Upload it (or open it from
+GitHub), then *Runtime ▸ Run all*. Its first code cell detects Colab and, only
+there, installs JDK 25 + Maven, clones this repo, builds `*/target/classes` and
+`pip`-installs the bridge — a few minutes, once per runtime. The same cell is a
+no-op off Colab, so the notebook stays runnable from a local venv unchanged.
+
+For the `cuda` engine pick a GPU runtime (*Runtime ▸ Change runtime type ▸ T4
+GPU*) before running; without one the notebook falls back to the pure-Java
+`cpu-jit` and every cell still produces the same numbers, only slower.
+
 ## Setup (venv)
 
 Run these yourself from the **repo root** (`nablatensor/`).
