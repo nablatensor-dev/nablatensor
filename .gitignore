@@ -24,4 +24,5 @@ container/.podman-root/
 __pycache__/
 *.egg-info/
 .ipynb_checkpoints/
+notebooks/nablatensor-engine-benchmark.txt
 
