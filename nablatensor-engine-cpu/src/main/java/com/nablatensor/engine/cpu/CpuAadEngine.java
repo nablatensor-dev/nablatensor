@@ -21,9 +21,11 @@ import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadTape;
 
 /**
- * Scalar JVM engine. Lowest priority, so it runs only when nothing faster is
- * present or when it is asked for by name — which is exactly what a
- * verification run wants, since it shares no code with the generated kernels.
+ * Scalar JVM engine. Lowest priority of all (10 — below {@code cpu-jit} at 25),
+ * so it is selected only when nothing else is available, or when asked for by
+ * name — which is exactly what a verification run wants, since it shares no code
+ * with the generated kernels and is the tape interpreter the others are checked
+ * against.
  */
 public final class CpuAadEngine implements AadEngine {
 
