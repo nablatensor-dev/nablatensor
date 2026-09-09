@@ -62,6 +62,13 @@ The `AadEngines.available(...)` filter above is fp64, so `vulkan` and `cuda`
 | `simd` | 5.0×10⁶ | ~34 min |
 | `cpu-jit` | 1.8×10⁶ | ~1.5 h |
 
+`cuda` has no device on this box. On a Colab **Tesla T4**,
+[`notebooks/engine-benchmark.ipynb`](../../notebooks/engine-benchmark.ipynb) — a
+heavier workload (a 4057-node barrier tape, not this 1536-node Asian) — runs
+`cuda` at `1.3×10⁷` value+5-Greeks scenarios/s (≈ `1.4×` the same T4's `opencl`),
+i.e. in the `vulkan` / `rocm` tier. Not directly comparable to the rows above;
+re-run the notebook on a GPU runtime for the exact figure.
+
 ```bash
 # the fp32 / GPU matrix + the 1e10 projection
 MAVEN_OPTS="--add-modules jdk.incubator.vector" mvn -o -q -pl nablatensor-examples exec:java \
