@@ -14,6 +14,7 @@ TODO.txt
 HOW-TO-RELEASE.md
 docs-internal
 docs-reg
+CLAUDE.local.md
 
 # container/ demo runner: fetched static crun + the isolated podman store
 container/.bin/
