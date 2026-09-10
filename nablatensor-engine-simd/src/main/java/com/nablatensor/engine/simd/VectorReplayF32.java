@@ -16,6 +16,7 @@
 package com.nablatensor.engine.simd;
 
 import com.nablatensor.engine.AadOptions;
+import com.nablatensor.engine.AadTotals;
 import com.nablatensor.engine.AadTape;
 
 import jdk.incubator.vector.FloatVector;
@@ -57,7 +58,7 @@ final class VectorReplayF32 extends BatchedReplay {
   }
 
   @Override
-  Accumulator runRange(long pathFrom, long count, long seed, Draws crn) {
+  AadTotals runRange(long pathFrom, long count, long seed, Draws crn) {
     final int n = ops.length;
     final float[] v = new float[n * BATCH];
     final float[] d = new float[n * BATCH];
@@ -65,7 +66,7 @@ final class VectorReplayF32 extends BatchedReplay {
     final double[] in = inputs;
     final boolean adjoints = options.adjoints();
     final VectorPhilox rng = new VectorPhilox();
-    final Accumulator acc = new Accumulator(inputRow.length);
+    final AadTotals acc = newTotals();
 
     for (long done = 0; done < count; done += BATCH) {
       final int alive = (int) Math.min(BATCH, count - done);
@@ -105,7 +106,9 @@ final class VectorReplayF32 extends BatchedReplay {
         }
       }
       for (int p = 0; p < alive; p++) {
-        acc.value += v[outRow + p];
+        double y = v[outRow + p];
+        acc.value[0] += y;
+        acc.sumsq[0] += y * y;
       }
 
       if (!adjoints) {
@@ -137,13 +140,14 @@ final class VectorReplayF32 extends BatchedReplay {
           case MIN -> revMin(v, d, a, b, row);
         }
       }
-      for (int j = 0; j < acc.gradient.length; j++) {
+      final double[] gradient = acc.gradient[0];
+      for (int j = 0; j < gradient.length; j++) {
         final int from = inputRow[j];
         double sum = 0.0;
         for (int p = 0; p < alive; p++) {
           sum += d[from + p];
         }
-        acc.gradient[j] += sum;
+        gradient[j] += sum;
       }
     }
     return acc;

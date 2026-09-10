@@ -19,33 +19,31 @@ import com.nablatensor.engine.AadOp;
 import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadResult;
 import com.nablatensor.engine.AadTape;
-import com.nablatensor.engine.AbstractAadExecutable;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import com.nablatensor.engine.AadTotals;
+import com.nablatensor.engine.FlatTape;
+import com.nablatensor.engine.HostAadExecutable;
 
 /**
- * Tape flattening, batch splitting and worker threads shared by the two typed
+ * The batch layout and the common-random-numbers cache shared by the two typed
  * sweeps.
  *
  * <p>Scenarios are the parallel axis at every level: SIMD lanes within a
  * vector, {@link SimdSupport#BATCH} scenarios within a sweep, and a contiguous
- * path range per worker thread. Splitting on scenarios rather than on the tape
- * is forced by the tape being a chain of dependent scalar operations, and it is
- * also what keeps the workers independent — each owns its own value and adjoint
- * arrays and shares nothing until the final sum.
+ * path range per worker thread — the last of which is
+ * {@link HostAadExecutable}'s job. Splitting on scenarios rather than on the
+ * tape is forced by the tape being a chain of dependent scalar operations, and
+ * it is also what keeps the workers independent: each owns its own value and
+ * adjoint arrays and shares nothing until the final sum.
+ *
+ * <p>What this class adds over the shared base is the node-to-row remapping —
+ * every sweep keeps {@link #BATCH} scenarios side by side per node, so it
+ * indexes rows rather than nodes — and the draw cache.
  */
-abstract class BatchedReplay extends AbstractAadExecutable {
+abstract class BatchedReplay extends HostAadExecutable {
 
   static final int BATCH = SimdSupport.BATCH;
 
-  // Flattened once so the sweeps read plain arrays rather than calling through
-  // the tape for every node of every batch.
+  // The flat tape, plus the row indices the sweeps address it by.
   final AadOp[] ops;
   final int[] rowA;
   final int[] rowB;
@@ -54,9 +52,6 @@ abstract class BatchedReplay extends AbstractAadExecutable {
   final boolean[] active;
   final int[] inputRow;
   final int outRow;
-
-  private final int threads;
-  private final ExecutorService pool;
 
   /**
    * {@code -Dnablatensor.crn=on}: common-random-numbers caching. The first
@@ -103,48 +98,25 @@ abstract class BatchedReplay extends AbstractAadExecutable {
   }
 
   BatchedReplay(AadTape tape, AadOptions options) {
-    super(tape, options);
+    super(tape, options, "aad-simd");
     this.randCount = tape.randCount();
-    this.threads = Math.max(1, options.resolvedThreads());
-    this.pool = threads > 1
-        ? Executors.newFixedThreadPool(threads, runnable -> {
-            Thread thread = new Thread(runnable, "aad-simd");
-            thread.setDaemon(true);
-            return thread;
-          })
-        : null;
-
-    int n = tape.size();
-    this.ops = new AadOp[n];
-    this.rowA = new int[n];
-    this.rowB = new int[n];
-    this.argA = new int[n];
-    this.constants = new double[n];
-    this.active = new boolean[n];
-    for (int i = 0; i < n; i++) {
-      ops[i] = tape.op(i);
-      argA[i] = tape.argA(i);
-      rowA[i] = tape.argA(i) * BATCH;
-      rowB[i] = tape.argB(i) * BATCH;
-      constants[i] = tape.constant(i);
-      active[i] = tape.isActive(i);
-    }
-    this.inputRow = new int[tape.inputCount()];
-    for (int j = 0; j < inputRow.length; j++) {
-      inputRow[j] = tape.inputNode(j) * BATCH;
-    }
-    this.outRow = tape.outputNode() * BATCH;
+    FlatTape flat = new FlatTape(tape);
+    this.ops = flat.op;
+    this.argA = flat.argA;
+    this.constants = flat.constant;
+    this.active = flat.active;
+    this.rowA = FlatTape.scaled(flat.argA, BATCH);
+    this.rowB = FlatTape.scaled(flat.argB, BATCH);
+    this.inputRow = FlatTape.scaled(flat.inputNode, BATCH);
+    this.outRow = flat.outputNode[0] * BATCH;
   }
 
   /** Evaluates a contiguous path range on the calling thread. */
-  abstract Accumulator runRange(long pathFrom, long count, long seed, Draws draws);
+  abstract AadTotals runRange(long pathFrom, long count, long seed, Draws draws);
 
   @Override
   public final AadResult replay(long paths, long pathOffset, long seed) {
-    checkOpen();
-    if (paths <= 0) {
-      throw new IllegalArgumentException("paths must be positive");
-    }
+    long start = beginReplay(paths);
 
     Draws draws = Draws.GENERATE;
     long padded = ((paths + BATCH - 1) / BATCH) * BATCH;
@@ -167,77 +139,15 @@ abstract class BatchedReplay extends AbstractAadExecutable {
       }
     }
 
-    long start = System.nanoTime();
+    // Whole batches per worker, so only the last worker can get a partial one.
     final Draws d = draws;
-    Accumulator total = threads == 1
-        ? runRange(pathOffset, paths, seed, d)
-        : runParallel(paths, pathOffset, seed, d);
+    AadTotals total = runRanges(paths, pathOffset, BATCH,
+        (from, count) -> runRange(from, count, seed, d));
     double seconds = (System.nanoTime() - start) / 1e9;
 
     if (draws.write) {
       cacheFilled = true;
     }
-
-    double[] gradients = new double[tape.inputCount()];
-    for (int j = 0; j < gradients.length; j++) {
-      gradients[j] = total.gradient[j] / paths;
-    }
-    return new AadResult(total.value / paths, gradients, tape.inputNames(), paths, seconds);
-  }
-
-  private Accumulator runParallel(long paths, long pathOffset, long seed, Draws draws) {
-    // Whole batches per worker, so only the last worker can have a partial one.
-    long batches = (paths + BATCH - 1) / BATCH;
-    long each = batches / threads;
-    long extra = batches % threads;
-    List<Callable<Accumulator>> tasks = new ArrayList<>(threads);
-    long cursor = pathOffset;
-    long remaining = paths;
-    for (int t = 0; t < threads && remaining > 0; t++) {
-      long count = Math.min((each + (t < extra ? 1 : 0)) * BATCH, remaining);
-      long from = cursor;
-      cursor += count;
-      remaining -= count;
-      if (count > 0) {
-        tasks.add(() -> runRange(from, count, seed, draws));
-      }
-    }
-    Accumulator total = new Accumulator(tape.inputCount());
-    try {
-      for (Future<Accumulator> future : pool.invokeAll(tasks)) {
-        total.add(future.get());
-      }
-    } catch (InterruptedException interrupted) {
-      Thread.currentThread().interrupt();
-      throw new IllegalStateException("replay interrupted", interrupted);
-    } catch (ExecutionException failure) {
-      Throwable cause = failure.getCause();
-      throw cause instanceof RuntimeException runtime ? runtime : new IllegalStateException(cause);
-    }
-    return total;
-  }
-
-  @Override
-  public void close() {
-    super.close();
-    if (pool != null) {
-      pool.shutdownNow();
-    }
-  }
-
-  static final class Accumulator {
-    double value;
-    final double[] gradient;
-
-    Accumulator(int inputs) {
-      this.gradient = new double[inputs];
-    }
-
-    void add(Accumulator other) {
-      value += other.value;
-      for (int j = 0; j < gradient.length; j++) {
-        gradient[j] += other.gradient[j];
-      }
-    }
+    return total.toResult(tape, paths, seconds);
   }
 }

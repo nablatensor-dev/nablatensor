@@ -26,6 +26,10 @@ import com.nablatensor.engine.AadTape;
  * name — which is exactly what a verification run wants, since it shares no code
  * with the generated kernels and is the tape interpreter the others are checked
  * against.
+ *
+ * <p>It answers in whichever precision it is asked for, so it is the oracle for
+ * an fp32 accelerator run as well as an fp64 one; see {@link ScalarReplay} for
+ * what single precision means for an interpreter.
  */
 public final class CpuAadEngine implements AadEngine {
 
@@ -46,19 +50,17 @@ public final class CpuAadEngine implements AadEngine {
 
   @Override
   public boolean supports(AadOptions options) {
-    return options.precision() == AadOptions.Precision.FLOAT64;
+    return true;
   }
 
   @Override
   public String describe() {
-    return "scalar JVM · " + Runtime.getRuntime().availableProcessors() + " processors · fp64";
+    return "scalar JVM · " + Runtime.getRuntime().availableProcessors()
+        + " processors · fp32+fp64";
   }
 
   @Override
   public AadExecutable compile(AadTape tape, AadOptions options) {
-    if (!supports(options)) {
-      throw new IllegalArgumentException("the scalar JVM engine is double-precision only");
-    }
     return new ScalarReplay(tape, options);
   }
 }

@@ -48,6 +48,17 @@ public interface AadEngine {
   AadExecutable compile(AadTape tape, AadOptions options);
 
   /**
+   * The two limits every generated-kernel backend currently shares: one stream
+   * of standard normals, and one recorded output. Called at the top of
+   * {@link #compile} so that automatic selection falls back to an engine that
+   * can take the tape rather than failing the run.
+   */
+  default void requireSupportedTape(AadTape tape) {
+    requireBasicRandom(tape, name());
+    requireSingleOutput(tape, name());
+  }
+
+  /**
    * Guard for backends that only implement a single stream of standard-normal
    * draws: throws (so automatic selection falls back to one that can) when the
    * tape uses {@code rec.randu()} or a named {@code rec.stream(...)}. A backend

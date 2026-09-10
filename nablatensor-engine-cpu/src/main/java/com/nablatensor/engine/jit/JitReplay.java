@@ -18,18 +18,12 @@ package com.nablatensor.engine.jit;
 import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadResult;
 import com.nablatensor.engine.AadTape;
-import com.nablatensor.engine.AbstractAadExecutable;
+import com.nablatensor.engine.AadTotals;
+import com.nablatensor.engine.HostAadExecutable;
 import com.nablatensor.engine.JitOptimizations;
 import com.nablatensor.engine.JitOptimizations.Category;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * Replay backed by a bytecode kernel generated for this exact tape. One path is
@@ -42,12 +36,11 @@ import java.util.concurrent.Future;
  * {@code float} per {@link AadOptions#precision()}, while the per-scenario value
  * and gradient totals are always accumulated in {@code double}.
  */
-final class JitReplay extends AbstractAadExecutable {
+final class JitReplay extends HostAadExecutable {
 
   private final boolean f32;
   private final JitKernel kernel64;
   private final JitKernelF32 kernel32;
-  private final int nodes;
   private final int vLen;
   private final int randCount;   // flat draw-buffer size = tape.randTotal()
   private final int[] streamNormal;
@@ -95,11 +88,8 @@ final class JitReplay extends AbstractAadExecutable {
   private long cachePaths = -1;
   private boolean cacheFilled;
 
-  private final int threads;
-  private final ExecutorService pool;
-
   JitReplay(AadTape tape, AadOptions options) {
-    super(tape, options);
+    super(tape, options, "aad-jit");
     this.f32 = options.precision() == AadOptions.Precision.FLOAT32;
     this.segNodes = Math.max(8, Integer.getInteger("nablatensor.jit.seg", 128));
 
@@ -131,7 +121,6 @@ final class JitReplay extends AbstractAadExecutable {
           + " roll=" + roll + " crn=" + crn + " fastMath=" + fastMath);
     }
 
-    this.nodes = tape.size();
     this.vLen = KernelGenerator.vLen(tape, adj, roll);
     this.randCount = tape.randTotal();
     int nStreams = tape.randStreamCount();
@@ -151,15 +140,6 @@ final class JitReplay extends AbstractAadExecutable {
     for (int j = 0; j < inputNode.length; j++) {
       inputNode[j] = KernelGenerator.mapNode(tape, adj, roll, tape.inputNode(j));
     }
-
-    this.threads = Math.max(1, options.resolvedThreads());
-    this.pool = threads > 1
-        ? Executors.newFixedThreadPool(threads, runnable -> {
-            Thread thread = new Thread(runnable, "aad-jit");
-            thread.setDaemon(true);
-            return thread;
-          })
-        : null;
   }
 
   @Override
@@ -178,10 +158,7 @@ final class JitReplay extends AbstractAadExecutable {
 
   @Override
   public AadResult replay(long paths, long pathOffset, long seed) {
-    checkOpen();
-    if (paths <= 0) {
-      throw new IllegalArgumentException("paths must be positive");
-    }
+    long start = beginReplay(paths);
 
     boolean useCrn = crn && randCount > 0 && (long) paths * randCount <= CRN_CAP;
     boolean cacheRead = false;
@@ -207,11 +184,10 @@ final class JitReplay extends AbstractAadExecutable {
     }
     final boolean useCache = cacheRead || cacheWrite;
     final boolean write = cacheWrite;
+    final long origin = pathOffset;
 
-    long start = System.nanoTime();
-    Accumulator total = threads == 1
-        ? runRange(pathOffset, paths, seed, useCache, pathOffset, write)
-        : runParallel(paths, pathOffset, seed, useCache, write);
+    AadTotals total = runRanges(paths, pathOffset, 1L,
+        (from, count) -> runRange(from, count, seed, useCache, origin, write));
     double seconds = (System.nanoTime() - start) / 1e9;
 
     if (cacheWrite) {
@@ -221,42 +197,14 @@ final class JitReplay extends AbstractAadExecutable {
     return total.toResult(tape, paths, seconds);
   }
 
-  private Accumulator runParallel(long paths, long pathOffset, long seed, boolean useCache, boolean write) {
-    List<Callable<Accumulator>> tasks = new ArrayList<>(threads);
-    long each = paths / threads;
-    long extra = paths % threads;
-    long cursor = pathOffset;
-    for (int t = 0; t < threads; t++) {
-      long count = each + (t < extra ? 1 : 0);
-      long from = cursor;
-      cursor += count;
-      if (count > 0) {
-        tasks.add(() -> runRange(from, count, seed, useCache, pathOffset, write));
-      }
-    }
-    Accumulator total = new Accumulator(outputNode.length, inputNode.length);
-    try {
-      for (Future<Accumulator> future : pool.invokeAll(tasks)) {
-        total.add(future.get());
-      }
-    } catch (InterruptedException interrupted) {
-      Thread.currentThread().interrupt();
-      throw new IllegalStateException("replay interrupted", interrupted);
-    } catch (ExecutionException failure) {
-      Throwable cause = failure.getCause();
-      throw cause instanceof RuntimeException runtime ? runtime : new IllegalStateException(cause);
-    }
-    return total;
-  }
-
-  private Accumulator runRange(long pathFrom, long count, long seed,
+  private AadTotals runRange(long pathFrom, long count, long seed,
       boolean useCache, long cacheOrigin, boolean write) {
     return f32
         ? runRangeF32(pathFrom, count, seed, useCache, cacheOrigin, write)
         : runRangeF64(pathFrom, count, seed, useCache, cacheOrigin, write);
   }
 
-  private Accumulator runRangeF64(long pathFrom, long count, long seed,
+  private AadTotals runRangeF64(long pathFrom, long count, long seed,
       boolean useCache, long cacheOrigin, boolean write) {
     final double[] v = new double[vLen];
     final double[] d = options.adjoints() ? new double[vLen] : null;
@@ -267,7 +215,7 @@ final class JitReplay extends AbstractAadExecutable {
     final boolean read = useCache && !write;
     final int base = useCache ? Math.toIntExact((pathFrom - cacheOrigin) * randCount) : 0;
     final int nOut = outputNode.length;
-    final Accumulator acc = new Accumulator(nOut, inputNode.length);
+    final AadTotals acc = newTotals();
 
     for (long path = pathFrom; path < pathFrom + count; path++) {
       int slot = base + Math.toIntExact((path - pathFrom) * randCount);
@@ -301,7 +249,7 @@ final class JitReplay extends AbstractAadExecutable {
     return acc;
   }
 
-  private Accumulator runRangeF32(long pathFrom, long count, long seed,
+  private AadTotals runRangeF32(long pathFrom, long count, long seed,
       boolean useCache, long cacheOrigin, boolean write) {
     final float[] v = new float[vLen];
     final float[] d = options.adjoints() ? new float[vLen] : null;
@@ -314,7 +262,7 @@ final class JitReplay extends AbstractAadExecutable {
     final boolean read = useCache && !write;
     final int base = useCache ? Math.toIntExact((pathFrom - cacheOrigin) * randCount) : 0;
     final int nOut = outputNode.length;
-    final Accumulator acc = new Accumulator(nOut, inputNode.length);
+    final AadTotals acc = newTotals();
 
     for (int j = 0; j < in.length; j++) {
       inF[j] = (float) in[j];
@@ -355,65 +303,11 @@ final class JitReplay extends AbstractAadExecutable {
     return acc;
   }
 
-  @Override
-  public void close() {
-    super.close();
-    if (pool != null) {
-      pool.shutdownNow();
-    }
-  }
-
   /** Fills the flat per-path draw buffer: each stream's normals then its uniforms. */
   private void fillDraws(double[] draws, long path, long seed) {
     for (int s = 0; s < streamOffset.length; s++) {
       JitPhilox.fillNormals(draws, streamOffset[s], streamNormal[s], path, seed, s, fastMath);
       JitPhilox.fillUniforms(draws, streamOffset[s] + streamNormal[s], streamUniform[s], path, seed, s);
-    }
-  }
-
-  private static final class Accumulator {
-    final double[] value;         // per output: sum over paths of the output value
-    final double[] sumsq;        // per output: sum over paths of value^2
-    final double[][] gradient;   // [output][input]: sum over paths of the adjoint
-
-    Accumulator(int outputs, int inputs) {
-      this.value = new double[outputs];
-      this.sumsq = new double[outputs];
-      this.gradient = new double[outputs][inputs];
-    }
-
-    void add(Accumulator other) {
-      for (int o = 0; o < value.length; o++) {
-        value[o] += other.value[o];
-        sumsq[o] += other.sumsq[o];
-        double[] row = gradient[o];
-        double[] orow = other.gradient[o];
-        for (int j = 0; j < row.length; j++) {
-          row[j] += orow[j];
-        }
-      }
-    }
-
-    AadResult toResult(AadTape tape, long paths, double seconds) {
-      int no = value.length;
-      double[] means = new double[no];
-      double[] stderr = new double[no];
-      double[][] grads = new double[no][];
-      for (int o = 0; o < no; o++) {
-        means[o] = value[o] / paths;
-        if (paths > 1) {
-          double var = (sumsq[o] - paths * means[o] * means[o]) / (paths - 1);
-          stderr[o] = Math.sqrt(Math.max(0.0, var) / paths);
-        } else {
-          stderr[o] = Double.NaN;
-        }
-        double[] row = gradient[o].clone();
-        for (int j = 0; j < row.length; j++) {
-          row[j] /= paths;
-        }
-        grads[o] = row;
-      }
-      return AadResult.of(tape.outputNames(), means, stderr, grads, tape.inputNames(), paths, seconds);
     }
   }
 }

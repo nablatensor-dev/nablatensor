@@ -41,9 +41,9 @@ Asian call · 252 fixings · 2,000,000 scenarios · seed 42 · fp64
 
 engine              price        delta         vega         scen/s  runs on
 rocm             5.301676     0.561932      22.3894       2.16e+06  ROCm/HIP · AMD Radeon Graphics · gfx1103 · HIPRTC
-simd             5.301676     0.561932      22.3894       3.81e+06  Vector API · S_512_BIT, 8x fp64 / 16x fp32 per vector, batch 32
-cpu              5.301676     0.561932      22.3894       9.66e+05  scalar JVM · 16 processors · fp64
-cpu-jit          5.301676     0.561932      22.3894       1.77e+06  generated straight-line bytecode kernel · segmented for C2
+simd             5.301676     0.561932      22.3894       3.87e+06  Vector API · S_512_BIT, 8x fp64 / 16x fp32 per vector, batch 32 · 16 processors · fp32+fp64
+cpu              5.301676     0.561932      22.3894       9.75e+05  scalar JVM · 16 processors · fp32+fp64
+cpu-jit          5.301676     0.561932      22.3894       1.76e+06  generated straight-line bytecode kernel · RNG prefilled · segmented for C2 · fp32+fp64
 ```
 
 Every engine agrees on price and Greeks to the digits shown; `cpu-jit`

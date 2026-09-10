@@ -29,7 +29,7 @@ import com.nablatensor.engine.AadTape;
  * jdk.incubator.vector}. Were the types named here, merely enumerating the
  * available engines on a JVM without that flag would fail to link this class.
  * Everything that touches the API therefore lives in {@link SimdSupport} and
- * {@link VectorReplay}, which are only resolved after {@link #isAvailable()}
+ * the two typed sweeps, which are only resolved after {@link #isAvailable()}
  * has confirmed the module is present.
  */
 public final class SimdAadEngine implements AadEngine {
@@ -72,8 +72,7 @@ public final class SimdAadEngine implements AadEngine {
 
   @Override
   public AadExecutable compile(AadTape tape, AadOptions options) {
-    AadEngine.requireBasicRandom(tape, "simd");
-    AadEngine.requireSingleOutput(tape, "simd");
+    requireSupportedTape(tape);
     if (!isAvailable()) {
       throw new IllegalStateException(
           "the Vector API is not on the module path; start the JVM with "

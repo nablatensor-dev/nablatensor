@@ -18,7 +18,7 @@ package com.nablatensor.engine.vulkan;
 import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadResult;
 import com.nablatensor.engine.AadTape;
-import com.nablatensor.engine.AbstractAadExecutable;
+import com.nablatensor.engine.GpuAadExecutable;
 import com.nablatensor.backend.vulkan.VulkanCompute;
 
 import java.util.Map;
@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * rather than baked-in constants, so {@link #setInput} re-prices a shifted
  * market with no re-record and no re-compile.
  */
-public final class VulkanAadKernel extends AbstractAadExecutable {
+public final class VulkanAadKernel extends GpuAadExecutable {
 
   private static final int MAX_GROUPS = Integer.getInteger("nablatensor.vulkan.groups", 2048);
 
@@ -43,8 +43,6 @@ public final class VulkanAadKernel extends AbstractAadExecutable {
   private static final Map<String, String> PIPELINES = new ConcurrentHashMap<>();
 
   private final String kernelName;
-  private final int channels;
-  private final double compileSeconds;
 
   private long inputBuffer;
   private long inputMemory;
@@ -54,10 +52,8 @@ public final class VulkanAadKernel extends AbstractAadExecutable {
 
   private VulkanAadKernel(AadTape tape, AadOptions options, String kernelName,
                            double compileSeconds) {
-    super(tape, options);
+    super(tape, options, "vulkan", compileSeconds);
     this.kernelName = kernelName;
-    this.channels = options.adjoints() ? tape.inputCount() + 1 : 1;
-    this.compileSeconds = compileSeconds;
     long[] in = VulkanCompute.alloc((long) Math.max(1, tape.inputCount()) * Float.BYTES);
     this.inputBuffer = in[0];
     this.inputMemory = in[1];
@@ -100,16 +96,6 @@ public final class VulkanAadKernel extends AbstractAadExecutable {
     return new VulkanAadKernel(tape, options, name, seconds);
   }
 
-  @Override
-  public String engineName() {
-    return "vulkan";
-  }
-
-  @Override
-  public double compileSeconds() {
-    return compileSeconds;
-  }
-
   /**
    * RADV on a shared-memory APU has no display-driver watchdog as aggressive as
    * NVIDIA's TDR, but the kernel DRM scheduler still has a hang check in the
@@ -117,8 +103,7 @@ public final class VulkanAadKernel extends AbstractAadExecutable {
    */
   @Override
   protected double defaultMaxChunkSeconds() {
-    String override = System.getProperty("nablatensor.maxLaunchSeconds");
-    return override != null ? Double.parseDouble(override) : 1.0;
+    return maxLaunchSeconds(1.0);
   }
 
   @Override
@@ -138,8 +123,7 @@ public final class VulkanAadKernel extends AbstractAadExecutable {
     int seedHi = (int) (seed >>> 32);
     long[] buffers = {inputBuffer, partialBuffer};
 
-    double value = 0.0;
-    double[] gradients = new double[tape.inputCount()];
+    double[] sums = newSums();
 
     long start = System.nanoTime();
     long done = 0;
@@ -152,22 +136,12 @@ public final class VulkanAadKernel extends AbstractAadExecutable {
 
       VulkanCompute.dispatch(kernelName, groups, buffers, push);
 
-      float[] partials = VulkanCompute.readFloats(partialMemory, groups * channels);
-      for (int g = 0; g < groups; g++) {
-        value += partials[g * channels];
-        for (int c = 1; c < channels; c++) {
-          gradients[c - 1] += partials[g * channels + c];
-        }
-      }
+      accumulate(VulkanCompute.readFloats(partialMemory, groups * channels), groups, sums);
       done += sub;
     }
     double seconds = (System.nanoTime() - start) / 1e9;
 
-    value /= paths;
-    for (int j = 0; j < gradients.length; j++) {
-      gradients[j] /= paths;
-    }
-    return new AadResult(value, gradients, tape.inputNames(), paths, seconds);
+    return finish(sums, paths, seconds);
   }
 
   @Override

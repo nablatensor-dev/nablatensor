@@ -61,8 +61,7 @@ public final class VulkanAadEngine implements AadEngine {
 
   @Override
   public AadExecutable compile(AadTape tape, AadOptions options) {
-    AadEngine.requireBasicRandom(tape, "vulkan");
-    AadEngine.requireSingleOutput(tape, "vulkan");
+    requireSupportedTape(tape);
     return VulkanAadKernel.compile(tape, options);
   }
 }

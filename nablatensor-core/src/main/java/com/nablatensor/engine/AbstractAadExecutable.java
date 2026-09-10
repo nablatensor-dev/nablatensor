@@ -26,6 +26,10 @@ import com.nablatensor.annotation.Internal;
  * display will have the driver kill an overlong kernel, and a CPU engine that
  * runs for minutes without returning cannot report progress or be interrupted.
  *
+ * <p>Most backends extend one of the two bases below this rather than this
+ * class itself: {@link HostAadExecutable} for a CPU replay and
+ * {@link GpuAadExecutable} for an accelerator.
+ *
  * <p>Public only so the backend modules can extend it; not part of the supported
  * API. Implement {@link AadEngine} / {@link AadExecutable} directly instead.
  */

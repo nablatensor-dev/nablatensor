@@ -27,9 +27,19 @@
  * {@link java.util.ServiceLoader}. {@link com.nablatensor.engine.AadEngines}
  * selects among them.
  *
+ * <p>A backend rarely starts from a bare {@code AadExecutable}. There are two
+ * bases, one per shape of parallelism: {@link com.nablatensor.engine.HostAadExecutable}
+ * for a CPU replay, which brings a worker pool and the split of a path range
+ * across it, and {@link com.nablatensor.engine.GpuAadExecutable}
+ * for an accelerator, which brings the per-work-group partial layout and its
+ * reduction — with {@link com.nablatensor.engine.DeviceAadExecutable} covering
+ * every runtime that fits the {@link com.nablatensor.engine.DeviceRuntime}
+ * surface outright.
+ *
  * <p>Types annotated {@link com.nablatensor.annotation.Internal} (e.g.
- * {@code AbstractAadExecutable}, {@code CudaAadCodegen}, {@code AadCheckpointPlan})
- * are public only for cross-module reach and may change in any release. See
+ * {@code AbstractAadExecutable}, {@code HostAadExecutable}, {@code GpuAadExecutable},
+ * {@code CudaAadCodegen}, {@code AadCheckpointPlan}) are public only for
+ * cross-module reach and may change in any release. See
  * {@code docs/api-stability.md}.
  */
 package com.nablatensor.engine;

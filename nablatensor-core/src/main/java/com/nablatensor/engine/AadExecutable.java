@@ -30,7 +30,9 @@ package com.nablatensor.engine;
  * {@link #measuredPathsPerSecond}, {@link #maxChunkSeconds}) and
  * {@link #compileSeconds} have working defaults that split a large replay into
  * budgeted dispatches; {@link AbstractAadExecutable} is an optional base that
- * provides the same with its own bookkeeping plus tape flattening.
+ * provides the same with its own bookkeeping, and below it
+ * {@link HostAadExecutable} and {@link GpuAadExecutable} carry what a CPU
+ * replay and an accelerator replay respectively have in common.
  */
 public interface AadExecutable extends AutoCloseable {
 

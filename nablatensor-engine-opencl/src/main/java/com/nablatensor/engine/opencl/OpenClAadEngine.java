@@ -23,6 +23,7 @@ import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadTape;
 import com.nablatensor.engine.CudaAadCodegen;
 import com.nablatensor.engine.DeviceAadExecutable;
+import com.nablatensor.engine.GpuAadExecutable;
 
 /**
  * OpenCL replay engine: the recorded tape becomes a fused forward+adjoint
@@ -81,29 +82,20 @@ public final class OpenClAadEngine implements AadEngine {
 
   @Override
   public AadExecutable compile(AadTape tape, AadOptions options) {
-    AadEngine.requireBasicRandom(tape, "opencl");
-    AadEngine.requireSingleOutput(tape, "opencl");
+    requireSupportedTape(tape);
     if (!OpenClCompute.isAvailable() || !OpenClCompute.supportsFp64()) {
       throw new IllegalStateException(
           "no OpenCL device with cl_khr_fp64 available for the AAD replay kernel");
     }
+    // The default OpenCL device is usually a GPU that also drives the display,
+    // so a dispatch stays well below the seconds-range hang check.
     return DeviceAadExecutable.compile(tape, options, "opencl", OpenClDeviceRuntime.INSTANCE,
-        OpenClAadEngine::generateSource, maxLaunchSeconds());
+        OpenClAadEngine::generateSource, GpuAadExecutable.maxLaunchSeconds(0.5));
   }
 
   private static String generateSource(AadTape tape, AadOptions options, AadCheckpointPlan plan) {
     return plan != null
         ? OpenClAadCodegen.generateCheckpointed(tape, options, plan)
         : OpenClAadCodegen.generate(tape, options);
-  }
-
-  /**
-   * The default OpenCL device is usually a GPU that also drives the display, so
-   * a dispatch is kept well below the seconds-range hang check. Override with
-   * {@code -Dnablatensor.maxLaunchSeconds}.
-   */
-  private static double maxLaunchSeconds() {
-    String override = System.getProperty("nablatensor.maxLaunchSeconds");
-    return override != null ? Double.parseDouble(override) : 0.5;
   }
 }
