@@ -144,18 +144,17 @@ final class KernelGenerator {
     return plan(tape, adjoints, roll).nodeSlot[node];
   }
 
-  static Object generate(AadTape tape, boolean adjoints, boolean roll, int segNodes, boolean f32) {
+  /** The instantiated kernel plus the size of the class file it came from. */
+  record Generated(Object kernel, int classFileBytes) {}
+
+  static Generated generate(AadTape tape, boolean adjoints, boolean roll, int segNodes, boolean f32) {
     byte[] bytes = emit(plan(tape, adjoints, roll), adjoints, Math.max(8, segNodes), f32);
     try {
       Class<?> cls = MethodHandles.lookup().defineHiddenClass(bytes, true).lookupClass();
-      return cls.getConstructor().newInstance();
+      return new Generated(cls.getConstructor().newInstance(), bytes.length);
     } catch (Throwable failure) {
       throw new IllegalStateException("AAD kernel generation failed", failure);
     }
-  }
-
-  static int classFileSize(AadTape tape, boolean adjoints, boolean roll, int segNodes, boolean f32) {
-    return emit(plan(tape, adjoints, roll), adjoints, Math.max(8, segNodes), f32).length;
   }
 
   /** "flat" or e.g. "rolled(period=6 x250, tape=2)" — for diagnostics / the write-up. */

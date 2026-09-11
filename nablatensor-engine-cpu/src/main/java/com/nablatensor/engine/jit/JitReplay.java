@@ -108,10 +108,11 @@ final class JitReplay extends HostAadExecutable {
 
     boolean adj = options.adjoints();
     long start = System.nanoTime();
-    Object k = KernelGenerator.generate(tape, adj, roll, segNodes, f32);
+    KernelGenerator.Generated generated = KernelGenerator.generate(tape, adj, roll, segNodes, f32);
     this.compileSeconds = (System.nanoTime() - start) / 1e9;
-    this.classFileBytes = KernelGenerator.classFileSize(tape, adj, roll, segNodes, f32);
+    this.classFileBytes = generated.classFileBytes();
     this.scratchElems = KernelGenerator.scratchLen(tape, adj, roll);
+    Object k = generated.kernel();
     this.kernel64 = f32 ? null : (JitKernel) k;
     this.kernel32 = f32 ? (JitKernelF32) k : null;
     if (System.getProperty("nablatensor.jit.debug") != null) {
