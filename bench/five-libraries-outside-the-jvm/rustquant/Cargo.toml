@@ -1,0 +1,11 @@
+[package]
+name = "rustquant-ladder"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+RustQuant = "0.3.1"
+time = "0.3"
+
+[profile.release]
+opt-level = 3

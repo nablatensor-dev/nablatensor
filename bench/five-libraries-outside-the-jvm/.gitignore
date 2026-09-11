@@ -1,0 +1,3 @@
+venv/
+rustquant/target/
+__pycache__/
