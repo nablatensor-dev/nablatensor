@@ -144,8 +144,7 @@ public final class CudaAadCodegen {
     src.append("  const unsigned long long tid = (unsigned long long) blockIdx.x * blockDim.x + threadIdx.x;\n")
         .append("  const unsigned long long stride = (unsigned long long) blockDim.x * gridDim.x;\n")
         .append("  for (unsigned long long path = tid; path < nPaths; path += stride) {\n")
-        .append("    Rng rng; rng_init(rng, path + pathOffset, seed);\n")
-        .append("    const unsigned long long srow = tid * ").append(plan.slotsPerPath).append("ull;\n");
+        .append("    Rng rng; rng_init(rng, path + pathOffset, seed);\n");
     for (int i = 0; i < plan.nodes; i++) {
       if (plan.global[i]) {
         src.append("    real g_v").append(i).append(";\n");
@@ -157,8 +156,8 @@ public final class CudaAadCodegen {
       src.append("    {\n");
       if (s >= 1) {
         for (int node : plan.slice[s]) {
-          src.append("      real v").append(node).append(" = scratch[srow + ")
-              .append(plan.slotOf(s, node)).append("ull];\n");
+          src.append("      real v").append(node).append(" = scratch[(unsigned long long)(")
+              .append(plan.slotOf(s, node)).append(") * invocations + tid];\n");
         }
       }
       for (int i = bound[s]; i < bound[s + 1]; i++) {
@@ -167,8 +166,8 @@ public final class CudaAadCodegen {
       }
       if (s + 1 < segments) {
         for (int node : plan.slice[s + 1]) {
-          src.append("      scratch[srow + ").append(plan.slotOf(s + 1, node))
-              .append("ull] = v").append(node).append(";\n");
+          src.append("      scratch[(unsigned long long)(").append(plan.slotOf(s + 1, node))
+              .append(") * invocations + tid] = v").append(node).append(";\n");
         }
       }
       if (s == segments - 1) {
@@ -190,8 +189,8 @@ public final class CudaAadCodegen {
       src.append("    {\n");
       if (s >= 1) {
         for (int node : plan.slice[s]) {
-          src.append("      real v").append(node).append(" = scratch[srow + ")
-              .append(plan.slotOf(s, node)).append("ull];\n");
+          src.append("      real v").append(node).append(" = scratch[(unsigned long long)(")
+              .append(plan.slotOf(s, node)).append(") * invocations + tid];\n");
         }
       }
       for (int i = bound[s]; i < bound[s + 1]; i++) {
