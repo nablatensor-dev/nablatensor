@@ -27,3 +27,6 @@ __pycache__/
 .ipynb_checkpoints/
 notebooks/nablatensor-engine-benchmark.txt
 
+
+# local crash notes (SIMD C2 crash on the 0.1.0 jar)
+SIMD.crash.*
