@@ -33,7 +33,7 @@ import java.util.Locale;
  * <p>Run: {@code mvn -q -pl nablatensor-examples exec:java
  * -Dexec.mainClass=com.nablatensor.bench.CheckpointBench
  * -Dengine=cuda -Dsteps=252 -Dscenarios=1000000
- * -Dnablatensor.checkpoint.minNodes=100 -Dmode=checkpointed}
+ * -Dnablatensor.checkpoint.minNodes=100 -Dmode=checkpointed [-Dgreeks=false]}
  */
 public final class CheckpointBench {
 
@@ -49,17 +49,20 @@ public final class CheckpointBench {
     int repeat = Integer.getInteger("repeat", 25);
     String engine = System.getProperty("engine", "cuda");
     String mode = System.getProperty("mode", "unspecified");
+    boolean greeks = Boolean.parseBoolean(System.getProperty("greeks", "true"));
 
     System.out.printf(Locale.ROOT, "# NablaTensor checkpoint bench%n%n");
     System.out.printf(Locale.ROOT, "- machine   : JDK %s, %s %s%n",
         Runtime.version(), System.getProperty("os.name"), System.getProperty("os.arch"));
     System.out.printf(Locale.ROOT, "- engine    : %s   mode: %s%n", engine, mode);
-    System.out.printf(Locale.ROOT, "- product   : Asian call, %d fixings, fp32%n", steps);
+    System.out.printf(Locale.ROOT, "- product   : Asian call, %d fixings, fp32, %s%n",
+        steps, greeks ? "price + Greeks" : "price only");
     System.out.printf(Locale.ROOT, "- scenarios : %,d   seed : %d   warmup: %d   repeat: %d%n%n",
         scenarios, seed, warmup, repeat);
 
-    try (MonteCarlo<EquityMarket> mc = MonteCarlo.of(Products.asianCall())
-        .market(market).steps(steps).fp32().greeks().on(engine).build()) {
+    var builder = MonteCarlo.of(Products.asianCall()).market(market).steps(steps).fp32();
+    builder = greeks ? builder.greeks() : builder.priceOnly();
+    try (MonteCarlo<EquityMarket> mc = builder.on(engine).build()) {
       System.out.printf(Locale.ROOT, "nodes: %d%n", mc.nodes());
 
       for (int i = 0; i < warmup; i++) {
@@ -77,11 +80,12 @@ public final class CheckpointBench {
         }
       }
 
+      double delta = greeks ? baseline.greek(EquityMarket::spot) : Double.NaN;
       System.out.printf(Locale.ROOT,
           "RESULT engine=%s mode=%s nodes=%d settled_s=%.6f scen_per_s=%.3e "
               + "price=%.6f delta=%.6f bit_exact=%b%n",
           engine, mode, mc.nodes(), bestSeconds, scenarios / bestSeconds,
-          baseline.price(), baseline.greek(EquityMarket::spot), bitExact);
+          baseline.price(), delta, bitExact);
     }
   }
 }
