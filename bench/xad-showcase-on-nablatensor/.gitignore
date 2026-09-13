@@ -1,0 +1,4 @@
+venv-aadc/
+__pycache__/
+nablatensor/out/
+nablatensor/cp.txt
