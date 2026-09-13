@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant;
 
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.ops.Smooth;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -70,34 +70,34 @@ public final class BermudanLsm {
     double sRef = market.spot();
 
     MultiOutput.Measures measures = rec -> {
-      SDouble s0 = rec.input("S0", market.spot());
-      SDouble k = rec.input("K", market.strike());
-      SDouble vol = rec.input("sigma", market.vol());
-      SDouble r = rec.input("r", market.rate());
-      SDouble tt = rec.input("T", market.maturity());
+      ADouble s0 = rec.input("S0", market.spot());
+      ADouble k = rec.input("K", market.strike());
+      ADouble vol = rec.input("sigma", market.vol());
+      ADouble r = rec.input("r", market.rate());
+      ADouble tt = rec.input("T", market.maturity());
       GbmPath model = new GbmPath(rec, r, vol, totalSteps, tt);
-      SDouble stepDisc = r.neg().mul(tt).div(totalSteps).exp();
+      ADouble stepDisc = r.neg().mul(tt).div(totalSteps).exp();
 
-      SDouble discount = rec.constant(1.0);
-      SDouble alive = rec.constant(1.0);
-      SDouble value = rec.constant(0.0);
-      SDouble euro = rec.constant(0.0);
-      SDouble s = s0;
+      ADouble discount = rec.constant(1.0);
+      ADouble alive = rec.constant(1.0);
+      ADouble value = rec.constant(0.0);
+      ADouble euro = rec.constant(0.0);
+      ADouble s = s0;
       int stepIdx = 0;
       for (int d = 0; d < exerciseDates; d++) {
         for (int step = 0; step < stepsPerDate; step++) {
           s = model.step(s, rec.randn(), stepIdx++);
           discount = discount.mul(stepDisc);
         }
-        SDouble exercise = (type == OptionType.CALL ? s.sub(k) : k.sub(s)).max(0.0);
+        ADouble exercise = (type == OptionType.CALL ? s.sub(k) : k.sub(s)).max(0.0);
         boolean last = d == exerciseDates - 1;
-        SDouble exerciseNow;
+        ADouble exerciseNow;
         if (last) {
           exerciseNow = alive;
         } else {
-          SDouble x = s.div(sRef).log();
-          SDouble contEst = rec.constant(0.0);
-          SDouble xp = rec.constant(1.0);
+          ADouble x = s.div(sRef).log();
+          ADouble contEst = rec.constant(0.0);
+          ADouble xp = rec.constant(1.0);
           for (int j = 0; j < perDate; j++) {
             contEst = contEst.add(rec.input("cv:" + d + ":" + j, 0.0).mul(xp));
             xp = xp.mul(x);
@@ -110,7 +110,7 @@ public final class BermudanLsm {
           euro = exercise.mul(discount);
         }
       }
-      Map<String, SDouble> out = new LinkedHashMap<>();
+      Map<String, ADouble> out = new LinkedHashMap<>();
       out.put("price", value);
       out.put("european", euro);
       return out;

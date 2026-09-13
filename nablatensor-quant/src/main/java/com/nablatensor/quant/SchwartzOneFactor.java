@@ -17,7 +17,7 @@ package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.Nabla;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import java.util.function.BiConsumer;
 
 /**
@@ -39,9 +39,9 @@ import java.util.function.BiConsumer;
  */
 public class SchwartzOneFactor {
 
-  private final SDouble kappa;
-  private final SDouble level;
-  private final SDouble sigma;
+  private final ADouble kappa;
+  private final ADouble level;
+  private final ADouble sigma;
   private final double dt;
   private final double sqrtDt;
 
@@ -53,12 +53,12 @@ public class SchwartzOneFactor {
     this.sqrtDt = Math.sqrt(dt);
   }
 
-  public SDouble startLog(Nabla.Inputs<SchwartzMarket> in) {
+  public ADouble startLog(Nabla.Inputs<SchwartzMarket> in) {
     return in.of(SchwartzMarket::spot).log();
   }
 
   /** One Euler step on the log price. */
-  public SDouble step(SDouble logSpot, SDouble z) {
+  public ADouble step(ADouble logSpot, ADouble z) {
     return logSpot
         .add(kappa.mul(level.sub(logSpot)).mul(dt))
         .add(sigma.mul(sqrtDt).mul(z));
@@ -85,13 +85,13 @@ public class SchwartzOneFactor {
       OptionType type, double strike, double maturity, int steps) {
     return (rec, in) -> {
       SchwartzOneFactor m = new SchwartzOneFactor(in, maturity, steps);
-      SDouble logS = m.startLog(in);
+      ADouble logS = m.startLog(in);
       for (int t = 0; t < steps; t++) {
         logS = m.step(logS, rec.randn());
       }
-      SDouble s = logS.exp();
-      SDouble intrinsic = type == OptionType.CALL ? s.sub(strike).max(0.0) : rec.constant(strike).sub(s).max(0.0);
-      SDouble discount = in.of(SchwartzMarket::rate).neg().mul(maturity).exp();
+      ADouble s = logS.exp();
+      ADouble intrinsic = type == OptionType.CALL ? s.sub(strike).max(0.0) : rec.constant(strike).sub(s).max(0.0);
+      ADouble discount = in.of(SchwartzMarket::rate).neg().mul(maturity).exp();
       rec.output(intrinsic.mul(discount));
     };
   }

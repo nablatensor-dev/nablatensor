@@ -25,7 +25,7 @@ import com.nablatensor.engine.AadEngines;
 import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.Nabla;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -60,7 +60,7 @@ class RandomStreamsTest {
     // min over a batch: with 400k draws the smallest is well under 0.01 and never negative
     double minish = meanOnEngine("cpu", rec -> {
       rec.input("x", 0.0);
-      SDouble u = rec.randu();
+      ADouble u = rec.randu();
       rec.output(u.mul(u).mul(u).mul(u));   // E[U^4] = 1/5, and stays in [0,1)
     });
     assertEquals(0.2, minish, 5e-3, "E[U^4] ~ 1/5, so draws are in [0,1)");
@@ -69,14 +69,14 @@ class RandomStreamsTest {
   @Test
   void cpuAndJitAgreeBitForBitOnUniformsAndNamedStreams() {
     java.util.function.Consumer<AadRecorder> body = rec -> {
-      SDouble s0 = rec.input("S0", 100.0);
-      SDouble vol = rec.input("sigma", 0.2);
+      ADouble s0 = rec.input("S0", 100.0);
+      ADouble vol = rec.input("sigma", 0.2);
       AadRecorder.RandomStream jumps = rec.stream("jump-clock");
-      SDouble acc = s0;
+      ADouble acc = s0;
       for (int t = 0; t < 16; t++) {
-        SDouble z = rec.randn();                       // default stream, normal
-        SDouble u = jumps.randu();                     // named stream, uniform
-        SDouble jump = com.nablatensor.ops.Smooth.gt(rec, u, 0.97, 0.01);  // rare "jump"
+        ADouble z = rec.randn();                       // default stream, normal
+        ADouble u = jumps.randu();                     // named stream, uniform
+        ADouble jump = com.nablatensor.ops.Smooth.gt(rec, u, 0.97, 0.01);  // rare "jump"
         acc = acc.mul(vol.mul(z).mul(0.05).add(1.0)).add(jump.mul(2.0));
       }
       rec.output(acc);
@@ -91,8 +91,8 @@ class RandomStreamsTest {
     // E[ z_a * z_b ] over independent streams is ~0; over the same stream it would be ~1
     double crossDifferentStreams = meanOnEngine("cpu-jit", rec -> {
       rec.input("x", 0.0);
-      SDouble za = rec.stream("a").randn();
-      SDouble zb = rec.stream("b").randn();
+      ADouble za = rec.stream("a").randn();
+      ADouble zb = rec.stream("b").randn();
       rec.output(za.mul(zb));
     });
     assertEquals(0.0, crossDifferentStreams, 5e-3, "independent streams: E[z_a z_b] ~ 0");
@@ -123,9 +123,9 @@ class RandomStreamsTest {
   @Test
   void singleStreamNormalTapeIsUnaffected() {
     java.util.function.Consumer<AadRecorder> body = rec -> {
-      SDouble s0 = rec.input("S0", 100.0);
-      SDouble vol = rec.input("sigma", 0.2);
-      SDouble s = s0;
+      ADouble s0 = rec.input("S0", 100.0);
+      ADouble vol = rec.input("sigma", 0.2);
+      ADouble s = s0;
       for (int t = 0; t < 32; t++) {
         s = s.mul(vol.mul(rec.randn()).mul(0.03).add(1.0));
       }

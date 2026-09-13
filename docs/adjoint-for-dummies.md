@@ -147,7 +147,7 @@ SIMD, Vulkan, ROCm, CUDA — implements) are:
 the forward pass — the adjoint only flows through the branch that was taken.)
 
 The `(x+2)*x` example, written exactly the way application code writes it,
-against `SDouble` instead of `double`:
+against `ADouble` instead of `double`:
 
 ```java
 AadTape tape = AadRecorder.record(rec -> {
@@ -159,7 +159,7 @@ AadTape tape = AadRecorder.record(rec -> {
 ```
 
 `rec.input(...)` doesn't compute anything — it appends an `ADD`/`MUL`/`INPUT`
-*node* to `AadTape` and hands back a lightweight handle (`SDouble`) to that
+*node* to `AadTape` and hands back a lightweight handle (`ADouble`) to that
 node. `AadRecorder.record(...)` runs your lambda exactly once, with $x=3$, and
 what comes out the other end is the array of nodes you traced by hand above.
 Every replay after that — forward value, or forward-then-backward for
@@ -394,7 +394,7 @@ times you like.
 - [`docs/compare/vs-bump-and-revalue.md`](compare/vs-bump-and-revalue.md) —
   the same cost argument as Chapter 5, per real product.
 - [`docs/examples/vanilla-european.md`](examples/vanilla-european.md) — the
-  smallest complete worked example with real `SDouble` code.
+  smallest complete worked example with real `ADouble` code.
 - [`docs/examples/frtb-curvature-for-beginners.md`](examples/frtb-curvature-for-beginners.md)
   — a "for beginners" walkthrough one level up, using adjoint delta as one
   ingredient of a bigger regulatory calculation.

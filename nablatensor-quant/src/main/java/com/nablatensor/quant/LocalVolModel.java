@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 import com.nablatensor.ops.SpecialFn;
 import java.util.function.BiConsumer;
@@ -36,9 +36,9 @@ import java.util.function.BiConsumer;
  */
 public class LocalVolModel {
 
-  private final SDouble rate;
-  private final SDouble sigma0;
-  private final SDouble skew;
+  private final ADouble rate;
+  private final ADouble sigma0;
+  private final ADouble skew;
   private final double refSpot;
   private final double dt;
   private final double sqrtDt;
@@ -53,13 +53,13 @@ public class LocalVolModel {
   }
 
   /** Local volatility at the current spot. */
-  public SDouble localVol(SDouble spot) {
+  public ADouble localVol(ADouble spot) {
     return sigma0.mul(SpecialFn.pow(spot.div(refSpot), skew));
   }
 
-  public SDouble step(AadRecorder rec, SDouble spot, SDouble z) {
-    SDouble sig = localVol(spot);
-    SDouble drift = rate.sub(sig.mul(sig).mul(0.5)).mul(dt);
+  public ADouble step(AadRecorder rec, ADouble spot, ADouble z) {
+    ADouble sig = localVol(spot);
+    ADouble drift = rate.sub(sig.mul(sig).mul(0.5)).mul(dt);
     return spot.mul(drift.add(sig.mul(sqrtDt).mul(z)).exp());
   }
 
@@ -67,12 +67,12 @@ public class LocalVolModel {
       OptionType type, double maturity, int steps) {
     return (rec, in) -> {
       LocalVolModel m = new LocalVolModel(in, LocalVolMarket.REF_SPOT, maturity, steps);
-      SDouble s = in.of(LocalVolMarket::spot);
+      ADouble s = in.of(LocalVolMarket::spot);
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn());
       }
-      SDouble k = in.of(LocalVolMarket::strike);
-      SDouble intrinsic = type == OptionType.CALL ? s.sub(k).max(0.0) : k.sub(s).max(0.0);
+      ADouble k = in.of(LocalVolMarket::strike);
+      ADouble intrinsic = type == OptionType.CALL ? s.sub(k).max(0.0) : k.sub(s).max(0.0);
       rec.output(intrinsic.mul(in.of(LocalVolMarket::rate).neg().mul(maturity).exp()));
     };
   }

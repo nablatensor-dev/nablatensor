@@ -26,7 +26,7 @@ import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.AadResult;
 import com.nablatensor.engine.AadTape;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import java.util.EnumSet;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -46,15 +46,15 @@ class AadOpConformanceTest {
 
   /** A tape touching CONST, INPUT, RANDN, RANDU, ADD, SUB, MUL, DIV, NEG, EXP, LOG, SQRT, ABS, MAX, MIN. */
   private static void everyOp(AadRecorder rec) {
-    SDouble x = rec.input("x", 1.3);
-    SDouble y = rec.input("y", 0.7);
-    SDouble z = rec.randn();                 // RANDN
-    SDouble u = rec.randu();                 // RANDU (default stream)
-    SDouble a = x.add(y).sub(0.1);           // ADD, SUB, CONST
-    SDouble b = x.mul(y).div(x.add(0.5));    // MUL, DIV
-    SDouble c = a.neg().exp().add(b.abs());  // NEG, EXP, ABS
-    SDouble d = c.add(1.0).log().sqrt();     // LOG, SQRT
-    SDouble e = d.max(z.mul(0.01)).min(x.mul(2.0));  // MAX, MIN
+    ADouble x = rec.input("x", 1.3);
+    ADouble y = rec.input("y", 0.7);
+    ADouble z = rec.randn();                 // RANDN
+    ADouble u = rec.randu();                 // RANDU (default stream)
+    ADouble a = x.add(y).sub(0.1);           // ADD, SUB, CONST
+    ADouble b = x.mul(y).div(x.add(0.5));    // MUL, DIV
+    ADouble c = a.neg().exp().add(b.abs());  // NEG, EXP, ABS
+    ADouble d = c.add(1.0).log().sqrt();     // LOG, SQRT
+    ADouble e = d.max(z.mul(0.01)).min(x.mul(2.0));  // MAX, MIN
     rec.output(e.add(u.mul(y)));
   }
 

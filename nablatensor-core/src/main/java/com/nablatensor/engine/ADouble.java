@@ -20,92 +20,92 @@ package com.nablatensor.engine;
  * be against {@code double}; every operation appends a node to the tape of the
  * recorder that produced it instead of computing a number.
  */
-public final class SDouble {
+public final class ADouble {
 
   private final AadRecorder recorder;
   final int node;
 
-  SDouble(AadRecorder recorder, int node) {
+  ADouble(AadRecorder recorder, int node) {
     this.recorder = recorder;
     this.node = node;
   }
 
-  private SDouble binary(AadOp op, SDouble other) {
+  private ADouble binary(AadOp op, ADouble other) {
     if (other.recorder != recorder) {
       throw new IllegalArgumentException("operands come from different recordings");
     }
     return recorder.node(op, node, other.node);
   }
 
-  private SDouble unary(AadOp op) {
+  private ADouble unary(AadOp op) {
     return recorder.node(op, node, -1);
   }
 
-  public SDouble add(SDouble other) {
+  public ADouble add(ADouble other) {
     return binary(AadOp.ADD, other);
   }
 
-  public SDouble sub(SDouble other) {
+  public ADouble sub(ADouble other) {
     return binary(AadOp.SUB, other);
   }
 
-  public SDouble mul(SDouble other) {
+  public ADouble mul(ADouble other) {
     return binary(AadOp.MUL, other);
   }
 
-  public SDouble div(SDouble other) {
+  public ADouble div(ADouble other) {
     return binary(AadOp.DIV, other);
   }
 
-  public SDouble add(double value) {
+  public ADouble add(double value) {
     return add(recorder.constant(value));
   }
 
-  public SDouble sub(double value) {
+  public ADouble sub(double value) {
     return sub(recorder.constant(value));
   }
 
-  public SDouble mul(double value) {
+  public ADouble mul(double value) {
     return mul(recorder.constant(value));
   }
 
-  public SDouble div(double value) {
+  public ADouble div(double value) {
     return div(recorder.constant(value));
   }
 
-  public SDouble neg() {
+  public ADouble neg() {
     return unary(AadOp.NEG);
   }
 
-  public SDouble exp() {
+  public ADouble exp() {
     return unary(AadOp.EXP);
   }
 
-  public SDouble log() {
+  public ADouble log() {
     return unary(AadOp.LOG);
   }
 
-  public SDouble sqrt() {
+  public ADouble sqrt() {
     return unary(AadOp.SQRT);
   }
 
-  public SDouble abs() {
+  public ADouble abs() {
     return unary(AadOp.ABS);
   }
 
-  public SDouble max(SDouble other) {
+  public ADouble max(ADouble other) {
     return binary(AadOp.MAX, other);
   }
 
-  public SDouble min(SDouble other) {
+  public ADouble min(ADouble other) {
     return binary(AadOp.MIN, other);
   }
 
-  public SDouble max(double value) {
+  public ADouble max(double value) {
     return max(recorder.constant(value));
   }
 
-  public SDouble min(double value) {
+  public ADouble min(double value) {
     return min(recorder.constant(value));
   }
 }

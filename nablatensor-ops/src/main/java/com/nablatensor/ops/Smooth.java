@@ -16,7 +16,7 @@
 package com.nablatensor.ops;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 
 /**
  * Smoothed indicators: differentiable stand-ins for the discontinuous
@@ -41,34 +41,34 @@ public final class Smooth {
   }
 
   /** Logistic step: {@code ~1} for {@code x >> 0}, {@code ~0} for {@code x << 0}, {@code 0.5} at 0. */
-  public static SDouble step(AadRecorder rec, SDouble x, double width) {
+  public static ADouble step(AadRecorder rec, ADouble x, double width) {
     requireWidth(width);
-    SDouble e = x.div(width).neg().exp();          // exp(-x/width)
+    ADouble e = x.div(width).neg().exp();          // exp(-x/width)
     return rec.constant(1.0).div(e.add(1.0));      // 1 / (1 + exp(-x/width))
   }
 
   /** Smoothed {@code 1{a > b}}. */
-  public static SDouble gt(AadRecorder rec, SDouble a, SDouble b, double width) {
+  public static ADouble gt(AadRecorder rec, ADouble a, ADouble b, double width) {
     return step(rec, a.sub(b), width);
   }
 
   /** Smoothed {@code 1{a > level}}. */
-  public static SDouble gt(AadRecorder rec, SDouble a, double level, double width) {
+  public static ADouble gt(AadRecorder rec, ADouble a, double level, double width) {
     return step(rec, a.sub(level), width);
   }
 
   /** Smoothed {@code 1{a < level}}. */
-  public static SDouble lt(AadRecorder rec, SDouble a, double level, double width) {
+  public static ADouble lt(AadRecorder rec, ADouble a, double level, double width) {
     return step(rec, a.neg().add(level), width);
   }
 
   /** Smoothed {@code 1{a < b}}. */
-  public static SDouble lt(AadRecorder rec, SDouble a, SDouble b, double width) {
+  public static ADouble lt(AadRecorder rec, ADouble a, ADouble b, double width) {
     return step(rec, b.sub(a), width);
   }
 
   /** Smoothed band indicator {@code 1{lo < x < hi}}. */
-  public static SDouble between(AadRecorder rec, SDouble x, double lo, double hi, double width) {
+  public static ADouble between(AadRecorder rec, ADouble x, double lo, double hi, double width) {
     return gt(rec, x, lo, width).mul(lt(rec, x, hi, width));
   }
 
@@ -77,9 +77,9 @@ public final class Smooth {
    * {@code width -> 0} recovers the hockey-stick; useful for a smoothed option
    * intrinsic when the whole payoff must stay differentiable.
    */
-  public static SDouble ramp(AadRecorder rec, SDouble x, double width) {
+  public static ADouble ramp(AadRecorder rec, ADouble x, double width) {
     requireWidth(width);
-    SDouble soft = x.abs().div(width).neg().exp().add(1.0).log().mul(width); // width*log(1+exp(-|x|/width))
+    ADouble soft = x.abs().div(width).neg().exp().add(1.0).log().mul(width); // width*log(1+exp(-|x|/width))
     return x.max(0.0).add(soft);
   }
 

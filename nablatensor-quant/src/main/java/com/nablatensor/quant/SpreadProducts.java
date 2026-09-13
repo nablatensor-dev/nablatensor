@@ -17,7 +17,7 @@ package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.Nabla;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import java.util.function.BiConsumer;
 
 /**
@@ -53,22 +53,22 @@ public final class SpreadProducts {
     double dt = maturity / steps;
     double sqrtDt = Math.sqrt(dt);
     return (rec, in) -> {
-      SDouble s1 = in.of(SpreadMarket::s1);
-      SDouble s2 = in.of(SpreadMarket::s2);
-      SDouble v1 = in.of(SpreadMarket::vol1);
-      SDouble v2 = in.of(SpreadMarket::vol2);
-      SDouble r = in.of(SpreadMarket::rate);
-      SDouble q1 = in.of(SpreadMarket::yield1);
-      SDouble q2 = in.of(SpreadMarket::yield2);
-      SDouble drift1 = r.sub(q1).sub(v1.mul(v1).mul(0.5)).mul(dt);
-      SDouble drift2 = r.sub(q2).sub(v2.mul(v2).mul(0.5)).mul(dt);
+      ADouble s1 = in.of(SpreadMarket::s1);
+      ADouble s2 = in.of(SpreadMarket::s2);
+      ADouble v1 = in.of(SpreadMarket::vol1);
+      ADouble v2 = in.of(SpreadMarket::vol2);
+      ADouble r = in.of(SpreadMarket::rate);
+      ADouble q1 = in.of(SpreadMarket::yield1);
+      ADouble q2 = in.of(SpreadMarket::yield2);
+      ADouble drift1 = r.sub(q1).sub(v1.mul(v1).mul(0.5)).mul(dt);
+      ADouble drift2 = r.sub(q2).sub(v2.mul(v2).mul(0.5)).mul(dt);
       for (int t = 0; t < steps; t++) {
-        SDouble[] z = mix.draw(rec);
+        ADouble[] z = mix.draw(rec);
         s1 = s1.mul(drift1.add(v1.mul(sqrtDt).mul(z[0])).exp());
         s2 = s2.mul(drift2.add(v2.mul(sqrtDt).mul(z[1])).exp());
       }
-      SDouble spread = s1.sub(s2);
-      SDouble intrinsic = call
+      ADouble spread = s1.sub(s2);
+      ADouble intrinsic = call
           ? spread.sub(strike).max(0.0)
           : rec.constant(strike).sub(spread).max(0.0);
       rec.output(intrinsic.mul(r.neg().mul(maturity).exp()));

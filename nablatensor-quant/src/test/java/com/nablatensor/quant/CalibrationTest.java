@@ -18,7 +18,7 @@ package com.nablatensor.quant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -45,14 +45,14 @@ class CalibrationTest {
     }
 
     Calibrator.Result r = Calibrator.of(rec -> {
-          SDouble alpha = rec.input("alpha", 0.20);
-          SDouble rho = rec.input("rho", 0.00);
-          SDouble nu = rec.input("nu", 0.30);
-          SDouble beta = rec.constant(BETA);
-          SDouble sse = rec.constant(0.0);
+          ADouble alpha = rec.input("alpha", 0.20);
+          ADouble rho = rec.input("rho", 0.00);
+          ADouble nu = rec.input("nu", 0.30);
+          ADouble beta = rec.constant(BETA);
+          ADouble sse = rec.constant(0.0);
           for (int i = 0; i < STRIKES.length; i++) {
-            SDouble model = SabrHagan.blackVol(rec, alpha, beta, rho, nu, F, STRIKES[i], T);
-            SDouble d = model.sub(targetVol[i]);
+            ADouble model = SabrHagan.blackVol(rec, alpha, beta, rho, nu, F, STRIKES[i], T);
+            ADouble d = model.sub(targetVol[i]);
             sse = sse.add(d.mul(d));
           }
           rec.output(sse);
@@ -76,11 +76,11 @@ class CalibrationTest {
   void haganTapeFormMatchesTheHostForm() {
     // the differentiable form and the plain-double reference must agree to rounding
     Calibrator.Result r = Calibrator.of(rec -> {
-          SDouble alpha = rec.input("alpha", TRUE_ALPHA);
-          SDouble rho = rec.input("rho", TRUE_RHO);
-          SDouble nu = rec.input("nu", TRUE_NU);
-          SDouble beta = rec.constant(BETA);
-          SDouble v = SabrHagan.blackVol(rec, alpha, beta, rho, nu, F, 0.06, T);
+          ADouble alpha = rec.input("alpha", TRUE_ALPHA);
+          ADouble rho = rec.input("rho", TRUE_RHO);
+          ADouble nu = rec.input("nu", TRUE_NU);
+          ADouble beta = rec.constant(BETA);
+          ADouble v = SabrHagan.blackVol(rec, alpha, beta, rho, nu, F, 0.06, T);
           rec.output(v);
         })
         .parameter("alpha", TRUE_ALPHA, 1e-4, 2.0)

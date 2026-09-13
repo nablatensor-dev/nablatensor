@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.nablatensor.engine.AadEngines;
 import com.nablatensor.engine.AadOptions;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 import java.util.function.BiFunction;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ class OpsTest {
   record P(double x) {}
 
   /** Records {@code out = body(x)}, replays once, returns {@code {value, d/dx}}. */
-  private static double[] eval(String engine, double x, BiFunction<Nabla.Inputs<P>, com.nablatensor.engine.AadRecorder, SDouble> body) {
+  private static double[] eval(String engine, double x, BiFunction<Nabla.Inputs<P>, com.nablatensor.engine.AadRecorder, ADouble> body) {
     try (Nabla.TypedPricer<P> pricer = Nabla.model(new P(x), (rec, in) -> rec.output(body.apply(in, rec)))
         .fp64().greeks().on(engine).build()) {
       Nabla.TypedValuation<P> v = pricer.value().with(new P(x)).scenarios(1).seed(1L).run();
@@ -136,7 +136,7 @@ class OpsTest {
   }
 
   private static double[] evalFp32(String engine, double x,
-      BiFunction<Nabla.Inputs<P>, com.nablatensor.engine.AadRecorder, SDouble> body) {
+      BiFunction<Nabla.Inputs<P>, com.nablatensor.engine.AadRecorder, ADouble> body) {
     try (Nabla.TypedPricer<P> pricer = Nabla.model(new P(x), (rec, in) -> rec.output(body.apply(in, rec)))
         .fp32().greeks().on(engine).build()) {
       Nabla.TypedValuation<P> v = pricer.value().with(new P(x)).scenarios(1024).seed(1L).run();

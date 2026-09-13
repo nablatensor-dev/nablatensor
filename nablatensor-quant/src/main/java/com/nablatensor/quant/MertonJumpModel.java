@@ -17,7 +17,7 @@ package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.Nabla;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.ops.Smooth;
 import java.util.function.BiConsumer;
 
@@ -46,12 +46,12 @@ import java.util.function.BiConsumer;
  */
 public class MertonJumpModel {
 
-  private final SDouble rate;
-  private final SDouble vol;
-  private final SDouble intensity;
-  private final SDouble jumpMean;
-  private final SDouble jumpVol;
-  private final SDouble kappa;
+  private final ADouble rate;
+  private final ADouble vol;
+  private final ADouble intensity;
+  private final ADouble jumpMean;
+  private final ADouble jumpVol;
+  private final ADouble kappa;
   private final double dt;
   private final double sqrtDt;
   private final double indicatorWidth;
@@ -69,7 +69,7 @@ public class MertonJumpModel {
     this.indicatorWidth = indicatorWidth;
   }
 
-  public SDouble start(Nabla.Inputs<MertonJumpMarket> in) {
+  public ADouble start(Nabla.Inputs<MertonJumpMarket> in) {
     return in.of(MertonJumpMarket::spot);
   }
 
@@ -77,17 +77,17 @@ public class MertonJumpModel {
    * One step. {@code z} drives the diffusion, {@code u} selects whether a jump
    * occurs this step, {@code zJump} is its (log) size.
    */
-  public SDouble step(AadRecorder rec, SDouble s, SDouble z, SDouble u, SDouble zJump) {
+  public ADouble step(AadRecorder rec, ADouble s, ADouble z, ADouble u, ADouble zJump) {
     // Bernoulli jump factor has expectation (1 + lambda kappa dt), so the exact
     // martingale compensator for this scheme is -ln(1 + lambda kappa dt), not
     // -lambda kappa dt (they agree to O(dt^2)).
-    SDouble compensator = intensity.mul(kappa).mul(dt).add(1.0).log();
-    SDouble drift = rate.sub(vol.mul(vol).mul(0.5)).mul(dt).sub(compensator);
-    SDouble diffused = s.mul(drift.add(vol.mul(sqrtDt).mul(z)).exp());
+    ADouble compensator = intensity.mul(kappa).mul(dt).add(1.0).log();
+    ADouble drift = rate.sub(vol.mul(vol).mul(0.5)).mul(dt).sub(compensator);
+    ADouble diffused = s.mul(drift.add(vol.mul(sqrtDt).mul(z)).exp());
 
-    SDouble p = intensity.mul(dt);
-    SDouble jumpOccurs = Smooth.lt(rec, u, p, indicatorWidth);      // ~ Bernoulli(lambda dt)
-    SDouble jumpFactor = jumpMean.add(jumpVol.mul(zJump)).exp().sub(1.0);
+    ADouble p = intensity.mul(dt);
+    ADouble jumpOccurs = Smooth.lt(rec, u, p, indicatorWidth);      // ~ Bernoulli(lambda dt)
+    ADouble jumpFactor = jumpMean.add(jumpVol.mul(zJump)).exp().sub(1.0);
     return diffused.mul(rec.constant(1.0).add(jumpOccurs.mul(jumpFactor)));
   }
 
@@ -101,13 +101,13 @@ public class MertonJumpModel {
       OptionType type, double maturity, int steps, double indicatorWidth) {
     return (rec, in) -> {
       MertonJumpModel m = new MertonJumpModel(in, maturity, steps, indicatorWidth);
-      SDouble s = m.start(in);
+      ADouble s = m.start(in);
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn(), rec.randu(), rec.randn());
       }
-      SDouble strike = in.of(MertonJumpMarket::strike);
-      SDouble intrinsic = type == OptionType.CALL ? s.sub(strike).max(0.0) : strike.sub(s).max(0.0);
-      SDouble discount = in.of(MertonJumpMarket::rate).neg().mul(maturity).exp();
+      ADouble strike = in.of(MertonJumpMarket::strike);
+      ADouble intrinsic = type == OptionType.CALL ? s.sub(strike).max(0.0) : strike.sub(s).max(0.0);
+      ADouble discount = in.of(MertonJumpMarket::rate).neg().mul(maturity).exp();
       rec.output(intrinsic.mul(discount));
     };
   }

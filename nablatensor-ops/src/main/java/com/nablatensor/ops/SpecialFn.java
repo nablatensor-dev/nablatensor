@@ -16,7 +16,7 @@
 package com.nablatensor.ops;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 
 /**
  * Tape-level special functions the primitive op set does not provide directly:
@@ -37,23 +37,23 @@ public final class SpecialFn {
   }
 
   /** Standard normal CDF, {@code N(x)}. Smooth logistic approximation. */
-  public static SDouble normCdf(AadRecorder rec, SDouble x) {
-    SDouble poly = x.mul(1.5976).add(x.mul(x).mul(x).mul(0.070566)); // 1.5976 x + 0.070566 x^3
+  public static ADouble normCdf(AadRecorder rec, ADouble x) {
+    ADouble poly = x.mul(1.5976).add(x.mul(x).mul(x).mul(0.070566)); // 1.5976 x + 0.070566 x^3
     return rec.constant(1.0).div(poly.neg().exp().add(1.0));
   }
 
   /** Standard normal PDF, {@code phi(x)}. Exact. */
-  public static SDouble normPdf(SDouble x) {
+  public static ADouble normPdf(ADouble x) {
     return x.mul(x).mul(-0.5).exp().mul(INV_SQRT_2PI);
   }
 
   /** {@code erf(x)}, via {@code erf(x) = 2 N(x sqrt 2) - 1}. */
-  public static SDouble erf(AadRecorder rec, SDouble x) {
+  public static ADouble erf(AadRecorder rec, ADouble x) {
     return normCdf(rec, x.mul(SQRT2)).mul(2.0).sub(1.0);
   }
 
   /** {@code x ^ p} for a constant exponent; requires {@code x > 0}. */
-  public static SDouble pow(SDouble x, double p) {
+  public static ADouble pow(ADouble x, double p) {
     if (p == 1.0) {
       return x;
     }
@@ -64,7 +64,7 @@ public final class SpecialFn {
   }
 
   /** {@code x ^ p} for a differentiable exponent; requires {@code x > 0}. */
-  public static SDouble pow(SDouble x, SDouble p) {
+  public static ADouble pow(ADouble x, ADouble p) {
     return x.log().mul(p).exp();
   }
 }

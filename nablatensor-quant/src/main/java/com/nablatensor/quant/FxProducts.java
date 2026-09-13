@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 import java.util.function.BiConsumer;
 
@@ -40,18 +40,18 @@ public final class FxProducts {
   public static BiConsumer<AadRecorder, Nabla.Inputs<FxMarket>> fxOption(
       OptionType type, double maturity, int steps) {
     return (rec, in) -> {
-      SDouble x = in.of(FxMarket::spot);
-      SDouble strike = in.of(FxMarket::strike);
-      SDouble vol = in.of(FxMarket::volFx);
-      SDouble rd = in.of(FxMarket::rateDom);
-      SDouble rf = in.of(FxMarket::rateForeign);
+      ADouble x = in.of(FxMarket::spot);
+      ADouble strike = in.of(FxMarket::strike);
+      ADouble vol = in.of(FxMarket::volFx);
+      ADouble rd = in.of(FxMarket::rateDom);
+      ADouble rf = in.of(FxMarket::rateForeign);
       double dt = maturity / steps;
       double sqrtDt = Math.sqrt(dt);
-      SDouble drift = rd.sub(rf).sub(vol.mul(vol).mul(0.5)).mul(dt);
+      ADouble drift = rd.sub(rf).sub(vol.mul(vol).mul(0.5)).mul(dt);
       for (int t = 0; t < steps; t++) {
         x = x.mul(drift.add(vol.mul(sqrtDt).mul(rec.randn())).exp());
       }
-      SDouble intrinsic = type == OptionType.CALL ? x.sub(strike).max(0.0) : strike.sub(x).max(0.0);
+      ADouble intrinsic = type == OptionType.CALL ? x.sub(strike).max(0.0) : strike.sub(x).max(0.0);
       rec.output(intrinsic.mul(rd.neg().mul(maturity).exp()));
     };
   }
@@ -63,21 +63,21 @@ public final class FxProducts {
   public static BiConsumer<AadRecorder, Nabla.Inputs<QuantoMarket>> quantoOption(
       OptionType type, double maturity, int steps, double fixedFx) {
     return (rec, in) -> {
-      SDouble s = in.of(QuantoMarket::assetSpot);
-      SDouble strike = in.of(QuantoMarket::strike);
-      SDouble volS = in.of(QuantoMarket::volAsset);
-      SDouble volX = in.of(QuantoMarket::volFx);
-      SDouble corr = in.of(QuantoMarket::corr);
-      SDouble rd = in.of(QuantoMarket::rateDom);
-      SDouble rf = in.of(QuantoMarket::rateForeign);
+      ADouble s = in.of(QuantoMarket::assetSpot);
+      ADouble strike = in.of(QuantoMarket::strike);
+      ADouble volS = in.of(QuantoMarket::volAsset);
+      ADouble volX = in.of(QuantoMarket::volFx);
+      ADouble corr = in.of(QuantoMarket::corr);
+      ADouble rd = in.of(QuantoMarket::rateDom);
+      ADouble rf = in.of(QuantoMarket::rateForeign);
       double dt = maturity / steps;
       double sqrtDt = Math.sqrt(dt);
       // domestic-measure drift of the foreign asset: r_f - corr volS volX - 0.5 volS^2
-      SDouble drift = rf.sub(corr.mul(volS).mul(volX)).sub(volS.mul(volS).mul(0.5)).mul(dt);
+      ADouble drift = rf.sub(corr.mul(volS).mul(volX)).sub(volS.mul(volS).mul(0.5)).mul(dt);
       for (int t = 0; t < steps; t++) {
         s = s.mul(drift.add(volS.mul(sqrtDt).mul(rec.randn())).exp());
       }
-      SDouble intrinsic = type == OptionType.CALL ? s.sub(strike).max(0.0) : strike.sub(s).max(0.0);
+      ADouble intrinsic = type == OptionType.CALL ? s.sub(strike).max(0.0) : strike.sub(s).max(0.0);
       rec.output(intrinsic.mul(fixedFx).mul(rd.neg().mul(maturity).exp()));
     };
   }

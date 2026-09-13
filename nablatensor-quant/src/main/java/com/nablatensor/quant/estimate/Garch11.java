@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant.estimate;
 
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.quant.Calibrator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -101,16 +101,16 @@ public record Garch11(double omega, double alpha, double beta) {
     //   persistence  = alpha + beta            (enforces alpha + beta < 1)
     //   share        = alpha / (alpha + beta)  (enforces alpha, beta >= 0)
     Calibrator.Result res = Calibrator.of(rec -> {
-      SDouble omega = rec.input("omegaFrac", 0.05).mul(var0);
-      SDouble persistence = rec.input("persistence", 0.95);
-      SDouble share = rec.input("share", 0.10);
-      SDouble alpha = persistence.mul(share);
-      SDouble beta = persistence.sub(alpha);
+      ADouble omega = rec.input("omegaFrac", 0.05).mul(var0);
+      ADouble persistence = rec.input("persistence", 0.95);
+      ADouble share = rec.input("share", 0.10);
+      ADouble alpha = persistence.mul(share);
+      ADouble beta = persistence.sub(alpha);
 
-      SDouble s2 = rec.constant(var0);
-      SDouble nll = rec.constant(0.0);
+      ADouble s2 = rec.constant(var0);
+      ADouble nll = rec.constant(0.0);
       for (double ret : returns) {
-        SDouble r2 = rec.constant(ret * ret);
+        ADouble r2 = rec.constant(ret * ret);
         nll = nll.add(s2.log()).add(r2.div(s2));
         s2 = omega.add(alpha.mul(r2)).add(beta.mul(s2));
       }

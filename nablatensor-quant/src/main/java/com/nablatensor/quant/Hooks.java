@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 import com.nablatensor.ops.Smooth;
 import java.util.ArrayList;
@@ -36,13 +36,13 @@ public final class Hooks {
   /** A source of per-step standard-normal draws for a {@link PathPayoff}. */
   @FunctionalInterface
   public interface Draws {
-    SDouble next();
+    ADouble next();
   }
 
   /** A payoff written so its randomness comes only from an injected {@link Draws}. */
   @FunctionalInterface
   public interface PathPayoff {
-    SDouble value(AadRecorder rec, Nabla.Inputs<EquityMarket> in, Draws draws, TimeGrid grid);
+    ADouble value(AadRecorder rec, Nabla.Inputs<EquityMarket> in, Draws draws, TimeGrid grid);
   }
 
   private Hooks() {
@@ -55,9 +55,9 @@ public final class Hooks {
    */
   public static Product<EquityMarket> antithetic(PathPayoff payoff) {
     return new Named("antithetic", (rec, in, grid) -> {
-      List<SDouble> z = new ArrayList<>();
-      SDouble a = payoff.value(rec, in, capturing(rec, z), grid);
-      SDouble b = payoff.value(rec, in, replayNegated(z), grid);
+      List<ADouble> z = new ArrayList<>();
+      ADouble a = payoff.value(rec, in, capturing(rec, z), grid);
+      ADouble b = payoff.value(rec, in, replayNegated(z), grid);
       rec.output(a.add(b).mul(0.5));
     });
   }
@@ -76,9 +76,9 @@ public final class Hooks {
   public static Product<EquityMarket> controlVariate(PathPayoff target, PathPayoff control,
                                        double controlMean, double beta) {
     return new Named("control-variate", (rec, in, grid) -> {
-      List<SDouble> z = new ArrayList<>();
-      SDouble y = target.value(rec, in, capturing(rec, z), grid);
-      SDouble x = control.value(rec, in, replay(z), grid);
+      List<ADouble> z = new ArrayList<>();
+      ADouble y = target.value(rec, in, capturing(rec, z), grid);
+      ADouble x = control.value(rec, in, replay(z), grid);
       rec.output(y.sub(x.sub(controlMean).mul(beta)));
     });
   }
@@ -92,16 +92,16 @@ public final class Hooks {
    */
   public static Product<EquityMarket> importanceSampling(PathPayoff payoff, double muPerStep) {
     return new Named("importance-sampling", (rec, in, grid) -> {
-      SDouble[] logW = {rec.constant(0.0)};
+      ADouble[] logW = {rec.constant(0.0)};
       int[] n = {0};
       Draws drifted = () -> {
-        SDouble z = rec.randn();
+        ADouble z = rec.randn();
         logW[0] = logW[0].add(z.mul(-muPerStep));
         n[0]++;
         return z.add(muPerStep);
       };
-      SDouble value = payoff.value(rec, in, drifted, grid);
-      SDouble weight = logW[0].add(-0.5 * muPerStep * muPerStep * n[0]).exp();
+      ADouble value = payoff.value(rec, in, drifted, grid);
+      ADouble weight = logW[0].add(-0.5 * muPerStep * muPerStep * n[0]).exp();
       rec.output(value.mul(weight));
     });
   }
@@ -114,27 +114,27 @@ public final class Hooks {
    */
   public static Product<EquityMarket> pathFilter(PathPayoff payoff, PathPayoff condition, double width) {
     return new Named("path-filter", (rec, in, grid) -> {
-      List<SDouble> z = new ArrayList<>();
-      SDouble f = payoff.value(rec, in, capturing(rec, z), grid);
-      SDouble c = condition.value(rec, in, replay(z), grid);
+      List<ADouble> z = new ArrayList<>();
+      ADouble f = payoff.value(rec, in, capturing(rec, z), grid);
+      ADouble c = condition.value(rec, in, replay(z), grid);
       rec.output(f.mul(Smooth.step(rec, c, width)));
     });
   }
 
-  private static Draws capturing(AadRecorder rec, List<SDouble> sink) {
+  private static Draws capturing(AadRecorder rec, List<ADouble> sink) {
     return () -> {
-      SDouble draw = rec.randn();
+      ADouble draw = rec.randn();
       sink.add(draw);
       return draw;
     };
   }
 
-  private static Draws replay(List<SDouble> source) {
+  private static Draws replay(List<ADouble> source) {
     int[] i = {0};
     return () -> source.get(i[0]++);
   }
 
-  private static Draws replayNegated(List<SDouble> source) {
+  private static Draws replayNegated(List<ADouble> source) {
     int[] i = {0};
     return () -> source.get(i[0]++).neg();
   }

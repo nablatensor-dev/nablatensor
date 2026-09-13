@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant.estimate;
 
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.quant.Calibrator;
 
 /**
@@ -74,11 +74,11 @@ public final class Ewma {
   public static double estimateByMaximumLikelihood(double[] returns) {
     double var0 = sampleVariance(returns);
     Calibrator.Result r = Calibrator.of(rec -> {
-      SDouble lambda = rec.input("lambda", 0.94);
-      SDouble s2 = rec.constant(var0);
-      SDouble nll = rec.constant(0.0);
+      ADouble lambda = rec.input("lambda", 0.94);
+      ADouble s2 = rec.constant(var0);
+      ADouble nll = rec.constant(0.0);
       for (double ret : returns) {
-        SDouble r2 = rec.constant(ret * ret);
+        ADouble r2 = rec.constant(ret * ret);
         nll = nll.add(s2.log()).add(r2.div(s2));
         s2 = lambda.mul(s2).add(rec.constant(1.0).sub(lambda).mul(r2));
       }

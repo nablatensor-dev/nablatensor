@@ -5,7 +5,7 @@
 Phase 1 adds five model step blocks in `nablatensor-quant`. Each is a small class
 that reads its parameters from a typed market record, exposes a `step(...)`
 method, and provides a ready `european(...)` / product builder. Because the
-parameters are `SDouble` inputs, **one adjoint sweep returns the full model
+parameters are `ADouble` inputs, **one adjoint sweep returns the full model
 parameter gradient** — the sensitivities a calibration or risk-attribution loop
 consumes — next to the usual spot/rate Greeks.
 

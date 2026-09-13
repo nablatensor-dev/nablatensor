@@ -155,7 +155,7 @@ public final class Nabla {
     }
   }
 
-  /** Records a valuation written against {@link SDouble} into a reusable model. */
+  /** Records a valuation written against {@link ADouble} into a reusable model. */
   public static Model model(Consumer<AadRecorder> valuation) {
     long start = System.nanoTime();
     AadTape tape = AadRecorder.record(valuation);
@@ -192,22 +192,22 @@ public final class Nabla {
     return new TypedModel<>(model, shape);
   }
 
-  /** The market a valuation reads from: one {@link SDouble} per record component. */
+  /** The market a valuation reads from: one {@link ADouble} per record component. */
   public static final class Inputs<M extends Record> {
 
     private final MarketShape<M> shape;
-    private final SDouble[] inputs;
+    private final ADouble[] inputs;
 
     private Inputs(AadRecorder recorder, MarketShape<M> shape, M defaults) {
       this.shape = shape;
-      this.inputs = new SDouble[shape.size()];
+      this.inputs = new ADouble[shape.size()];
       for (int i = 0; i < inputs.length; i++) {
         inputs[i] = recorder.input(shape.name(i), shape.value(defaults, i));
       }
     }
 
     /** The input behind one component, named by its accessor rather than a string. */
-    public SDouble of(ToDoubleFunction<M> component) {
+    public ADouble of(ToDoubleFunction<M> component) {
       return inputs[shape.indexOf(component)];
     }
   }

@@ -44,17 +44,17 @@ public final class AadRecorder {
     return recorder.builder.build();
   }
 
-  SDouble node(AadOp op, int a, int b) {
-    return new SDouble(this, builder.add(op, a, b, 0.0));
+  ADouble node(AadOp op, int a, int b) {
+    return new ADouble(this, builder.add(op, a, b, 0.0));
   }
 
   /** A differentiable input; its recorded value is the default for a replay. */
-  public SDouble input(String name, double value) {
-    return new SDouble(this, builder.addInput(name, value));
+  public ADouble input(String name, double value) {
+    return new ADouble(this, builder.addInput(name, value));
   }
 
-  public SDouble constant(double value) {
-    return new SDouble(this, builder.add(AadOp.CONST, -1, -1, value));
+  public ADouble constant(double value) {
+    return new ADouble(this, builder.add(AadOp.CONST, -1, -1, value));
   }
 
   /**
@@ -62,13 +62,13 @@ public final class AadRecorder {
    * Nothing is drawn while recording: the node only reserves the next slot in
    * the per-scenario random stream, which the replay kernel generates on-device.
    */
-  public SDouble randn() {
-    return new SDouble(this, builder.addRandn());
+  public ADouble randn() {
+    return new ADouble(this, builder.addRandn());
   }
 
   /** A uniform draw on {@code [0, 1)} that varies per scenario, from the default stream. */
-  public SDouble randu() {
-    return new SDouble(this, builder.addRandu("default"));
+  public ADouble randu() {
+    return new ADouble(this, builder.addRandu("default"));
   }
 
   /**
@@ -95,18 +95,18 @@ public final class AadRecorder {
     }
 
     /** A standard normal from this stream. */
-    public SDouble randn() {
-      return new SDouble(AadRecorder.this, builder.addRandn(name));
+    public ADouble randn() {
+      return new ADouble(AadRecorder.this, builder.addRandn(name));
     }
 
     /** A uniform draw on {@code [0, 1)} from this stream. */
-    public SDouble randu() {
-      return new SDouble(AadRecorder.this, builder.addRandu(name));
+    public ADouble randu() {
+      return new ADouble(AadRecorder.this, builder.addRandu(name));
     }
   }
 
   /** Records the single output of this valuation, named {@code "value"}. */
-  public void output(SDouble value) {
+  public void output(ADouble value) {
     builder.setOutput(value.node);
   }
 
@@ -114,10 +114,10 @@ public final class AadRecorder {
    * Records one of several named outputs. Every reverse sweep over the tape then
    * yields this output's value, its Monte-Carlo standard error and its full
    * input gradient; the names address the rows of {@link AadResult}. A name may
-   * be recorded only once, and mixing this with {@link #output(SDouble)} (which
+   * be recorded only once, and mixing this with {@link #output(ADouble)} (which
    * uses the name {@code "value"}) is allowed as long as the names stay distinct.
    */
-  public void output(String name, SDouble value) {
+  public void output(String name, ADouble value) {
     builder.addOutput(name, value.node);
   }
 }

@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.Nabla;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.ops.Smooth;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -42,20 +42,20 @@ class MultiOutputNativeTest {
   private static final long SEED = 20260901L;
   private static final int STEPS = 24;
 
-  private static Map<String, SDouble> measures(AadRecorder rec) {
-    SDouble s0 = rec.input("S0", 100.0);
-    SDouble k = rec.input("K", 100.0);
-    SDouble vol = rec.input("sigma", 0.2);
-    SDouble r = rec.input("r", 0.03);
+  private static Map<String, ADouble> measures(AadRecorder rec) {
+    ADouble s0 = rec.input("S0", 100.0);
+    ADouble k = rec.input("K", 100.0);
+    ADouble vol = rec.input("sigma", 0.2);
+    ADouble r = rec.input("r", 0.03);
     double dt = 1.0 / STEPS;
-    SDouble drift = r.sub(vol.mul(vol).mul(0.5)).mul(dt);
-    SDouble vs = vol.mul(Math.sqrt(dt));
-    SDouble s = s0;
+    ADouble drift = r.sub(vol.mul(vol).mul(0.5)).mul(dt);
+    ADouble vs = vol.mul(Math.sqrt(dt));
+    ADouble s = s0;
     for (int t = 0; t < STEPS; t++) {
       s = s.mul(drift.add(vs.mul(rec.randn())).exp());
     }
-    SDouble disc = r.neg().exp();
-    Map<String, SDouble> m = new LinkedHashMap<>();
+    ADouble disc = r.neg().exp();
+    Map<String, ADouble> m = new LinkedHashMap<>();
     m.put("call", s.sub(k).max(0.0).mul(disc));
     m.put("straddle", s.sub(k).abs().mul(disc));
     m.put("digital", Smooth.gt(rec, s, k, 1.0).mul(disc));
@@ -74,7 +74,7 @@ class MultiOutputNativeTest {
           double vega;
           double delta;
           try (Nabla.Pricer p = Nabla.model(rec -> {
-                Map<String, SDouble> m = measures(rec);
+                Map<String, ADouble> m = measures(rec);
                 rec.output(m.get(name));
               }).fp64().greeks().on(engine).build()) {
             Nabla.Valuation val = p.value().scenarios(N).seed(SEED).run();

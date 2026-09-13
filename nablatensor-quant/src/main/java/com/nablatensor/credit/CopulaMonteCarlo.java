@@ -17,7 +17,7 @@ package com.nablatensor.credit;
 
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.Nabla;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.ops.SpecialFn;
 import com.nablatensor.ops.Smooth;
 import java.util.function.BiConsumer;
@@ -58,21 +58,21 @@ public final class CopulaMonteCarlo {
     double trancheWidth = detach - attach;
     double discount = Math.exp(-rate * maturity);
     return (rec, in) -> {
-      SDouble rho = in.of(CopulaMarket::rho);
-      SDouble pd = in.of(CopulaMarket::pd);
-      SDouble sqrtRho = rho.sqrt();
-      SDouble sqrtComp = rec.constant(1.0).sub(rho).sqrt();
-      SDouble m = rec.randn();
+      ADouble rho = in.of(CopulaMarket::rho);
+      ADouble pd = in.of(CopulaMarket::pd);
+      ADouble sqrtRho = rho.sqrt();
+      ADouble sqrtComp = rec.constant(1.0).sub(rho).sqrt();
+      ADouble m = rec.randn();
 
-      SDouble defaults = rec.constant(0.0);
+      ADouble defaults = rec.constant(0.0);
       for (int i = 0; i < names; i++) {
-        SDouble xi = sqrtRho.mul(m).add(sqrtComp.mul(rec.randn()));
-        SDouble u = SpecialFn.normCdf(rec, xi);
+        ADouble xi = sqrtRho.mul(m).add(sqrtComp.mul(rec.randn()));
+        ADouble u = SpecialFn.normCdf(rec, xi);
         defaults = defaults.add(Smooth.lt(rec, u, pd, width));
       }
 
-      SDouble portfolioLoss = defaults.mul(lgd / names);
-      SDouble trancheLoss = portfolioLoss.sub(attach).max(0.0).min(trancheWidth);
+      ADouble portfolioLoss = defaults.mul(lgd / names);
+      ADouble trancheLoss = portfolioLoss.sub(attach).max(0.0).min(trancheWidth);
       rec.output(trancheLoss.mul(discount));
     };
   }

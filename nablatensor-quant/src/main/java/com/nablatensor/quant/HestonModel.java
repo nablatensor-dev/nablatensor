@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 import java.util.function.BiConsumer;
 
@@ -41,14 +41,14 @@ import java.util.function.BiConsumer;
 public class HestonModel {
 
   /** Spot and instantaneous variance at a point on the path. */
-  public record State(SDouble spot, SDouble variance) {}
+  public record State(ADouble spot, ADouble variance) {}
 
-  private final SDouble rate;
-  private final SDouble kappa;
-  private final SDouble theta;
-  private final SDouble xi;
-  private final SDouble rho;
-  private final SDouble rhoBar;   // sqrt(1 - rho^2)
+  private final ADouble rate;
+  private final ADouble kappa;
+  private final ADouble theta;
+  private final ADouble xi;
+  private final ADouble rho;
+  private final ADouble rhoBar;   // sqrt(1 - rho^2)
   private final double dt;
   private final double sqrtDt;
 
@@ -71,28 +71,28 @@ public class HestonModel {
    * One full-truncation Euler step. {@code z1} drives the spot; {@code zv} is an
    * independent normal that is correlated into the variance factor here.
    */
-  public State step(AadRecorder rec, State s, SDouble z1, SDouble zv) {
-    SDouble z2 = rho.mul(z1).add(rhoBar.mul(zv));   // corr(z1, z2) = rho
+  public State step(AadRecorder rec, State s, ADouble z1, ADouble zv) {
+    ADouble z2 = rho.mul(z1).add(rhoBar.mul(zv));   // corr(z1, z2) = rho
 
-    SDouble vPlus = s.variance().max(0.0);
-    SDouble sqrtV = vPlus.sqrt();
+    ADouble vPlus = s.variance().max(0.0);
+    ADouble sqrtV = vPlus.sqrt();
 
-    SDouble vNext = s.variance()
+    ADouble vNext = s.variance()
         .add(kappa.mul(theta.sub(vPlus)).mul(dt))
         .add(xi.mul(sqrtV).mul(sqrtDt).mul(z2));
 
-    SDouble logDrift = spotDrift(rate.sub(vPlus.mul(0.5)).mul(dt));
-    SDouble sNext = s.spot().mul(logDrift.add(spotDiffusion(sqrtV).mul(sqrtDt).mul(z1)).exp());
+    ADouble logDrift = spotDrift(rate.sub(vPlus.mul(0.5)).mul(dt));
+    ADouble sNext = s.spot().mul(logDrift.add(spotDiffusion(sqrtV).mul(sqrtDt).mul(z1)).exp());
     return new State(sNext, vNext);
   }
 
   /** Hook: the per-step spot log-drift. Identity for plain Heston. */
-  protected SDouble spotDrift(SDouble base) {
+  protected ADouble spotDrift(ADouble base) {
     return base;
   }
 
   /** Hook: the {@code sqrt(v)} multiplier on the spot Brownian. Identity for plain Heston. */
-  protected SDouble spotDiffusion(SDouble sqrtVariance) {
+  protected ADouble spotDiffusion(ADouble sqrtVariance) {
     return sqrtVariance;
   }
 
@@ -105,11 +105,11 @@ public class HestonModel {
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn(), rec.randn());
       }
-      SDouble strike = in.of(HestonMarket::strike);
-      SDouble intrinsic = type == OptionType.CALL
+      ADouble strike = in.of(HestonMarket::strike);
+      ADouble intrinsic = type == OptionType.CALL
           ? s.spot().sub(strike).max(0.0)
           : strike.sub(s.spot()).max(0.0);
-      SDouble discount = in.of(HestonMarket::rate).neg().mul(maturity).exp();
+      ADouble discount = in.of(HestonMarket::rate).neg().mul(maturity).exp();
       rec.output(intrinsic.mul(discount));
     };
   }

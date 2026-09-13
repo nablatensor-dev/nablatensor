@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 import com.nablatensor.ops.Smooth;
 
@@ -55,21 +55,21 @@ public final class ExoticProducts {
   public static Product<EquityMarket> barrier(OptionType type, Barrier kind, double barrier, double width) {
     return new Labelled("Barrier " + kind + " " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
-      SDouble path = sim.spot;
-      SDouble survival = rec.constant(1.0);      // prob(not knocked) so far, smoothed
+      ADouble path = sim.spot;
+      ADouble survival = rec.constant(1.0);      // prob(not knocked) so far, smoothed
       boolean up = kind == Barrier.UP_OUT || kind == Barrier.UP_IN;
       for (int t = 0; t < grid.steps(); t++) {
         path = sim.model.step(path, rec.randn(), t);
-        SDouble notBreached = up
+        ADouble notBreached = up
             ? Smooth.lt(rec, path, barrier, width)   // still below an up-barrier
             : Smooth.gt(rec, path, barrier, width);  // still above a down-barrier
         survival = survival.mul(notBreached);
       }
-      SDouble vanilla = type == OptionType.CALL
+      ADouble vanilla = type == OptionType.CALL
           ? path.sub(sim.strike).max(0.0)
           : sim.strike.sub(path).max(0.0);
       boolean knockOut = kind == Barrier.UP_OUT || kind == Barrier.DOWN_OUT;
-      SDouble alive = knockOut ? survival : rec.constant(1.0).sub(survival);
+      ADouble alive = knockOut ? survival : rec.constant(1.0).sub(survival);
       rec.output(sim.discount(vanilla.mul(alive)));
     });
   }
@@ -81,11 +81,11 @@ public final class ExoticProducts {
   public static Product<EquityMarket> digitalCash(OptionType type, double cash, double width) {
     return new Labelled("Digital cash " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
-      SDouble s = sim.spot;
+      ADouble s = sim.spot;
       for (int t = 0; t < grid.steps(); t++) {
         s = sim.model.step(s, rec.randn(), t);
       }
-      SDouble itm = type == OptionType.CALL
+      ADouble itm = type == OptionType.CALL
           ? Smooth.gt(rec, s, sim.strike, width)
           : Smooth.lt(rec, s, sim.strike, width);
       rec.output(sim.discount(itm.mul(cash)));
@@ -96,11 +96,11 @@ public final class ExoticProducts {
   public static Product<EquityMarket> digitalAsset(OptionType type, double width) {
     return new Labelled("Digital asset " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
-      SDouble s = sim.spot;
+      ADouble s = sim.spot;
       for (int t = 0; t < grid.steps(); t++) {
         s = sim.model.step(s, rec.randn(), t);
       }
-      SDouble itm = type == OptionType.CALL
+      ADouble itm = type == OptionType.CALL
           ? Smooth.gt(rec, s, sim.strike, width)
           : Smooth.lt(rec, s, sim.strike, width);
       rec.output(sim.discount(itm.mul(s)));
@@ -116,15 +116,15 @@ public final class ExoticProducts {
                                 double globalFloor, double globalCap, double notional) {
     return new Labelled("Cliquet", (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
-      SDouble prev = sim.spot;
-      SDouble sum = rec.constant(0.0);
+      ADouble prev = sim.spot;
+      ADouble sum = rec.constant(0.0);
       for (int t = 0; t < grid.steps(); t++) {
-        SDouble next = sim.model.step(prev, rec.randn(), t);
-        SDouble ret = next.div(prev).sub(1.0).max(localFloor).min(localCap);
+        ADouble next = sim.model.step(prev, rec.randn(), t);
+        ADouble ret = next.div(prev).sub(1.0).max(localFloor).min(localCap);
         sum = sum.add(ret);
         prev = next;
       }
-      SDouble clamped = sum.max(globalFloor).min(globalCap);
+      ADouble clamped = sum.max(globalFloor).min(globalCap);
       rec.output(sim.discount(clamped.mul(notional)));
     });
   }
@@ -146,11 +146,11 @@ public final class ExoticProducts {
       }
       int stride = steps / observations;
       Sim sim = new Sim(rec, in, grid);
-      SDouble s = sim.spot;
-      SDouble alivePrev = rec.constant(1.0);
-      SDouble value = rec.constant(0.0);
-      SDouble discStep = sim.perStepDiscount(steps);
-      SDouble disc = rec.constant(1.0);
+      ADouble s = sim.spot;
+      ADouble alivePrev = rec.constant(1.0);
+      ADouble value = rec.constant(0.0);
+      ADouble discStep = sim.perStepDiscount(steps);
+      ADouble disc = rec.constant(1.0);
       int stepIdx = 0;
       for (int obs = 1; obs <= observations; obs++) {
         for (int k = 0; k < stride; k++) {
@@ -158,10 +158,10 @@ public final class ExoticProducts {
           disc = disc.mul(discStep);
         }
         boolean last = obs == observations;
-        SDouble triggered = last ? rec.constant(1.0) : Smooth.gt(rec, s, autocallLevel, width);
-        SDouble aliveNow = alivePrev.mul(rec.constant(1.0).sub(triggered));
-        SDouble redeemedNow = alivePrev.sub(aliveNow);
-        SDouble redemption = last
+        ADouble triggered = last ? rec.constant(1.0) : Smooth.gt(rec, s, autocallLevel, width);
+        ADouble aliveNow = alivePrev.mul(rec.constant(1.0).sub(triggered));
+        ADouble redeemedNow = alivePrev.sub(aliveNow);
+        ADouble redemption = last
             ? s.div(sim.spot).min(1.0).add(couponPerPeriod * observations)   // principal w/ downside + full coupon
             : rec.constant(1.0 + couponPerPeriod * obs);
         value = value.add(redeemedNow.mul(redemption).mul(notional).mul(disc));
@@ -173,10 +173,10 @@ public final class ExoticProducts {
 
   /** Shared GBM setup, mirroring {@link Products}' internal helper. */
   private static final class Sim {
-    final SDouble spot;
-    final SDouble strike;
-    final SDouble rate;
-    final SDouble maturity;
+    final ADouble spot;
+    final ADouble strike;
+    final ADouble rate;
+    final ADouble maturity;
     final GbmPath model;
 
     Sim(AadRecorder rec, Nabla.Inputs<EquityMarket> in, TimeGrid grid) {
@@ -187,11 +187,11 @@ public final class ExoticProducts {
       this.model = new GbmPath(rec, rate, in.of(EquityMarket::vol), grid, maturity);
     }
 
-    SDouble discount(SDouble payoff) {
+    ADouble discount(ADouble payoff) {
       return payoff.mul(rate.neg().mul(maturity).exp());
     }
 
-    SDouble perStepDiscount(int steps) {
+    ADouble perStepDiscount(int steps) {
       return rate.neg().mul(maturity).div(steps).exp();   // exp(-r T / steps)
     }
   }

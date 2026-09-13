@@ -24,7 +24,7 @@ import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.AadResult;
 import com.nablatensor.engine.AadTape;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -54,18 +54,18 @@ class Fp32BackendComparisonTest {
 
   /** GBM path in price space, arithmetic average of the fixings, discounted call payoff. */
   private static void asianCall(AadRecorder rec) {
-    SDouble spot = rec.input("spot", S0);
-    SDouble vol = rec.input("vol", VOL);
+    ADouble spot = rec.input("spot", S0);
+    ADouble vol = rec.input("vol", VOL);
     double dt = T / FIXINGS;
-    SDouble driftTerm = vol.mul(vol).mul(-0.5 * dt).add(RATE * dt);
-    SDouble diffusion = vol.mul(Math.sqrt(dt));
-    SDouble price = spot;
-    SDouble sum = rec.constant(0.0);
+    ADouble driftTerm = vol.mul(vol).mul(-0.5 * dt).add(RATE * dt);
+    ADouble diffusion = vol.mul(Math.sqrt(dt));
+    ADouble price = spot;
+    ADouble sum = rec.constant(0.0);
     for (int i = 0; i < FIXINGS; i++) {
       price = price.mul(driftTerm.add(diffusion.mul(rec.randn())).exp());
       sum = sum.add(price);
     }
-    SDouble average = sum.mul(1.0 / FIXINGS);
+    ADouble average = sum.mul(1.0 / FIXINGS);
     rec.output(average.sub(K).max(0.0).mul(Math.exp(-RATE * T)));
   }
 

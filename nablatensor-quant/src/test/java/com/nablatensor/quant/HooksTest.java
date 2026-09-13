@@ -18,7 +18,7 @@ package com.nablatensor.quant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -34,13 +34,13 @@ class HooksTest {
 
   /** Arithmetic Asian call written against an injected draw source. */
   private static final Hooks.PathPayoff ASIAN = (rec, in, draws, grid) -> {
-    SDouble spot = in.of(EquityMarket::spot);
-    SDouble rate = in.of(EquityMarket::rate);
-    SDouble mat = in.of(EquityMarket::maturity);
-    SDouble strike = in.of(EquityMarket::strike);
+    ADouble spot = in.of(EquityMarket::spot);
+    ADouble rate = in.of(EquityMarket::rate);
+    ADouble mat = in.of(EquityMarket::maturity);
+    ADouble strike = in.of(EquityMarket::strike);
     GbmPath model = new GbmPath(rec, rate, in.of(EquityMarket::vol), grid, mat);
-    SDouble path = spot;
-    SDouble sum = rec.constant(0.0);
+    ADouble path = spot;
+    ADouble sum = rec.constant(0.0);
     for (int t = 0; t < grid.steps(); t++) {
       path = model.step(path, draws.next(), t);
       sum = sum.add(path);
@@ -50,10 +50,10 @@ class HooksTest {
 
   /** Discounted terminal spot; analytic mean is S0. Consumes the same draws as ASIAN. */
   private static final Hooks.PathPayoff DISCOUNTED_TERMINAL = (rec, in, draws, grid) -> {
-    SDouble rate = in.of(EquityMarket::rate);
-    SDouble mat = in.of(EquityMarket::maturity);
+    ADouble rate = in.of(EquityMarket::rate);
+    ADouble mat = in.of(EquityMarket::maturity);
     GbmPath model = new GbmPath(rec, rate, in.of(EquityMarket::vol), grid, mat);
-    SDouble path = in.of(EquityMarket::spot);
+    ADouble path = in.of(EquityMarket::spot);
     for (int t = 0; t < grid.steps(); t++) {
       path = model.step(path, draws.next(), t);
     }

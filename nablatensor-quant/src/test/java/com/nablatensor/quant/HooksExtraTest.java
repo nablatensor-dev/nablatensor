@@ -18,7 +18,7 @@ package com.nablatensor.quant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import org.junit.jupiter.api.Test;
 
 /** Importance sampling and path filtering: both leave the target expectation intact. */
@@ -31,10 +31,10 @@ class HooksExtraTest {
 
   /** OTM European call over an injected draw stream. */
   private static final Hooks.PathPayoff CALL = (rec, in, draws, grid) -> {
-    SDouble rate = in.of(EquityMarket::rate);
-    SDouble mat = in.of(EquityMarket::maturity);
+    ADouble rate = in.of(EquityMarket::rate);
+    ADouble mat = in.of(EquityMarket::maturity);
     GbmPath model = new GbmPath(rec, rate, in.of(EquityMarket::vol), grid, mat);
-    SDouble s = in.of(EquityMarket::spot);
+    ADouble s = in.of(EquityMarket::spot);
     for (int t = 0; t < grid.steps(); t++) {
       s = model.step(s, draws.next(), t);
     }
@@ -43,10 +43,10 @@ class HooksExtraTest {
 
   /** Terminal log-moneyness; positive when the call finishes in the money. */
   private static final Hooks.PathPayoff FINISHES_ITM = (rec, in, draws, grid) -> {
-    SDouble rate = in.of(EquityMarket::rate);
-    SDouble mat = in.of(EquityMarket::maturity);
+    ADouble rate = in.of(EquityMarket::rate);
+    ADouble mat = in.of(EquityMarket::maturity);
     GbmPath model = new GbmPath(rec, rate, in.of(EquityMarket::vol), grid, mat);
-    SDouble s = in.of(EquityMarket::spot);
+    ADouble s = in.of(EquityMarket::spot);
     for (int t = 0; t < grid.steps(); t++) {
       s = model.step(s, draws.next(), t);
     }

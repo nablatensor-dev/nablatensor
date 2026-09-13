@@ -15,7 +15,7 @@
  */
 package com.nablatensor.cva;
 
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import java.util.Locale;
 
 /**
@@ -71,14 +71,14 @@ public record FxForward(String id, Side side, double foreignNotional, double str
   }
 
   @Override
-  public SDouble markToMarket(Path path, double t) {
+  public ADouble markToMarket(Path path, double t) {
     if (t >= settlementYears - 1.0e-9) {
       return path.recorder().constant(0.0);
     }
-    SDouble domesticDiscount = path.rates().bond(path.shortRate(), t, settlementYears);
-    SDouble foreignDiscount = path.foreignDiscount(t, settlementYears);
-    SDouble forward = path.fxSpot().mul(foreignDiscount).div(domesticDiscount);
-    SDouble value = forward.sub(strike).mul(domesticDiscount).mul(foreignNotional);
+    ADouble domesticDiscount = path.rates().bond(path.shortRate(), t, settlementYears);
+    ADouble foreignDiscount = path.foreignDiscount(t, settlementYears);
+    ADouble forward = path.fxSpot().mul(foreignDiscount).div(domesticDiscount);
+    ADouble value = forward.sub(strike).mul(domesticDiscount).mul(foreignNotional);
     return value.mul(side == Side.BUY_FOREIGN ? 1.0 : -1.0);
   }
 }

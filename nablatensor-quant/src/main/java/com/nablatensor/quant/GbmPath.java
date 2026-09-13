@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 
 /**
  * Geometric Brownian motion as a composable model step (Seam 5).
@@ -31,36 +31,36 @@ import com.nablatensor.engine.SDouble;
  * per-step drift and diffusion are a single shared tape node, so the recording
  * matches the earlier fixed-{@code dt} form exactly.
  *
- * <p>Subclass and override {@link #drift(SDouble)} or {@link #diffusion(SDouble)}
+ * <p>Subclass and override {@link #drift(ADouble)} or {@link #diffusion(ADouble)}
  * to get a displaced-diffusion or a term-structure variant without touching the
  * driver or the engine.
  */
 public class GbmPath {
 
-  private final SDouble[] drift;      // (r - sigma^2/2) * dt_i
-  private final SDouble[] diffusion;  // sigma * sqrt(dt_i)
+  private final ADouble[] drift;      // (r - sigma^2/2) * dt_i
+  private final ADouble[] diffusion;  // sigma * sqrt(dt_i)
 
   /** Uniform-grid convenience: {@code n} equal steps to {@code maturity}. */
-  public GbmPath(AadRecorder rec, SDouble rate, SDouble vol, int steps, SDouble maturity) {
+  public GbmPath(AadRecorder rec, ADouble rate, ADouble vol, int steps, ADouble maturity) {
     this(rec, rate, vol, TimeGrid.uniform(steps), maturity);
   }
 
-  public GbmPath(AadRecorder rec, SDouble rate, SDouble vol, TimeGrid grid, SDouble maturity) {
+  public GbmPath(AadRecorder rec, ADouble rate, ADouble vol, TimeGrid grid, ADouble maturity) {
     int n = grid.steps();
-    this.drift = new SDouble[n];
-    this.diffusion = new SDouble[n];
-    SDouble halfVar = rate.sub(vol.mul(vol).mul(0.5));
+    this.drift = new ADouble[n];
+    this.diffusion = new ADouble[n];
+    ADouble halfVar = rate.sub(vol.mul(vol).mul(0.5));
     if (grid.isUniform()) {
-      SDouble dt = maturity.mul(grid.fraction(0));
-      SDouble d = drift(halfVar.mul(dt));
-      SDouble s = diffusion(vol.mul(dt.sqrt()));
+      ADouble dt = maturity.mul(grid.fraction(0));
+      ADouble d = drift(halfVar.mul(dt));
+      ADouble s = diffusion(vol.mul(dt.sqrt()));
       for (int i = 0; i < n; i++) {
         drift[i] = d;
         diffusion[i] = s;
       }
     } else {
       for (int i = 0; i < n; i++) {
-        SDouble dt = maturity.mul(grid.fraction(i));
+        ADouble dt = maturity.mul(grid.fraction(i));
         drift[i] = drift(halfVar.mul(dt));
         diffusion[i] = diffusion(vol.mul(dt.sqrt()));
       }
@@ -68,17 +68,17 @@ public class GbmPath {
   }
 
   /** Hook: the deterministic per-step log-return. Identity for plain GBM. */
-  protected SDouble drift(SDouble perStepDrift) {
+  protected ADouble drift(ADouble perStepDrift) {
     return perStepDrift;
   }
 
   /** Hook: the per-step volatility multiplier on {@code Z}. Identity for plain GBM. */
-  protected SDouble diffusion(SDouble perStepVol) {
+  protected ADouble diffusion(ADouble perStepVol) {
     return perStepVol;
   }
 
   /** One step forward from step {@code i} given a standard-normal draw {@code z}. */
-  public SDouble step(SDouble spot, SDouble z, int i) {
+  public ADouble step(ADouble spot, ADouble z, int i) {
     return spot.mul(drift[i].add(diffusion[i].mul(z)).exp());
   }
 }

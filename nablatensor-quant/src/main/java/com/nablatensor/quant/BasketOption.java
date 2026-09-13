@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 import java.util.function.BiConsumer;
 
@@ -55,24 +55,24 @@ public final class BasketOption {
     double sqrtDt = Math.sqrt(dt);
 
     return (rec, in) -> {
-      SDouble rate = in.of(BasketMarket::rate);
-      SDouble[] s = {in.of(BasketMarket::s1), in.of(BasketMarket::s2), in.of(BasketMarket::s3)};
-      SDouble[] vol = {in.of(BasketMarket::v1), in.of(BasketMarket::v2), in.of(BasketMarket::v3)};
-      SDouble[] drift = new SDouble[ASSETS];
+      ADouble rate = in.of(BasketMarket::rate);
+      ADouble[] s = {in.of(BasketMarket::s1), in.of(BasketMarket::s2), in.of(BasketMarket::s3)};
+      ADouble[] vol = {in.of(BasketMarket::v1), in.of(BasketMarket::v2), in.of(BasketMarket::v3)};
+      ADouble[] drift = new ADouble[ASSETS];
       for (int i = 0; i < ASSETS; i++) {
         drift[i] = rate.sub(vol[i].mul(vol[i]).mul(0.5)).mul(dt);
       }
       for (int t = 0; t < steps; t++) {
-        SDouble[] z = mixer.draw(rec);
+        ADouble[] z = mixer.draw(rec);
         for (int i = 0; i < ASSETS; i++) {
           s[i] = s[i].mul(drift[i].add(vol[i].mul(sqrtDt).mul(z[i])).exp());
         }
       }
-      SDouble level = rec.constant(0.0);
+      ADouble level = rec.constant(0.0);
       for (int i = 0; i < ASSETS; i++) {
         level = level.add(s[i].mul(weights[i]));
       }
-      SDouble intrinsic = type == OptionType.CALL
+      ADouble intrinsic = type == OptionType.CALL
           ? level.sub(strike).max(0.0)
           : rec.constant(strike).sub(level).max(0.0);
       rec.output(intrinsic.mul(rate.neg().mul(maturity).exp()));

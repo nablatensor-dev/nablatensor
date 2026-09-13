@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 import java.util.function.BiConsumer;
 
@@ -36,12 +36,12 @@ import java.util.function.BiConsumer;
 public class HullWhite1F {
 
   /** Short rate and the running integral of the short rate. */
-  public record State(SDouble rate, SDouble integratedRate) {}
+  public record State(ADouble rate, ADouble integratedRate) {}
 
-  private final SDouble a;
-  private final SDouble b;
-  private final SDouble sigma;
-  private final SDouble r0;
+  private final ADouble a;
+  private final ADouble b;
+  private final ADouble sigma;
+  private final ADouble r0;
   private final double dt;
   private final double sqrtDt;
 
@@ -58,26 +58,26 @@ public class HullWhite1F {
     return new State(in.of(HullWhiteMarket::r0), rec.constant(0.0));
   }
 
-  public State step(AadRecorder rec, State s, SDouble z) {
-    SDouble rNext = s.rate()
+  public State step(AadRecorder rec, State s, ADouble z) {
+    ADouble rNext = s.rate()
         .add(drift(a.mul(b.sub(s.rate())).mul(dt)))
         .add(diffusion(sigma).mul(sqrtDt).mul(z));
-    SDouble accum = s.integratedRate().add(s.rate().add(rNext).mul(0.5 * dt));
+    ADouble accum = s.integratedRate().add(s.rate().add(rNext).mul(0.5 * dt));
     return new State(rNext, accum);
   }
 
   /** Hook: the per-step deterministic rate move. Identity for plain Hull-White. */
-  protected SDouble drift(SDouble meanReversionTerm) {
+  protected ADouble drift(ADouble meanReversionTerm) {
     return meanReversionTerm;
   }
 
   /** Hook: the volatility multiplier on the Brownian increment. Identity for plain Hull-White. */
-  protected SDouble diffusion(SDouble volatility) {
+  protected ADouble diffusion(ADouble volatility) {
     return volatility;
   }
 
   /** {@code exp(-integral(r dt))} along this path. */
-  public static SDouble discountFactor(State s) {
+  public static ADouble discountFactor(State s) {
     return s.integratedRate().neg().exp();
   }
 
@@ -95,8 +95,8 @@ public class HullWhite1F {
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn());
       }
-      SDouble strike = in.of(HullWhiteMarket::strike);
-      SDouble payoff = s.rate().sub(strike).max(0.0).mul(tau * notional);
+      ADouble strike = in.of(HullWhiteMarket::strike);
+      ADouble payoff = s.rate().sub(strike).max(0.0).mul(tau * notional);
       rec.output(payoff.mul(discountFactor(s)));
     };
   }
@@ -124,10 +124,10 @@ public class HullWhite1F {
    * P(t,T) = exp( -r0 (T-t) + B r0 - sigma^2/(4a) B^2 (1 - e^{-2 a t}) - B r_t )
    * }</pre>
    */
-  public SDouble bond(SDouble rt, double t, double horizon) {
+  public ADouble bond(ADouble rt, double t, double horizon) {
     double dtau = horizon - t;
-    SDouble bTT = a.mul(-dtau).exp().neg().add(1.0).div(a);              // B(t,T) = (1 - e^{-a dtau}) / a
-    SDouble term = sigma.mul(sigma).div(a.mul(4.0))
+    ADouble bTT = a.mul(-dtau).exp().neg().add(1.0).div(a);              // B(t,T) = (1 - e^{-a dtau}) / a
+    ADouble term = sigma.mul(sigma).div(a.mul(4.0))
         .mul(bTT).mul(bTT)
         .mul(a.mul(-2.0 * t).exp().neg().add(1.0));                       // sigma^2/(4a) B^2 (1 - e^{-2 a t})
     return r0.mul(-dtau).add(bTT.mul(r0)).sub(term).sub(bTT.mul(rt)).exp();
@@ -148,15 +148,15 @@ public class HullWhite1F {
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn());
       }
-      SDouble annuity = rec.constant(0.0);
-      SDouble lastBond = null;
+      ADouble annuity = rec.constant(0.0);
+      ADouble lastBond = null;
       for (int i = 1; i <= swapPeriods; i++) {
-        SDouble p = m.bond(s.rate(), expiry, expiry + i * accrual);
+        ADouble p = m.bond(s.rate(), expiry, expiry + i * accrual);
         annuity = annuity.add(p.mul(accrual));
         lastBond = p;
       }
-      SDouble swapRate = rec.constant(1.0).sub(lastBond).div(annuity);
-      SDouble payoff = annuity.mul(swapRate.sub(strike).max(0.0));
+      ADouble swapRate = rec.constant(1.0).sub(lastBond).div(annuity);
+      ADouble payoff = annuity.mul(swapRate.sub(strike).max(0.0));
       rec.output(payoff.mul(discountFactor(s)));
     };
   }

@@ -10,7 +10,7 @@ packages**:
 
 | Package | Surface |
 |---|---|
-| `com.nablatensor.engine` | `Nabla`, `SDouble`, `AadRecorder`, `AadTape`, `AadResult`, `AadOptions`, `JitOptimizations` |
+| `com.nablatensor.engine` | `Nabla`, `ADouble`, `AadRecorder`, `AadTape`, `AadResult`, `AadOptions`, `JitOptimizations` |
 | `com.nablatensor.engine` (SPI) | `AadEngine`, `AadExecutable` — implement to add a backend |
 | `com.nablatensor.quant` | `MonteCarlo`, `Product`, `TimeGrid`, `EquityMarket` (and the other `*Market` records), `Products`, `ExoticProducts`, `Hooks`, `MultiOutput`, `MultiMetric`, `Calibrator`, `BlackScholes`, the `*Model` step blocks |
 | `com.nablatensor.scenario` | `Shock`, `Scenario`, `ScenarioSet`, `Ladder`, `ScenarioRunner` |

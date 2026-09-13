@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant;
 
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -149,19 +149,19 @@ public final class MultiCurveBootstrap {
 
   // ---- the recorded two-stage recursion --------------------------------
 
-  private Map<String, SDouble> record(com.nablatensor.engine.AadRecorder rec) {
-    Map<String, SDouble> out = new LinkedHashMap<>();
+  private Map<String, ADouble> record(com.nablatensor.engine.AadRecorder rec) {
+    Map<String, ADouble> out = new LinkedHashMap<>();
 
     // Stage 1 — OIS discount curve. Integer-year DFs indexed by year.
-    Map<Integer, SDouble> oisDfByYear = new TreeMap<>();
+    Map<Integer, ADouble> oisDfByYear = new TreeMap<>();
     for (Inst inst : ois) {
-      SDouble q = rec.input(inst.label(), inst.quote());
+      ADouble q = rec.input(inst.label(), inst.quote());
       double t = inst.maturity();
-      SDouble df;
+      ADouble df;
       if (inst.deposit()) {
         df = rec.constant(1.0).div(rec.constant(1.0).add(q.mul(t)));
       } else {
-        SDouble prefix = rec.constant(0.0);
+        ADouble prefix = rec.constant(0.0);
         for (var e : oisDfByYear.entrySet()) {
           if (e.getKey() <= t + 1e-9) {
             prefix = prefix.add(e.getValue());
@@ -178,32 +178,32 @@ public final class MultiCurveBootstrap {
 
     // Stage 2 — one forecast curve per tenor, discounted on Stage 1.
     for (var entry : forecast.entrySet()) {
-      Map<Integer, SDouble> fcDfByYear = new TreeMap<>();
+      Map<Integer, ADouble> fcDfByYear = new TreeMap<>();
       for (Inst inst : entry.getValue()) {
-        SDouble q = rec.input(inst.label(), inst.quote());
+        ADouble q = rec.input(inst.label(), inst.quote());
         double t = inst.maturity();
-        SDouble df;
+        ADouble df;
         if (inst.deposit()) {
           df = rec.constant(1.0).div(rec.constant(1.0).add(q.mul(t)));
         } else {
           int n = (int) Math.rint(t);
-          SDouble pdT = oisDfByYear.get(n);
-          SDouble annuityT = rec.constant(0.0);
+          ADouble pdT = oisDfByYear.get(n);
+          ADouble annuityT = rec.constant(0.0);
           for (int y = 1; y <= n; y++) {
             annuityT = annuityT.add(oisDfByYear.get(y));
           }
           // s_below = sum_{j=1}^{n-1} (P_fc(j-1)/P_fc(j) - 1) * P_d(j)
-          SDouble sBelow = rec.constant(0.0);
-          SDouble prevFc = rec.constant(1.0);
+          ADouble sBelow = rec.constant(0.0);
+          ADouble prevFc = rec.constant(1.0);
           for (int y = 1; y <= n - 1; y++) {
-            SDouble pfc = fcDfByYear.get(y);
+            ADouble pfc = fcDfByYear.get(y);
             sBelow = sBelow.add(prevFc.div(pfc).sub(1.0).mul(oisDfByYear.get(y)));
             prevFc = pfc;
           }
-          SDouble prevFcLast = n == 1 ? rec.constant(1.0) : fcDfByYear.get(n - 1);
+          ADouble prevFcLast = n == 1 ? rec.constant(1.0) : fcDfByYear.get(n - 1);
           // q*A_n = s_below + (P_fc(n-1)/x - 1) * P_d(n)
           //   =>  x = P_fc(n-1) * P_d(n) / (q*A_n - s_below + P_d(n))
-          SDouble denom = q.mul(annuityT).sub(sBelow).add(pdT);
+          ADouble denom = q.mul(annuityT).sub(sBelow).add(pdT);
           df = prevFcLast.mul(pdT).div(denom);
           fcDfByYear.put(n, df);
         }

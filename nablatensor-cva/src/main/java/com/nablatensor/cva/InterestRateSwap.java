@@ -15,7 +15,7 @@
  */
 package com.nablatensor.cva;
 
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import java.util.Locale;
 
 /**
@@ -82,13 +82,13 @@ public record InterestRateSwap(String id, Side side, double notional, double fix
   }
 
   @Override
-  public SDouble markToMarket(Path path, double t) {
+  public ADouble markToMarket(Path path, double t) {
     HwShortRate model = path.rates();
-    SDouble rate = path.shortRate();
+    ADouble rate = path.shortRate();
     int periods = (int) Math.round((maturityYears - startYears) / accrualYears);
-    SDouble annuity = path.recorder().constant(0.0);
-    SDouble endBond = null;
-    SDouble resetBond = null;
+    ADouble annuity = path.recorder().constant(0.0);
+    ADouble endBond = null;
+    ADouble resetBond = null;
     for (int j = 1; j <= periods; j++) {
       double payDate = startYears + j * accrualYears;
       if (payDate <= t + 1.0e-9) {
@@ -97,15 +97,15 @@ public record InterestRateSwap(String id, Side side, double notional, double fix
       if (resetBond == null) {
         resetBond = model.bond(rate, t, Math.max(payDate - accrualYears, t));
       }
-      SDouble discountToPay = model.bond(rate, t, payDate);
+      ADouble discountToPay = model.bond(rate, t, payDate);
       annuity = annuity.add(discountToPay.mul(accrualYears));
       endBond = discountToPay;
     }
     if (endBond == null) {
       return path.recorder().constant(0.0);
     }
-    SDouble floatingLeg = resetBond.sub(endBond);
-    SDouble receiveFixedValue = annuity.mul(fixedRate).sub(floatingLeg).mul(notional);
+    ADouble floatingLeg = resetBond.sub(endBond);
+    ADouble receiveFixedValue = annuity.mul(fixedRate).sub(floatingLeg).mul(notional);
     return receiveFixedValue.mul(side == Side.RECEIVE_FIXED ? 1.0 : -1.0);
   }
 }

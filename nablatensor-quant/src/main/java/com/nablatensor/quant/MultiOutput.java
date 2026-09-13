@@ -17,7 +17,7 @@ package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.Nabla;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -55,7 +55,7 @@ public final class MultiOutput implements AutoCloseable {
    */
   @FunctionalInterface
   public interface Measures {
-    Map<String, SDouble> record(AadRecorder rec);
+    Map<String, ADouble> record(AadRecorder rec);
   }
 
   private final Nabla.Pricer pricer;
@@ -179,7 +179,7 @@ public final class MultiOutput implements AutoCloseable {
     public MultiOutput build() {
       List<String> order = new ArrayList<>();
       Nabla.Model model = Nabla.model(rec -> {
-        Map<String, SDouble> outs = measures.record(rec);
+        Map<String, ADouble> outs = measures.record(rec);
         if (outs.isEmpty()) {
           throw new IllegalStateException("no measures recorded");
         }

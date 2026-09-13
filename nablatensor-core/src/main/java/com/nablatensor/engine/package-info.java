@@ -18,7 +18,7 @@
  * The recording engine and its backend SPI.
  *
  * <p><b>API</b> — {@link com.nablatensor.engine.Nabla} (entry point),
- * {@link com.nablatensor.engine.SDouble}, {@link com.nablatensor.engine.AadRecorder},
+ * {@link ADouble}, {@link com.nablatensor.engine.AadRecorder},
  * {@link com.nablatensor.engine.AadTape}, {@link com.nablatensor.engine.AadResult},
  * {@link com.nablatensor.engine.AadOptions}, {@link com.nablatensor.engine.JitOptimizations}.
  *

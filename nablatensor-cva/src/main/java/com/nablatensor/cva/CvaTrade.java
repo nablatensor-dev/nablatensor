@@ -16,11 +16,11 @@
 package com.nablatensor.cva;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 
 /**
  * One trade in a netting set, able to mark itself to market on a simulated path
- * at any grid date. The MtM is written in plain {@link SDouble} arithmetic so it
+ * at any grid date. The MtM is written in plain {@link ADouble} arithmetic so it
  * records onto the same tape as the exposure simulation and one adjoint sweep
  * differentiates the whole netting-set CVA.
  *
@@ -40,7 +40,7 @@ public sealed interface CvaTrade permits InterestRateSwap, FxForward {
   double effectiveMaturityYears();
 
   /** On-tape mark-to-market at time {@code t}, in reporting currency, on the given path. */
-  SDouble markToMarket(Path path, double t);
+  ADouble markToMarket(Path path, double t);
 
   /** The simulated market a trade reads to value itself at a grid date. */
   interface Path {
@@ -51,12 +51,12 @@ public sealed interface CvaTrade permits InterestRateSwap, FxForward {
     HwShortRate rates();
 
     /** The simulated short rate at the current grid date. */
-    SDouble shortRate();
+    ADouble shortRate();
 
     /** The simulated FX spot (reporting currency per unit foreign) at the current grid date. */
-    SDouble fxSpot();
+    ADouble fxSpot();
 
     /** {@code exp(-fxForeignRate * (to - from))} — the flat foreign-currency discount. */
-    SDouble foreignDiscount(double from, double to);
+    ADouble foreignDiscount(double from, double to);
   }
 }

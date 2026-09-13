@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 import com.nablatensor.ops.Smooth;
 
@@ -38,7 +38,7 @@ public final class BermudanOption {
   /** Estimate of the discounted continuation value at an exercise date. */
   @FunctionalInterface
   public interface ContinuationValue {
-    SDouble estimate(AadRecorder rec, int dateIndex, SDouble spot, SDouble discountFactor);
+    ADouble estimate(AadRecorder rec, int dateIndex, ADouble spot, ADouble discountFactor);
 
     /** Continuation always dominates immediate exercise, so exercise happens only
      *  at the last date: the Bermudan collapses to its European. */
@@ -61,17 +61,17 @@ public final class BermudanOption {
   public static Product<EquityMarket> option(OptionType type, int exerciseDates, int stepsPerDate,
                                double decisionWidth, ContinuationValue continuation) {
     return new Named("Bermudan " + type, (rec, in, ignoredGrid) -> {
-      SDouble spot = in.of(EquityMarket::spot);
-      SDouble strike = in.of(EquityMarket::strike);
-      SDouble rate = in.of(EquityMarket::rate);
-      SDouble maturity = in.of(EquityMarket::maturity);
+      ADouble spot = in.of(EquityMarket::spot);
+      ADouble strike = in.of(EquityMarket::strike);
+      ADouble rate = in.of(EquityMarket::rate);
+      ADouble maturity = in.of(EquityMarket::maturity);
       GbmPath model = new GbmPath(rec, rate, in.of(EquityMarket::vol), exerciseDates * stepsPerDate, maturity);
 
-      SDouble stepDiscount = rate.neg().mul(maturity).div(exerciseDates * stepsPerDate).exp();
-      SDouble discount = rec.constant(1.0);
-      SDouble alive = rec.constant(1.0);
-      SDouble value = rec.constant(0.0);
-      SDouble s = spot;
+      ADouble stepDiscount = rate.neg().mul(maturity).div(exerciseDates * stepsPerDate).exp();
+      ADouble discount = rec.constant(1.0);
+      ADouble alive = rec.constant(1.0);
+      ADouble value = rec.constant(0.0);
+      ADouble s = spot;
       int stepIdx = 0;
 
       for (int d = 0; d < exerciseDates; d++) {
@@ -79,10 +79,10 @@ public final class BermudanOption {
           s = model.step(s, rec.randn(), stepIdx++);
           discount = discount.mul(stepDiscount);
         }
-        SDouble exercise = (type == OptionType.CALL ? s.sub(strike) : strike.sub(s)).max(0.0);
-        SDouble contEst = continuation.estimate(rec, d, s, discount);
+        ADouble exercise = (type == OptionType.CALL ? s.sub(strike) : strike.sub(s)).max(0.0);
+        ADouble contEst = continuation.estimate(rec, d, s, discount);
         boolean lastDate = d == exerciseDates - 1;
-        SDouble exerciseNow = lastDate
+        ADouble exerciseNow = lastDate
             ? alive
             : alive.mul(Smooth.gt(rec, exercise.sub(contEst), 0.0, decisionWidth));
         value = value.add(exerciseNow.mul(exercise).mul(discount));

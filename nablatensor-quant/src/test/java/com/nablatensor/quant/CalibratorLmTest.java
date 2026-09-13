@@ -18,7 +18,7 @@ package com.nablatensor.quant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -42,11 +42,11 @@ class CalibratorLmTest {
     }
 
     Calibrator.Result r = Calibrator.leastSquares(rec -> {
-          SDouble alpha = rec.input("alpha", 0.20);
-          SDouble rho = rec.input("rho", 0.0);
-          SDouble nu = rec.input("nu", 0.30);
-          SDouble beta = rec.constant(BETA);
-          Map<String, SDouble> res = new LinkedHashMap<>();
+          ADouble alpha = rec.input("alpha", 0.20);
+          ADouble rho = rec.input("rho", 0.0);
+          ADouble nu = rec.input("nu", 0.30);
+          ADouble beta = rec.constant(BETA);
+          Map<String, ADouble> res = new LinkedHashMap<>();
           for (int i = 0; i < STRIKES.length; i++) {
             res.put("k" + i,
                 SabrHagan.blackVol(rec, alpha, beta, rho, nu, F, STRIKES[i], T).sub(target[i]));

@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 
 /**
  * Turns independent standard-normal draws into correlated ones by a fixed
@@ -68,13 +68,13 @@ public final class CorrelatedNormals {
    * Mixes {@code size()} independent draws into {@code size()} correlated ones:
    * {@code y = L x}.
    */
-  public SDouble[] mix(AadRecorder rec, SDouble[] independent) {
+  public ADouble[] mix(AadRecorder rec, ADouble[] independent) {
     if (independent.length != lower.length) {
       throw new IllegalArgumentException("need " + lower.length + " draws, got " + independent.length);
     }
-    SDouble[] y = new SDouble[lower.length];
+    ADouble[] y = new ADouble[lower.length];
     for (int i = 0; i < lower.length; i++) {
-      SDouble acc = rec.constant(0.0);
+      ADouble acc = rec.constant(0.0);
       for (int j = 0; j <= i; j++) {
         acc = acc.add(independent[j].mul(lower[i][j]));
       }
@@ -84,8 +84,8 @@ public final class CorrelatedNormals {
   }
 
   /** Draws {@code size()} fresh independent normals and mixes them. */
-  public SDouble[] draw(AadRecorder rec) {
-    SDouble[] z = new SDouble[lower.length];
+  public ADouble[] draw(AadRecorder rec) {
+    ADouble[] z = new ADouble[lower.length];
     for (int i = 0; i < z.length; i++) {
       z[i] = rec.randn();
     }

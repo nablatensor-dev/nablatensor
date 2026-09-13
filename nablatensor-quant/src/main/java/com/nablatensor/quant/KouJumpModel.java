@@ -17,7 +17,7 @@ package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.Nabla;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.ops.Smooth;
 import java.util.function.BiConsumer;
 
@@ -37,13 +37,13 @@ import java.util.function.BiConsumer;
  */
 public class KouJumpModel {
 
-  private final SDouble rate;
-  private final SDouble vol;
-  private final SDouble intensity;
-  private final SDouble probUp;
-  private final SDouble etaUp;
-  private final SDouble etaDown;
-  private final SDouble kappa;
+  private final ADouble rate;
+  private final ADouble vol;
+  private final ADouble intensity;
+  private final ADouble probUp;
+  private final ADouble etaUp;
+  private final ADouble etaDown;
+  private final ADouble kappa;
   private final double dt;
   private final double sqrtDt;
   private final double indicatorWidth;
@@ -55,19 +55,19 @@ public class KouJumpModel {
     this.probUp = in.of(KouMarket::probUp);
     this.etaUp = in.of(KouMarket::etaUp);
     this.etaDown = in.of(KouMarket::etaDown);
-    SDouble up = probUp.mul(etaUp.div(etaUp.sub(1.0)));
-    SDouble down = rec1(probUp).mul(etaDown.div(etaDown.add(1.0)));
+    ADouble up = probUp.mul(etaUp.div(etaUp.sub(1.0)));
+    ADouble down = rec1(probUp).mul(etaDown.div(etaDown.add(1.0)));
     this.kappa = up.add(down).sub(1.0);
     this.dt = maturity / steps;
     this.sqrtDt = Math.sqrt(dt);
     this.indicatorWidth = indicatorWidth;
   }
 
-  private static SDouble rec1(SDouble p) {
+  private static ADouble rec1(ADouble p) {
     return p.neg().add(1.0);
   }
 
-  public SDouble start(Nabla.Inputs<KouMarket> in) {
+  public ADouble start(Nabla.Inputs<KouMarket> in) {
     return in.of(KouMarket::spot);
   }
 
@@ -76,24 +76,24 @@ public class KouJumpModel {
    * jump occurs, {@code uSide} selects up vs down, {@code uMag} is inverted to
    * the exponential magnitude.
    */
-  public SDouble step(AadRecorder rec, SDouble s, SDouble z,
-                      SDouble uJump, SDouble uSide, SDouble uMag) {
+  public ADouble step(AadRecorder rec, ADouble s, ADouble z,
+                      ADouble uJump, ADouble uSide, ADouble uMag) {
     // Exact martingale compensator for the at-most-one-jump-per-step scheme
     // (jump factor expectation 1 + lambda kappa dt): -ln(1 + lambda kappa dt).
-    SDouble compensator = intensity.mul(kappa).mul(dt).add(1.0).log();
-    SDouble drift = rate.sub(vol.mul(vol).mul(0.5)).mul(dt).sub(compensator);
-    SDouble diffused = s.mul(drift.add(vol.mul(sqrtDt).mul(z)).exp());
+    ADouble compensator = intensity.mul(kappa).mul(dt).add(1.0).log();
+    ADouble drift = rate.sub(vol.mul(vol).mul(0.5)).mul(dt).sub(compensator);
+    ADouble diffused = s.mul(drift.add(vol.mul(sqrtDt).mul(z)).exp());
 
-    SDouble p = intensity.mul(dt);
-    SDouble jumpOccurs = Smooth.lt(rec, uJump, p, indicatorWidth);
-    SDouble isUp = Smooth.lt(rec, uSide, probUp, 1.0e-3);
+    ADouble p = intensity.mul(dt);
+    ADouble jumpOccurs = Smooth.lt(rec, uJump, p, indicatorWidth);
+    ADouble isUp = Smooth.lt(rec, uSide, probUp, 1.0e-3);
     // Exp(eta) magnitude from a uniform: -ln(1 - u) / eta.
-    SDouble expMag = rec.constant(1.0).sub(uMag).log().neg();
-    SDouble jUp = expMag.div(etaUp);
-    SDouble jDown = expMag.div(etaDown).neg();
-    SDouble logJump = isUp.mul(jUp).add(rec1(isUp).mul(jDown));
+    ADouble expMag = rec.constant(1.0).sub(uMag).log().neg();
+    ADouble jUp = expMag.div(etaUp);
+    ADouble jDown = expMag.div(etaDown).neg();
+    ADouble logJump = isUp.mul(jUp).add(rec1(isUp).mul(jDown));
 
-    SDouble jumpFactor = logJump.exp().sub(1.0);
+    ADouble jumpFactor = logJump.exp().sub(1.0);
     return diffused.mul(rec.constant(1.0).add(jumpOccurs.mul(jumpFactor)));
   }
 
@@ -106,13 +106,13 @@ public class KouJumpModel {
       OptionType type, double maturity, int steps, double indicatorWidth) {
     return (rec, in) -> {
       KouJumpModel m = new KouJumpModel(in, maturity, steps, indicatorWidth);
-      SDouble s = m.start(in);
+      ADouble s = m.start(in);
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn(), rec.randu(), rec.randu(), rec.randu());
       }
-      SDouble strike = in.of(KouMarket::strike);
-      SDouble intrinsic = type == OptionType.CALL ? s.sub(strike).max(0.0) : strike.sub(s).max(0.0);
-      SDouble discount = in.of(KouMarket::rate).neg().mul(maturity).exp();
+      ADouble strike = in.of(KouMarket::strike);
+      ADouble intrinsic = type == OptionType.CALL ? s.sub(strike).max(0.0) : strike.sub(s).max(0.0);
+      ADouble discount = in.of(KouMarket::rate).neg().mul(maturity).exp();
       rec.output(intrinsic.mul(discount));
     };
   }

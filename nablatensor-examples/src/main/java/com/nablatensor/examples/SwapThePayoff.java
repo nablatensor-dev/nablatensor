@@ -15,12 +15,11 @@
  */
 package com.nablatensor.examples;
 
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.GbmPath;
 import com.nablatensor.quant.MonteCarlo;
 import com.nablatensor.quant.Product;
-import com.nablatensor.quant.TimeGrid;
 import com.nablatensor.engine.Nabla;
 import com.nablatensor.quant.Products;
 import java.util.LinkedHashMap;
@@ -72,18 +71,18 @@ public final class SwapThePayoff {
   /** A capped call as a raw payoff lambda: {@code min(max(S_T - K, 0), cap)}, discounted. */
   static Product<EquityMarket> cappedCall(double cap) {
     return (rec, in, grid) -> {
-      SDouble spot = in.of(EquityMarket::spot);
-      SDouble strike = in.of(EquityMarket::strike);
-      SDouble rate = in.of(EquityMarket::rate);
-      SDouble vol = in.of(EquityMarket::vol);
-      SDouble maturity = in.of(EquityMarket::maturity);
+      ADouble spot = in.of(EquityMarket::spot);
+      ADouble strike = in.of(EquityMarket::strike);
+      ADouble rate = in.of(EquityMarket::rate);
+      ADouble vol = in.of(EquityMarket::vol);
+      ADouble maturity = in.of(EquityMarket::maturity);
 
       GbmPath model = new GbmPath(rec, rate, vol, grid, maturity);
-      SDouble s = spot;
+      ADouble s = spot;
       for (int t = 0; t < grid.steps(); t++) {
         s = model.step(s, rec.randn(), t);
       }
-      SDouble payoff = s.sub(strike).max(0.0).min(rec.constant(cap));
+      ADouble payoff = s.sub(strike).max(0.0).min(rec.constant(cap));
       rec.output(payoff.mul(rate.neg().mul(maturity).exp()));
     };
   }

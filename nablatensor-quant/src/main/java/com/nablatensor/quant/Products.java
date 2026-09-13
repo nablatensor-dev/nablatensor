@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 
 /**
@@ -24,7 +24,7 @@ import com.nablatensor.engine.Nabla;
  * lookback, each on a {@link GbmPath}. All discounted to today at the flat rate.
  *
  * <p>Each factory returns a {@code Product<EquityMarket>} whose {@code record} is
- * a handful of lines over {@link SDouble} — read one as the template for a payoff
+ * a handful of lines over {@link ADouble} — read one as the template for a payoff
  * of your own. The {@code xxxCall} / {@code xxxPut} pairs are conveniences over
  * the {@link OptionType}-parameterised forms ({@link #european(OptionType)} …),
  * which is the shape to reach for when adding an instrument.
@@ -70,7 +70,7 @@ public final class Products {
   public static Product<EquityMarket> european(OptionType type) {
     return new Named("European " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
-      SDouble terminal = sim.spot;
+      ADouble terminal = sim.spot;
       for (int t = 0; t < grid.steps(); t++) {
         terminal = sim.model.step(terminal, rec.randn(), t);
       }
@@ -82,13 +82,13 @@ public final class Products {
   public static Product<EquityMarket> asian(OptionType type) {
     return new Named("Asian " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
-      SDouble path = sim.spot;
-      SDouble sum = rec.constant(0.0);
+      ADouble path = sim.spot;
+      ADouble sum = rec.constant(0.0);
       for (int t = 0; t < grid.steps(); t++) {
         path = sim.model.step(path, rec.randn(), t);
         sum = sum.add(path);
       }
-      SDouble average = sum.div((double) grid.steps());
+      ADouble average = sum.div((double) grid.steps());
       rec.output(sim.discount(intrinsic(type, average, sim.strike)));
     });
   }
@@ -101,13 +101,13 @@ public final class Products {
   public static Product<EquityMarket> lookback(OptionType type) {
     return new Named("Lookback " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
-      SDouble path = sim.spot;
-      SDouble extremum = sim.spot;
+      ADouble path = sim.spot;
+      ADouble extremum = sim.spot;
       for (int t = 0; t < grid.steps(); t++) {
         path = sim.model.step(path, rec.randn(), t);
         extremum = type == OptionType.CALL ? extremum.max(path) : extremum.min(path);
       }
-      SDouble intrinsic = type == OptionType.CALL
+      ADouble intrinsic = type == OptionType.CALL
           ? extremum.sub(sim.strike).max(0.0)
           : sim.strike.sub(extremum).max(0.0);
       rec.output(sim.discount(intrinsic));
@@ -122,28 +122,28 @@ public final class Products {
   public static Product<EquityMarket> floatingLookback(OptionType type) {
     return new Named("Floating lookback " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
-      SDouble path = sim.spot;
-      SDouble extremum = sim.spot;
+      ADouble path = sim.spot;
+      ADouble extremum = sim.spot;
       for (int t = 0; t < grid.steps(); t++) {
         path = sim.model.step(path, rec.randn(), t);
         extremum = type == OptionType.CALL ? extremum.min(path) : extremum.max(path);
       }
-      SDouble payoff = type == OptionType.CALL ? path.sub(extremum) : extremum.sub(path);
+      ADouble payoff = type == OptionType.CALL ? path.sub(extremum) : extremum.sub(path);
       rec.output(sim.discount(payoff));   // always non-negative by construction
     });
   }
 
-  private static SDouble intrinsic(OptionType type, SDouble underlying, SDouble strike) {
-    SDouble diff = type == OptionType.CALL ? underlying.sub(strike) : strike.sub(underlying);
+  private static ADouble intrinsic(OptionType type, ADouble underlying, ADouble strike) {
+    ADouble diff = type == OptionType.CALL ? underlying.sub(strike) : strike.sub(underlying);
     return diff.max(0.0);
   }
 
   /** The recorded market plus a ready {@link GbmPath}; shared setup for every payoff above. */
   private static final class Sim {
-    final SDouble spot;
-    final SDouble strike;
-    final SDouble rate;
-    final SDouble maturity;
+    final ADouble spot;
+    final ADouble strike;
+    final ADouble rate;
+    final ADouble maturity;
     final GbmPath model;
 
     Sim(AadRecorder rec, Nabla.Inputs<EquityMarket> in, TimeGrid grid) {
@@ -151,11 +151,11 @@ public final class Products {
       this.strike = in.of(EquityMarket::strike);
       this.rate = in.of(EquityMarket::rate);
       this.maturity = in.of(EquityMarket::maturity);
-      SDouble vol = in.of(EquityMarket::vol);
+      ADouble vol = in.of(EquityMarket::vol);
       this.model = new GbmPath(rec, rate, vol, grid, maturity);
     }
 
-    SDouble discount(SDouble payoff) {
+    ADouble discount(ADouble payoff) {
       return payoff.mul(rate.neg().mul(maturity).exp());
     }
   }

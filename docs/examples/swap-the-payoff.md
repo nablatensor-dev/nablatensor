@@ -4,7 +4,7 @@
 
 NablaTensor's first design rule: **anything a quant would reasonably want to
 tweak lives in a seam.** The payoff is Seam 1 — a `Product` is a functional
-interface, you write the valuation in plain Java over `SDouble`, and swapping it
+interface, you write the valuation in plain Java over `ADouble`, and swapping it
 re-records the tape in microseconds. The engine, the `MonteCarlo` driver and the
 Greek machinery never change.
 

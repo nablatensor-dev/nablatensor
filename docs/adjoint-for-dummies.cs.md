@@ -153,7 +153,7 @@ skutečně větší — adjoint teče jen tou větví, která se při výpočtu 
 použila.)
 
 Příklad `(x+2)*x` zapsaný přesně tak, jak by ho napsala aplikace — proti
-`SDouble` místo proti `double`:
+`ADouble` místo proti `double`:
 
 ```java
 AadTape tape = AadRecorder.record(rec -> {
@@ -165,7 +165,7 @@ AadTape tape = AadRecorder.record(rec -> {
 ```
 
 `rec.input(...)` nic nepočítá — jen přidá uzel `ADD`/`MUL`/`INPUT` do
-`AadTape` a vrátí lehký odkaz (`SDouble`) na tento uzel. `AadRecorder.record(...)`
+`AadTape` a vrátí lehký odkaz (`ADouble`) na tento uzel. `AadRecorder.record(...)`
 spustí vaše lambda přesně jednou, s $x=3$, a na výstupu je přesně to pole
 uzlů, které jste si výše prošli ručně. Každý další přehrání — ať už jde jen
 o dopřednou hodnotu, nebo o dopředný a zpětný průchod kvůli gradientům —
@@ -403,7 +403,7 @@ chcete.
 - [`docs/compare/vs-bump-and-revalue.md`](compare/vs-bump-and-revalue.md) —
   stejná úvaha o ceně jako v 5. kapitole, na skutečných produktech.
 - [`docs/examples/vanilla-european.md`](examples/vanilla-european.md) —
-  nejmenší kompletní řešený příklad se skutečným kódem `SDouble`.
+  nejmenší kompletní řešený příklad se skutečným kódem `ADouble`.
 - [`docs/examples/frtb-curvature-for-beginners.md`](examples/frtb-curvature-for-beginners.md)
   — průvodce "pro začátečníky" o úroveň výš, kde je adjungovaná delta jednou
   ze součástí většího regulatorního výpočtu.

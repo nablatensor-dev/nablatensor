@@ -16,7 +16,7 @@ Source: [`nablatensor-examples/.../MnistMlp.java`](../../nablatensor-examples/sr
 The `Tensor` API runs only on a GPU `ComputeBackend` (Vulkan / ROCm / CUDA);
 there is no CPU tensor backend. The example picks
 `NablaTensors.defaultDevice()` and prints a notice and exits if no device is
-present. (The adjoint-AD engine — `Nabla` / `SDouble` — is the part that
+present. (The adjoint-AD engine — `Nabla` / `ADouble` — is the part that
 runs on a GPU-less laptop; this example is the tensor library.)
 
 ## The step

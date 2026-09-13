@@ -6,7 +6,7 @@
 
 **Adjoint automatic differentiation for quantitative finance on the JVM. Write the valuation in Java once — get price and every Greek from one reverse sweep, on CPU, SIMD or GPU.**
 
-Record a Monte-Carlo valuation once in plain Java against `SDouble` scalars.
+Record a Monte-Carlo valuation once in plain Java against `ADouble` scalars.
 NablaTensor flattens it to a tape and replays that tape — millions of scenarios —
 on a generated **bytecode kernel**, on **SIMD**, or on a **GPU**, from the *same*
 recording. One forward sweep gives the price; one reverse sweep gives *all*
@@ -124,7 +124,7 @@ checked against the scalar oracle).
 
 | module | what |
 |---|---|
-| `nablatensor-core` | `SDouble`, `AadRecorder`, `AadTape`, the `AadEngine` SPI, `AadResult`, Philox plumbing, the shared CUDA-C tape codegen |
+| `nablatensor-core` | `ADouble`, `AadRecorder`, `AadTape`, the `AadEngine` SPI, `AadResult`, Philox plumbing, the shared CUDA-C tape codegen |
 | `nablatensor-engine-cpu` | CPU replay — a scalar interpreter (the always-available deterministic **oracle**) and a tape→straight-line JVM **bytecode** engine via the Class-File API (the LTS-clean default) |
 | `nablatensor-engine-simd` | JDK Vector API replay — opt-in (`--add-modules jdk.incubator.vector`) |
 | `nablatensor-engine-vulkan` | everything Vulkan (FFM runtime + tensor backend + replay engine): tape → GLSL→SPIR-V fused compute shader, dispatched through the Vulkan loader |
@@ -143,7 +143,7 @@ dependency of the `cpu-jit` path.
 
 ### The seams (change without forking)
 
-1. **the payoff/model lambda** — `Product<M>` is a functional interface over any `double`-only market record; write the valuation in `SDouble`.
+1. **the payoff/model lambda** — `Product<M>` is a functional interface over any `double`-only market record; write the valuation in `ADouble`.
 2. **`setInput`** — market data and model params are re-settable on a compiled kernel (`mc.run(shockedMarket, …)`).
    `.timeGrid(TimeGrid.of(t1, t2, …))` swaps the schedule (non-uniform sampling) without touching the payoff.
 3. **custom ops** — `CustomOp.registerUnary(name, macro)`; the code generators pick it up on every backend.

@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 import java.util.function.BiConsumer;
 
@@ -44,8 +44,8 @@ public final class LmmModel {
   private final double tenor;
   private final double dt;
   private final double sqrtDt;
-  private final SDouble vol;
-  private final SDouble corr;
+  private final ADouble vol;
+  private final ADouble corr;
 
   public LmmModel(Nabla.Inputs<LmmMarket> in, double expiry, int steps) {
     this.tenor = LmmMarket.TENOR;
@@ -55,21 +55,21 @@ public final class LmmModel {
     this.corr = in.of(LmmMarket::corr);
   }
 
-  public SDouble[] start(Nabla.Inputs<LmmMarket> in) {
-    return new SDouble[] {
+  public ADouble[] start(Nabla.Inputs<LmmMarket> in) {
+    return new ADouble[] {
         in.of(LmmMarket::l1), in.of(LmmMarket::l2), in.of(LmmMarket::l3), in.of(LmmMarket::l4)};
   }
 
   /** One log-Euler step with a frozen terminal-measure drift; {@code z[i]} correlated already. */
-  public SDouble[] step(AadRecorder rec, SDouble[] l, SDouble[] z) {
-    SDouble[] next = new SDouble[RATES];
+  public ADouble[] step(AadRecorder rec, ADouble[] l, ADouble[] z) {
+    ADouble[] next = new ADouble[RATES];
     for (int i = 0; i < RATES; i++) {
-      SDouble drift = rec.constant(0.0);
+      ADouble drift = rec.constant(0.0);
       for (int j = i + 1; j < RATES; j++) {
-        SDouble term = l[j].mul(tenor).mul(vol).mul(corr).div(l[j].mul(tenor).add(1.0));
+        ADouble term = l[j].mul(tenor).mul(vol).mul(corr).div(l[j].mul(tenor).add(1.0));
         drift = drift.sub(vol.mul(term));
       }
-      SDouble logIncr = drift.sub(vol.mul(vol).mul(0.5)).mul(dt).add(vol.mul(sqrtDt).mul(z[i]));
+      ADouble logIncr = drift.sub(vol.mul(vol).mul(0.5)).mul(dt).add(vol.mul(sqrtDt).mul(z[i]));
       next[i] = l[i].mul(logIncr.exp());
     }
     return next;
@@ -81,8 +81,8 @@ public final class LmmModel {
    * SDouble Cholesky of the innovations (so {@code dV/dcorr} also picks up the
    * diffusion channel) is a later refinement.
    */
-  public SDouble[] draw(AadRecorder rec) {
-    SDouble[] z = new SDouble[RATES];
+  public ADouble[] draw(AadRecorder rec) {
+    ADouble[] z = new ADouble[RATES];
     for (int i = 0; i < RATES; i++) {
       z[i] = rec.randn();
     }
@@ -97,20 +97,20 @@ public final class LmmModel {
       double expiry, int steps, double strike) {
     return (rec, in) -> {
       LmmModel m = new LmmModel(in, expiry, steps);
-      SDouble[] l = m.start(in);
+      ADouble[] l = m.start(in);
       for (int t = 0; t < steps; t++) {
         l = m.step(rec, l, m.draw(rec));
       }
       // annuity A = sum tenor * P(0, T_{i+1}); P built forward from the simulated forwards
-      SDouble discount = rec.constant(1.0);
-      SDouble annuity = rec.constant(0.0);
-      SDouble floatingLeg = rec.constant(0.0);
+      ADouble discount = rec.constant(1.0);
+      ADouble annuity = rec.constant(0.0);
+      ADouble floatingLeg = rec.constant(0.0);
       for (int i = 0; i < RATES; i++) {
         discount = discount.div(l[i].mul(LmmMarket.TENOR).add(1.0));
         annuity = annuity.add(discount.mul(LmmMarket.TENOR));
         floatingLeg = floatingLeg.add(discount.mul(l[i]).mul(LmmMarket.TENOR));
       }
-      SDouble swapRate = floatingLeg.div(annuity);
+      ADouble swapRate = floatingLeg.div(annuity);
       rec.output(swapRate.sub(strike).max(0.0).mul(annuity));
     };
   }
@@ -120,19 +120,19 @@ public final class LmmModel {
       double expiry, int steps, double strike) {
     return (rec, in) -> {
       LmmModel m = new LmmModel(in, expiry, steps);
-      SDouble[] l = m.start(in);
+      ADouble[] l = m.start(in);
       for (int t = 0; t < steps; t++) {
         l = m.step(rec, l, m.draw(rec));
       }
-      SDouble discount = rec.constant(1.0);
-      SDouble annuity = rec.constant(0.0);
-      SDouble floatingLeg = rec.constant(0.0);
+      ADouble discount = rec.constant(1.0);
+      ADouble annuity = rec.constant(0.0);
+      ADouble floatingLeg = rec.constant(0.0);
       for (int i = 0; i < RATES; i++) {
         discount = discount.div(l[i].mul(LmmMarket.TENOR).add(1.0));
         annuity = annuity.add(discount.mul(LmmMarket.TENOR));
         floatingLeg = floatingLeg.add(discount.mul(l[i]).mul(LmmMarket.TENOR));
       }
-      SDouble swapRate = floatingLeg.div(annuity);
+      ADouble swapRate = floatingLeg.div(annuity);
       rec.output(annuity.mul(swapRate.neg().add(strike).max(0.0)));
     };
   }
@@ -149,11 +149,11 @@ public final class LmmModel {
     return (rec, in) -> {
       double sign = type.sign();
       LmmModel stepper = new LmmModel(in, LmmMarket.TENOR, Math.max(1, stepsPerPeriod));
-      SDouble[] l = stepper.start(in);
-      SDouble discount = rec.constant(1.0);
-      SDouble value = rec.constant(0.0);
+      ADouble[] l = stepper.start(in);
+      ADouble discount = rec.constant(1.0);
+      ADouble value = rec.constant(0.0);
       for (int i = 0; i < RATES; i++) {
-        SDouble caplet = l[i].sub(strike).mul(sign).max(0.0).mul(LmmMarket.TENOR * notional);
+        ADouble caplet = l[i].sub(strike).mul(sign).max(0.0).mul(LmmMarket.TENOR * notional);
         discount = discount.div(l[i].mul(LmmMarket.TENOR).add(1.0));   // now to end of period i
         value = value.add(caplet.mul(discount));
         if (i < RATES - 1) {

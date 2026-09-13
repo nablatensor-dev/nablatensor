@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 
 /**
@@ -25,7 +25,7 @@ import com.nablatensor.engine.Nabla;
  * record works, so a rates or FX payoff records against its own market type
  * through the same interface.
  *
- * <p>An implementation writes the valuation in plain Java over {@link SDouble}
+ * <p>An implementation writes the valuation in plain Java over {@link ADouble}
  * scalars and calls {@code rec.output(...)} exactly once. It never touches a
  * device or a Greek: the engine records the tape and one adjoint sweep produces
  * every sensitivity.

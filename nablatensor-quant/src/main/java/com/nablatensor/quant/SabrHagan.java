@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.ops.SpecialFn;
 
 /**
@@ -24,7 +24,7 @@ import com.nablatensor.ops.SpecialFn;
  *
  * <p>Two forms: a plain {@code double} {@link #blackVol(double, double, double,
  * double, double, double, double)} for generating reference quotes, and a
- * tape-level {@link #blackVol(AadRecorder, SDouble, SDouble, SDouble, SDouble,
+ * tape-level {@link #blackVol(AadRecorder, ADouble, ADouble, ADouble, ADouble,
  * double, double, double)} whose {@code alpha}, {@code beta}, {@code rho} and
  * {@code nu} are differentiable — the model function inside {@link Calibrator}.
  */
@@ -63,31 +63,31 @@ public final class SabrHagan {
    * are constants; the four SABR parameters are differentiable. Requires
    * {@code strike != forward} (use a small offset for the ATM point).
    */
-  public static SDouble blackVol(AadRecorder rec, SDouble alpha, SDouble beta, SDouble rho, SDouble nu,
+  public static ADouble blackVol(AadRecorder rec, ADouble alpha, ADouble beta, ADouble rho, ADouble nu,
                                  double forward, double strike, double maturity) {
     if (Math.abs(forward - strike) < 1e-12) {
       throw new IllegalArgumentException("tape-level blackVol needs strike != forward");
     }
     double logFK = Math.log(forward / strike);
-    SDouble oneMinusBeta = beta.neg().add(1.0);
+    ADouble oneMinusBeta = beta.neg().add(1.0);
 
     // fkBeta = (F K) ^ ((1-beta)/2)
-    SDouble fkBeta = SpecialFn.pow(rec.constant(forward * strike), oneMinusBeta.mul(0.5));
+    ADouble fkBeta = SpecialFn.pow(rec.constant(forward * strike), oneMinusBeta.mul(0.5));
 
-    SDouble aDen = fkBeta.mul(oneMinusBeta.mul(oneMinusBeta).mul(logFK * logFK / 24.0)
+    ADouble aDen = fkBeta.mul(oneMinusBeta.mul(oneMinusBeta).mul(logFK * logFK / 24.0)
         .add(SpecialFn.pow(oneMinusBeta, 4.0).mul(Math.pow(logFK, 4) / 1920.0))
         .add(1.0));
-    SDouble a = alpha.div(aDen);
+    ADouble a = alpha.div(aDen);
 
-    SDouble b = oneMinusBeta.mul(oneMinusBeta).mul(alpha.mul(alpha).div(fkBeta.mul(fkBeta))).mul(1.0 / 24.0)
+    ADouble b = oneMinusBeta.mul(oneMinusBeta).mul(alpha.mul(alpha).div(fkBeta.mul(fkBeta))).mul(1.0 / 24.0)
         .add(rho.mul(beta).mul(nu).mul(alpha).div(fkBeta).mul(0.25))
         .add(rho.mul(rho).mul(-3.0).add(2.0).mul(nu.mul(nu)).mul(1.0 / 24.0))
         .mul(maturity)
         .add(1.0);
 
-    SDouble z = nu.div(alpha).mul(fkBeta).mul(logFK);
-    SDouble root = z.mul(z).sub(rho.mul(z).mul(2.0)).add(1.0).sqrt();
-    SDouble xz = root.add(z).sub(rho).div(rho.neg().add(1.0)).log();
+    ADouble z = nu.div(alpha).mul(fkBeta).mul(logFK);
+    ADouble root = z.mul(z).sub(rho.mul(z).mul(2.0)).add(1.0).sqrt();
+    ADouble xz = root.add(z).sub(rho).div(rho.neg().add(1.0)).log();
     return a.mul(z.div(xz)).mul(b);
   }
 }

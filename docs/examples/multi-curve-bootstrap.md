@@ -4,7 +4,7 @@
 
 Feature **F5**. Post-LIBOR, discounting moved to an OIS curve and each floating
 tenor got its own forecast curve. This builds the stack and — because the whole
-bootstrap recursion is recorded against `SDouble` quotes and replayed through a
+bootstrap recursion is recorded against `ADouble` quotes and replayed through a
 `MultiOutput` — returns the exact `d(zero rate) / d(quote)` Jacobian from one
 adjoint sweep, the transformation a rates desk uses to turn instrument PV01s
 into zero-rate bucket risk.

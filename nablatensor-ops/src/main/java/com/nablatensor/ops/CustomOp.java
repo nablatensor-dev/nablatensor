@@ -16,14 +16,14 @@
 package com.nablatensor.ops;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A registry for user-named operations, in <em>macro</em> form: a custom op is a
- * function that expands into primitive {@link SDouble} nodes when it is
+ * function that expands into primitive {@link ADouble} nodes when it is
  * recorded. Its adjoint is whatever the recorded sub-graph produces, so it works
  * on every backend with no engine change (Seam 3, composable subset).
  *
@@ -43,13 +43,13 @@ public final class CustomOp {
   /** A named op of one tape argument. */
   @FunctionalInterface
   public interface Unary {
-    SDouble apply(AadRecorder rec, SDouble x);
+    ADouble apply(AadRecorder rec, ADouble x);
   }
 
   /** A named op of two tape arguments. */
   @FunctionalInterface
   public interface Binary {
-    SDouble apply(AadRecorder rec, SDouble a, SDouble b);
+    ADouble apply(AadRecorder rec, ADouble a, ADouble b);
   }
 
   private static final Map<String, Unary> UNARY = new ConcurrentHashMap<>();

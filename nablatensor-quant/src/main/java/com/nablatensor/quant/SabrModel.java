@@ -16,7 +16,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 import com.nablatensor.ops.SpecialFn;
 import java.util.function.BiConsumer;
@@ -37,12 +37,12 @@ import java.util.function.BiConsumer;
  */
 public class SabrModel {
 
-  public record State(SDouble forward, SDouble alpha) {}
+  public record State(ADouble forward, ADouble alpha) {}
 
-  private final SDouble beta;
-  private final SDouble nu;
-  private final SDouble rho;
-  private final SDouble rhoBar;
+  private final ADouble beta;
+  private final ADouble nu;
+  private final ADouble rho;
+  private final ADouble rhoBar;
   private final double dt;
   private final double sqrtDt;
 
@@ -59,17 +59,17 @@ public class SabrModel {
     return new State(in.of(SabrMarket::forward), in.of(SabrMarket::alpha));
   }
 
-  public State step(AadRecorder rec, State s, SDouble z1, SDouble zv) {
-    SDouble z2 = rho.mul(z1).add(rhoBar.mul(zv));
-    SDouble fFloor = s.forward().max(1e-8);
-    SDouble local = diffusion(s.alpha().mul(SpecialFn.pow(fFloor, beta)));
-    SDouble fNext = s.forward().add(local.mul(sqrtDt).mul(z1));
-    SDouble aNext = s.alpha().mul(nu.mul(nu).mul(-0.5 * dt).add(nu.mul(sqrtDt).mul(z2)).exp());
+  public State step(AadRecorder rec, State s, ADouble z1, ADouble zv) {
+    ADouble z2 = rho.mul(z1).add(rhoBar.mul(zv));
+    ADouble fFloor = s.forward().max(1e-8);
+    ADouble local = diffusion(s.alpha().mul(SpecialFn.pow(fFloor, beta)));
+    ADouble fNext = s.forward().add(local.mul(sqrtDt).mul(z1));
+    ADouble aNext = s.alpha().mul(nu.mul(nu).mul(-0.5 * dt).add(nu.mul(sqrtDt).mul(z2)).exp());
     return new State(fNext, aNext);
   }
 
   /** Hook: the local volatility {@code alpha * F^beta} on the forward. Identity for plain SABR. */
-  protected SDouble diffusion(SDouble localVol) {
+  protected ADouble diffusion(ADouble localVol) {
     return localVol;
   }
 
@@ -82,11 +82,11 @@ public class SabrModel {
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn(), rec.randn());
       }
-      SDouble k = in.of(SabrMarket::strike);
-      SDouble intrinsic = type == OptionType.CALL
+      ADouble k = in.of(SabrMarket::strike);
+      ADouble intrinsic = type == OptionType.CALL
           ? s.forward().sub(k).max(0.0)
           : k.sub(s.forward()).max(0.0);
-      SDouble discount = in.of(SabrMarket::rate).neg().mul(maturity).exp();
+      ADouble discount = in.of(SabrMarket::rate).neg().mul(maturity).exp();
       rec.output(intrinsic.mul(discount));
     };
   }

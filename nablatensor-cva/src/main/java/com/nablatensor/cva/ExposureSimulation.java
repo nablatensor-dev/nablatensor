@@ -17,7 +17,7 @@ package com.nablatensor.cva;
 
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.Nabla;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.risk.TimeProfile;
 import java.util.function.BiConsumer;
 
@@ -116,34 +116,34 @@ public final class ExposureSimulation {
 
   private BiConsumer<AadRecorder, Nabla.Inputs<CvaMarket>> valuation(boolean emitProfile) {
     return (rec, in) -> {
-      SDouble shortRate0 = in.of(CvaMarket::r0);
-      SDouble level = in.of(CvaMarket::hwLevel);
-      SDouble meanReversion = in.of(CvaMarket::hwMeanReversion);
-      SDouble hwSigma = in.of(CvaMarket::hwSigma);
-      SDouble hazardShort = in.of(CvaMarket::hazardShort);
-      SDouble hazardMid = in.of(CvaMarket::hazardMid);
-      SDouble hazardLong = in.of(CvaMarket::hazardLong);
-      SDouble lossGivenDefault = in.of(CvaMarket::recovery).neg().add(1.0);
-      SDouble fxVol = in.of(CvaMarket::fxVol);
-      SDouble foreignRate = in.of(CvaMarket::fxForeignRate);
+      ADouble shortRate0 = in.of(CvaMarket::r0);
+      ADouble level = in.of(CvaMarket::hwLevel);
+      ADouble meanReversion = in.of(CvaMarket::hwMeanReversion);
+      ADouble hwSigma = in.of(CvaMarket::hwSigma);
+      ADouble hazardShort = in.of(CvaMarket::hazardShort);
+      ADouble hazardMid = in.of(CvaMarket::hazardMid);
+      ADouble hazardLong = in.of(CvaMarket::hazardLong);
+      ADouble lossGivenDefault = in.of(CvaMarket::recovery).neg().add(1.0);
+      ADouble fxVol = in.of(CvaMarket::fxVol);
+      ADouble foreignRate = in.of(CvaMarket::fxForeignRate);
 
       HwShortRate model = new HwShortRate(rec, shortRate0, level, meanReversion, hwSigma, dt);
       HwShortRate.State rateState = model.start();
-      SDouble fxSpot = in.of(CvaMarket::fxSpot);
-      SDouble fxDrift = shortRate0.sub(foreignRate).mul(dt).sub(fxVol.mul(fxVol).mul(0.5 * dt));
-      SDouble fxDiffusion = fxVol.mul(Math.sqrt(dt));
+      ADouble fxSpot = in.of(CvaMarket::fxSpot);
+      ADouble fxDrift = shortRate0.sub(foreignRate).mul(dt).sub(fxVol.mul(fxVol).mul(0.5 * dt));
+      ADouble fxDiffusion = fxVol.mul(Math.sqrt(dt));
 
       int marginPeriodSteps = nettingSet.collateral().marginPeriodSteps(dt);
       boolean collateralised = nettingSet.collateral().isCollateralised();
       double threshold = nettingSet.collateral().threshold() / MONEY_UNIT;
       double independentAmount = nettingSet.collateral().independentAmount() / MONEY_UNIT;
-      SDouble[] pastValue = new SDouble[steps + 1];
+      ADouble[] pastValue = new ADouble[steps + 1];
 
-      SDouble cva = rec.constant(0.0);
+      ADouble cva = rec.constant(0.0);
       // S(t_{k-1}) carried as a running product, so the marginal default
       // probability is never formed as the difference of two nearly-equal
       // survivals (the dominant single-precision cancellation).
-      SDouble survivalPrevious = rec.constant(1.0);
+      ADouble survivalPrevious = rec.constant(1.0);
       double previousTime = 0.0;
 
       for (int k = 1; k <= steps; k++) {
@@ -152,7 +152,7 @@ public final class ExposureSimulation {
         double tk = k * dt;
 
         HwShortRate.State currentRate = rateState;
-        SDouble currentFxSpot = fxSpot;
+        ADouble currentFxSpot = fxSpot;
         CvaTrade.Path path = new CvaTrade.Path() {
           @Override
           public AadRecorder recorder() {
@@ -165,48 +165,48 @@ public final class ExposureSimulation {
           }
 
           @Override
-          public SDouble shortRate() {
+          public ADouble shortRate() {
             return currentRate.rate();
           }
 
           @Override
-          public SDouble fxSpot() {
+          public ADouble fxSpot() {
             return currentFxSpot;
           }
 
           @Override
-          public SDouble foreignDiscount(double from, double to) {
+          public ADouble foreignDiscount(double from, double to) {
             return foreignRate.mul(-(to - from)).exp();
           }
         };
 
-        SDouble value = rec.constant(0.0);
+        ADouble value = rec.constant(0.0);
         for (CvaTrade trade : nettingSet.trades()) {
           value = value.add(trade.markToMarket(path, tk));
         }
         value = value.mul(1.0 / MONEY_UNIT); // non-dimensionalise onto the tape
         pastValue[k] = value;
 
-        SDouble exposure = value;
+        ADouble exposure = value;
         if (collateralised) {
           // collateral the counterparty had posted to us as of the margin-period lag:
           // max(V(t - MPoR) - threshold, 0). The collateralised exposure at default is
           // the residual gap max(V(t) - C - independentAmount, 0) <= max(V(t), 0).
-          SDouble reference = k - marginPeriodSteps >= 1
+          ADouble reference = k - marginPeriodSteps >= 1
               ? pastValue[k - marginPeriodSteps]
               : rec.constant(0.0);
-          SDouble posted = reference.sub(threshold).max(0.0);
+          ADouble posted = reference.sub(threshold).max(0.0);
           exposure = value.sub(posted).sub(independentAmount);
         }
 
-        SDouble positiveExposure = exposure.max(0.0);
+        ADouble positiveExposure = exposure.max(0.0);
         // Marginal default probability over (t_{k-1}, t_k] as
         //   S(t_{k-1}) * (1 - e^{-deltaLambda})
         // with deltaLambda the *incremental* cumulative hazard over the step and
         // (1 - e^{-x}) from its series, so no large survivals are subtracted.
-        SDouble deltaHazard = incrementalHazard(previousTime, tk, hazardShort, hazardMid, hazardLong);
-        SDouble defaultProbability = survivalPrevious.mul(oneMinusExpNeg(deltaHazard));
-        SDouble discount = model.discountFactor(currentRate);
+        ADouble deltaHazard = incrementalHazard(previousTime, tk, hazardShort, hazardMid, hazardLong);
+        ADouble defaultProbability = survivalPrevious.mul(oneMinusExpNeg(deltaHazard));
+        ADouble discount = model.discountFactor(currentRate);
         cva = cva.add(positiveExposure.mul(discount).mul(defaultProbability).mul(lossGivenDefault));
         survivalPrevious = survivalPrevious.mul(deltaHazard.neg().exp()); // S(t_k)
         previousTime = tk;
@@ -230,12 +230,12 @@ public final class ExposureSimulation {
    * increment directly — rather than differencing two integrals from zero —
    * is what lets the marginal default probability stay accurate in fp32.
    */
-  private static SDouble incrementalHazard(double from, double to, SDouble hazardShort,
-                                           SDouble hazardMid, SDouble hazardLong) {
+  private static ADouble incrementalHazard(double from, double to, ADouble hazardShort,
+                                           ADouble hazardMid, ADouble hazardLong) {
     double shortWidth = overlap(from, to, 0.0, SHORT_BUCKET);
     double midWidth = overlap(from, to, SHORT_BUCKET, MID_BUCKET);
     double longWidth = overlap(from, to, MID_BUCKET, Double.POSITIVE_INFINITY);
-    SDouble h = null;
+    ADouble h = null;
     if (shortWidth > 0.0) {
       h = hazardShort.mul(shortWidth);
     }
@@ -261,8 +261,8 @@ public final class ExposureSimulation {
    * for {@code x} up to ~1 — far beyond the step hazard {@code lambda*dt}
    * (~1e-2) this is called with.
    */
-  private static SDouble oneMinusExpNeg(SDouble x) {
-    SDouble s = x.mul(-1.0 / 6.0).add(1.0);
+  private static ADouble oneMinusExpNeg(ADouble x) {
+    ADouble s = x.mul(-1.0 / 6.0).add(1.0);
     s = x.mul(s).mul(-1.0 / 5.0).add(1.0);
     s = x.mul(s).mul(-1.0 / 4.0).add(1.0);
     s = x.mul(s).mul(-1.0 / 3.0).add(1.0);

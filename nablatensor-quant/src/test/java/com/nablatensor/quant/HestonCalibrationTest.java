@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nablatensor.engine.AadRecorder;
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -59,11 +59,11 @@ class HestonCalibrationTest {
     // 2) calibrate (v0, xi, rho) from a perturbed start
     final double[] tgt = target;
     Calibrator.Result res = Calibrator.leastSquares(rec -> {
-          SDouble v0 = rec.input("v0", 0.03);
-          SDouble xi = rec.input("xi", 0.35);
-          SDouble rho = rec.input("rho", -0.2);
-          Map<String, SDouble> m = hestonMeasures(rec, v0, xi, rho);
-          Map<String, SDouble> residuals = new LinkedHashMap<>();
+          ADouble v0 = rec.input("v0", 0.03);
+          ADouble xi = rec.input("xi", 0.35);
+          ADouble rho = rec.input("rho", -0.2);
+          Map<String, ADouble> m = hestonMeasures(rec, v0, xi, rho);
+          Map<String, ADouble> residuals = new LinkedHashMap<>();
           for (int i = 0; i < STRIKES.length; i++) {
             residuals.put("k" + i, m.get("k" + i).sub(tgt[i]));
           }
@@ -86,14 +86,14 @@ class HestonCalibrationTest {
 
   // ---- helpers -----------------------------------------------------------
 
-  private static Map<String, SDouble> measures(AadRecorder rec, double v0, double xi, double rho) {
+  private static Map<String, ADouble> measures(AadRecorder rec, double v0, double xi, double rho) {
     return hestonMeasures(rec, rec.constant(v0), rec.constant(xi), rec.constant(rho));
   }
 
-  private static Map<String, SDouble> hestonMeasures(AadRecorder rec, SDouble v0, SDouble xi, SDouble rho) {
-    SDouble[] terminal = hestonTerminal(rec, v0, xi, rho);
-    SDouble disc = rec.constant(Math.exp(-R * T));
-    Map<String, SDouble> m = new LinkedHashMap<>();
+  private static Map<String, ADouble> hestonMeasures(AadRecorder rec, ADouble v0, ADouble xi, ADouble rho) {
+    ADouble[] terminal = hestonTerminal(rec, v0, xi, rho);
+    ADouble disc = rec.constant(Math.exp(-R * T));
+    Map<String, ADouble> m = new LinkedHashMap<>();
     for (int i = 0; i < STRIKES.length; i++) {
       m.put("k" + i, terminal[0].sub(STRIKES[i]).max(0.0).mul(disc));
     }
@@ -101,20 +101,20 @@ class HestonCalibrationTest {
   }
 
   /** Full-truncation Euler Heston to T; returns {terminal spot}. */
-  private static SDouble[] hestonTerminal(AadRecorder rec, SDouble v0, SDouble xi, SDouble rho) {
+  private static ADouble[] hestonTerminal(AadRecorder rec, ADouble v0, ADouble xi, ADouble rho) {
     double dt = T / STEPS, sqrtDt = Math.sqrt(dt);
-    SDouble rhoBar = rho.mul(rho).neg().add(1.0).sqrt();
-    SDouble s = rec.constant(S0);
-    SDouble v = v0;
+    ADouble rhoBar = rho.mul(rho).neg().add(1.0).sqrt();
+    ADouble s = rec.constant(S0);
+    ADouble v = v0;
     for (int t = 0; t < STEPS; t++) {
-      SDouble z1 = rec.randn();
-      SDouble z2 = rho.mul(z1).add(rhoBar.mul(rec.randn()));
-      SDouble vPlus = v.max(0.0);
-      SDouble sqrtV = vPlus.sqrt();
+      ADouble z1 = rec.randn();
+      ADouble z2 = rho.mul(z1).add(rhoBar.mul(rec.randn()));
+      ADouble vPlus = v.max(0.0);
+      ADouble sqrtV = vPlus.sqrt();
       v = v.add(rec.constant(KAPPA).mul(rec.constant(THETA).sub(vPlus)).mul(dt))
           .add(xi.mul(sqrtV).mul(sqrtDt).mul(z2));
       s = s.mul(rec.constant(R).sub(vPlus.mul(0.5)).mul(dt).add(sqrtV.mul(sqrtDt).mul(z1)).exp());
     }
-    return new SDouble[] {s};
+    return new ADouble[] {s};
   }
 }

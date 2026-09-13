@@ -15,7 +15,7 @@
  */
 package com.nablatensor.examples;
 
-import com.nablatensor.engine.SDouble;
+import com.nablatensor.engine.ADouble;
 import com.nablatensor.quant.Calibrator;
 import com.nablatensor.quant.SabrHagan;
 import java.util.Locale;
@@ -50,13 +50,13 @@ public final class HestonSabrCalibration {
 
     long t0 = System.nanoTime();
     Calibrator.Result r = Calibrator.of(rec -> {
-          SDouble alpha = rec.input("alpha", 0.20);
-          SDouble rho = rec.input("rho", 0.0);
-          SDouble nu = rec.input("nu", 0.30);
-          SDouble beta = rec.constant(BETA);
-          SDouble sse = rec.constant(0.0);
+          ADouble alpha = rec.input("alpha", 0.20);
+          ADouble rho = rec.input("rho", 0.0);
+          ADouble nu = rec.input("nu", 0.30);
+          ADouble beta = rec.constant(BETA);
+          ADouble sse = rec.constant(0.0);
           for (int i = 0; i < STRIKES.length; i++) {
-            SDouble d = SabrHagan.blackVol(rec, alpha, beta, rho, nu, F, STRIKES[i], T).sub(target[i]);
+            ADouble d = SabrHagan.blackVol(rec, alpha, beta, rho, nu, F, STRIKES[i], T).sub(target[i]);
             sse = sse.add(d.mul(d));
           }
           rec.output(sse);
