@@ -16,11 +16,13 @@
 package com.nablatensor.examples;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.nablatensor.engine.AadEngine;
 import com.nablatensor.engine.AadEngines;
+import com.nablatensor.engine.AadCheckpointPlan;
 import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.AadResult;
@@ -44,7 +46,8 @@ class OpenClAsianParityTest {
 
   private static final int FIXINGS = 50;
   private static final double S0 = 100.0, K = 100.0, VOL = 0.20, RATE = 0.03, T = 1.0;
-  private static final long PATHS = 200_000L;
+  private static final long PATHS = Long.getLong("nablatensor.opencl.test.paths", 200_000L);
+  private static final int REPEATS = Integer.getInteger("nablatensor.opencl.test.repeats", 40);
   private static final long SEED = 0xA51A17L;
 
   /** GBM path in price space, arithmetic average of the fixings, discounted call payoff. */
@@ -68,7 +71,63 @@ class OpenClAsianParityTest {
   }
 
   @Test
+  void checkpointedFp32MatchesPlain() {
+    AadOptions options = AadOptions.defaults();
+    AadEngine engine = AadEngines.find("opencl", options).orElse(null);
+    assumeTrue(engine != null, "no usable OpenCL engine on this machine");
+    System.out.println("Checkpoint parity device: " + engine.describe());
+    AadTape tape = AadRecorder.record(OpenClAsianParityTest::asianCall);
+    String[] properties = {"nablatensor.checkpoint", "nablatensor.checkpoint.minNodes",
+        "nablatensor.checkpoint.segLen"};
+    String[] previous = new String[properties.length];
+    for (int index = 0; index < properties.length; index++) {
+      previous[index] = System.getProperty(properties[index]);
+    }
+    try {
+      System.setProperty(properties[0], "off");
+      try (var plain = engine.compile(tape, options)) {
+        System.setProperty(properties[0], "on");
+        System.setProperty(properties[1], "2");
+        for (int segmentLength : new int[] {48, 96}) {
+          System.setProperty(properties[2], Integer.toString(segmentLength));
+          assertNotNull(AadCheckpointPlan.of(tape, options, 2));
+          try (var checkpointed = engine.compile(tape, options)) {
+            for (double spot : new double[] {S0, 101.0}) {
+              plain.setInput("spot", spot);
+              checkpointed.setInput("spot", spot);
+              AadResult expected = plain.replay(20_000, 0x100000003L, SEED);
+              AadResult actual = checkpointed.replay(20_000, 0x100000003L, SEED);
+              assertClose(expected.value(), actual.value());
+              double[] expectedGradients = expected.gradients();
+              double[] actualGradients = actual.gradients();
+              assertEquals(expectedGradients.length, actualGradients.length);
+              for (int index = 0; index < expectedGradients.length; index++) {
+                assertClose(expectedGradients[index], actualGradients[index]);
+              }
+            }
+          }
+        }
+      }
+    } finally {
+      for (int index = 0; index < properties.length; index++) {
+        if (previous[index] == null) {
+          System.clearProperty(properties[index]);
+        } else {
+          System.setProperty(properties[index], previous[index]);
+        }
+      }
+    }
+  }
+
+  private static void assertClose(double expected, double actual) {
+    assertTrue(Double.isFinite(expected));
+    assertTrue(Double.isFinite(actual));
+    assertEquals(expected, actual, 2e-6 * Math.max(1.0, Math.abs(expected)));
+  }
+
+  @Test
   void openClMatchesCpuJitAndIsStable() {
+    assertTrue(PATHS > 0 && REPEATS > 0, "test paths and repeats must be positive");
     AadOptions fp64 = new AadOptions(AadOptions.Precision.FLOAT64, true);
 
     AadEngine openCl = AadEngines.find("opencl", fp64).orElse(null);
@@ -92,8 +151,7 @@ class OpenClAsianParityTest {
       compileSeconds = exe.compileSeconds();
       first = exe.replay(PATHS, 0L, SEED);
 
-      // Stability: 40 back-to-back dispatches on the device, fixed (paths, seed).
-      for (int i = 0; i < 40; i++) {
+      for (int i = 0; i < REPEATS; i++) {
         AadResult r = exe.replay(PATHS, 0L, SEED);
         assertEquals(first.value(), r.value(), 0.0, "OpenCL replay #" + i + " drifted");
         assertEquals(first.gradient("spot"), r.gradient("spot"), 0.0, "delta drift #" + i);

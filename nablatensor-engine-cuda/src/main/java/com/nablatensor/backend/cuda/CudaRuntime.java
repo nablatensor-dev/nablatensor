@@ -59,6 +59,7 @@ final class CudaRuntime {
   private static final MethodHandle MEMCPY_D2H = driver("cuMemcpyDtoH", FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_LONG, JAVA_LONG));
   private static final MethodHandle MODULE_LOAD = driver("cuModuleLoadData", FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS));
   private static final MethodHandle MODULE_FUNCTION = driver("cuModuleGetFunction", FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_LONG, ADDRESS));
+  private static final MethodHandle FUNCTION_ATTRIBUTE = driver("cuFuncGetAttribute", FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, JAVA_LONG));
   private static final MethodHandle LAUNCH = driver("cuLaunchKernel", FunctionDescriptor.of(JAVA_INT, JAVA_LONG,
       JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_LONG, ADDRESS, ADDRESS));
   private static final MethodHandle ERROR_NAME = driver("cuGetErrorName", FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS));
@@ -580,6 +581,16 @@ final class CudaRuntime {
       MemorySegment function = arena.allocate(JAVA_LONG);
       check((int) MODULE_FUNCTION.invoke(function, module.get(JAVA_LONG, 0), arena.allocateFrom(kernelName)),
           "cuModuleGetFunction");
+        if (Boolean.getBoolean("nablatensor.cuda.kernelStats")) {
+        MemorySegment attribute = arena.allocate(JAVA_INT);
+        check((int) FUNCTION_ATTRIBUTE.invoke(attribute, 4, function.get(JAVA_LONG, 0)),
+          "cuFuncGetAttribute(NUM_REGS)");
+        int registers = attribute.get(JAVA_INT, 0);
+        check((int) FUNCTION_ATTRIBUTE.invoke(attribute, 3, function.get(JAVA_LONG, 0)),
+          "cuFuncGetAttribute(LOCAL_SIZE_BYTES)");
+        System.err.printf("CUDA kernel=%s registers=%d local_bytes=%d%n",
+          kernelName, registers, attribute.get(JAVA_INT, 0));
+        }
       return function.get(JAVA_LONG, 0);
     } catch (Throwable failure) {
       throw failure instanceof RuntimeException runtime ? runtime : new RuntimeException(failure);

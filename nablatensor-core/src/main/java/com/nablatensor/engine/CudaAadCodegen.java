@@ -111,6 +111,22 @@ public final class CudaAadCodegen {
    * and the invocation count that strides it. See {@link AadCheckpointPlan}.
    */
   public static String generateCheckpointed(AadTape tape, AadOptions options, AadCheckpointPlan plan) {
+    return generateCheckpointed(tape, options, plan, false);
+  }
+
+  /** CUDA-only compiler barriers preserve recomputation; launch bounds budget registers for occupancy. */
+  public static String generateCheckpointed(AadTape tape, AadOptions options, AadCheckpointPlan plan,
+                                             boolean opaqueRecompute) {
+    return generateCheckpointed(tape, options, plan, opaqueRecompute, opaqueRecompute,
+      opaqueRecompute ? 4 : 0);
+  }
+
+  public static String generateCheckpointed(AadTape tape, AadOptions options, AadCheckpointPlan plan,
+                                             boolean opaqueRecompute, boolean volatileScratch,
+                                             int minBlocks) {
+    if (minBlocks < 0 || minBlocks > 8) {
+      throw new IllegalArgumentException("CUDA checkpoint minBlocks must be between 0 and 8");
+    }
     boolean f32 = options.precision() == AadOptions.Precision.FLOAT32;
     String real = f32 ? "float" : "double";
     String zero = f32 ? "0.0f" : "0.0";
@@ -125,14 +141,25 @@ public final class CudaAadCodegen {
     src.append("#define BLOCK ").append(BLOCK).append('\n');
     src.append("typedef ").append(real).append(" real;\n");
     appendRng(src, f32);
+    if (opaqueRecompute) {
+      String constraint = f32 ? "f" : "d";
+      src.append("__device__ __forceinline__ real checkpoint_opaque(real value) {\n")
+          .append("  real result;\n  asm volatile(\"mov.b").append(f32 ? "32" : "64")
+          .append(" %0, %1;\" : \"=").append(constraint)
+          .append("\"(result) : \"").append(constraint).append("\"(value));\n")
+          .append("  return result;\n}\n");
+    }
 
-    src.append("extern \"C\" __global__ void ").append(KERNEL_NAME).append("(\n")
+    src.append("extern \"C\" __global__ ")
+      .append(minBlocks > 0 ? "__launch_bounds__(BLOCK, " + minBlocks + ") " : "")
+        .append("void ").append(KERNEL_NAME).append("(\n")
         .append("    const double* __restrict__ inputs,\n")
         .append("    unsigned long long nPaths,\n")
         .append("    unsigned long long pathOffset,\n")
         .append("    unsigned long long seed,\n")
         .append("    double* __restrict__ partials,\n")
-        .append("    real* __restrict__ scratch,\n")
+        .append(volatileScratch ? "    volatile real* __restrict__ scratch,\n"
+          : "    real* __restrict__ scratch,\n")
         .append("    unsigned long long invocations) {\n");
     for (int j = 0; j < nIn; j++) {
       src.append("  const real in").append(j).append(" = (real) inputs[").append(j).append("];\n");
@@ -187,10 +214,22 @@ public final class CudaAadCodegen {
     }
     for (int s = segments - 1; s >= 0; s--) {
       src.append("    {\n");
+      if (opaqueRecompute) {
+        src.append("      asm volatile(\"mov.b32 %0, %0; mov.b32 %1, %1;\" : \"+r\"(rng.lo), \"+r\"(rng.hi));\n");
+        for (int node = 0; node < bound[s]; node++) {
+          if (plan.global[node] && plan.lastUse[node] >= bound[s]) {
+            src.append("      g_v").append(node).append(" = checkpoint_opaque(g_v")
+                .append(node).append(");\n");
+          }
+        }
+      }
       if (s >= 1) {
         for (int node : plan.slice[s]) {
-          src.append("      real v").append(node).append(" = scratch[(unsigned long long)(")
-              .append(plan.slotOf(s, node)).append(") * invocations + tid];\n");
+          src.append("      real v").append(node).append(" = ")
+              .append(opaqueRecompute ? "checkpoint_opaque(" : "")
+              .append("scratch[(unsigned long long)(")
+              .append(plan.slotOf(s, node)).append(") * invocations + tid]")
+              .append(opaqueRecompute ? ");\n" : ";\n");
         }
       }
       for (int i = bound[s]; i < bound[s + 1]; i++) {

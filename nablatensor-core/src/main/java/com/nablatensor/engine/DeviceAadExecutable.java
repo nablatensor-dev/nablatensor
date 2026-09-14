@@ -80,9 +80,9 @@ public final class DeviceAadExecutable extends GpuAadExecutable {
   private boolean closed;
 
   /**
-   * Segment checkpointing is opt-in: verified bit-for-bit against the unrolled
-   * kernel, but on an integrated GPU the RNG-heavy forward recompute and the
-   * checkpoint traffic cost about what the occupancy buys back. Enable with
+  * Segment checkpointing is opt-in: numerical parity is precision-dependent,
+  * and recompute / checkpoint traffic can outweigh the occupancy gain on some
+  * tapes and devices. Enable with
    * {@code -Dnablatensor.checkpoint=on} or an explicit
    * {@code -Dnablatensor.checkpoint.minNodes=<n>}.
    */

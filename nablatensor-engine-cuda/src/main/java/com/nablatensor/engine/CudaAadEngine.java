@@ -63,7 +63,13 @@ public final class CudaAadEngine implements AadEngine {
       throw new IllegalStateException("no CUDA device available for the AAD replay kernel");
     }
     return DeviceAadExecutable.compile(tape, options, "cuda", CudaDeviceRuntime.INSTANCE,
-        DeviceAadExecutable.CUDA_C, maxLaunchSeconds());
+      (recorded, settings, plan) -> plan == null
+        ? CudaAadCodegen.generate(recorded, settings)
+        : CudaAadCodegen.generateCheckpointed(recorded, settings, plan,
+          Boolean.parseBoolean(System.getProperty("nablatensor.cuda.checkpoint.opaque", "true")),
+          Boolean.parseBoolean(System.getProperty("nablatensor.cuda.checkpoint.volatile", "true")),
+            Integer.getInteger("nablatensor.cuda.checkpoint.minBlocks", 4)),
+      maxLaunchSeconds());
   }
 
   /**
