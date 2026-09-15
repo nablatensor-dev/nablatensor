@@ -3,8 +3,11 @@
 **[nablatensor.com](https://nablatensor.com)**
 
 [![CI](https://github.com/nablatensor-dev/nablatensor/actions/workflows/ci.yml/badge.svg)](https://github.com/nablatensor-dev/nablatensor/actions/workflows/ci.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/com.nablatensor/nablatensor-core.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/com.nablatensor/nablatensor-core)
 
 **Adjoint automatic differentiation for quantitative finance on the JVM. Write the valuation in Java once — get price and every Greek from one reverse sweep, on CPU, SIMD or GPU.**
+
+![Adjoint AD, compiled to Vulkan — a barrier note priced with every Greek](docs/assets/greeks-on-gpu.gif)
 
 Record a Monte-Carlo valuation once in plain Java against `ADouble` scalars.
 NablaTensor flattens it to a tape and replays that tape — millions of scenarios —
@@ -13,6 +16,7 @@ recording. One forward sweep gives the price; one reverse sweep gives *all*
 first-order Greeks, at roughly the cost of the price alone.
 
 - **Apache-2.0**, single repo, no CLA.
+- **On Maven Central** — current release **0.2.0**; see [Install](#install) below.
 - **Clone-and-run.** `mvn -o test` is green on a laptop with no GPU, no native
   library and no incubator flag — the default `cpu-jit` backend is plain Java.
 - **Customizable.** Changing a payoff or a model step is a three-line diff, not a fork.
@@ -20,6 +24,36 @@ first-order Greeks, at roughly the cost of the price alone.
 > **Not** a deep-learning framework, a market-data platform, or a certified
 > regulatory-capital product. It computes the numbers a regulation asks for;
 > sign-off is yours.
+
+---
+
+## Install
+
+Published to **Maven Central** — browse the group at
+[central.sonatype.com](https://central.sonatype.com/search?q=g:com.nablatensor).
+Current release: **0.2.0**.
+
+```xml
+<dependency>
+  <groupId>com.nablatensor</groupId>
+  <artifactId>nablatensor-core</artifactId>
+  <version>0.2.0</version>
+</dependency>
+<dependency>
+  <groupId>com.nablatensor</groupId>
+  <artifactId>nablatensor-quant</artifactId>
+  <version>0.2.0</version>
+</dependency>
+<dependency>
+  <groupId>com.nablatensor</groupId>
+  <artifactId>nablatensor-engine-cpu</artifactId>
+  <version>0.2.0</version>
+</dependency>
+```
+
+Add `nablatensor-engine-vulkan` / `-rocm` / `-cuda` / `-opencl` / `-simd` for a
+GPU or SIMD backend — every module is the same `groupId:artifactId:version`
+shape and gates itself at runtime whether or not its toolchain is present.
 
 ---
 
