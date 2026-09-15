@@ -52,8 +52,12 @@ jobs:
       # Sonatype Central Portal. autoPublish is off in the `release` profile, so
       # this uploads and validates the bundle but leaves the final "Publish" as
       # a manual click at https://central.sonatype.com/publishing/deployments .
-      # Runs before Tag so a Central rejection stops the release cleanly.
+      # Skipped (not failed) when the Central secrets aren't configured yet;
+      # the user publishes manually from central.sonatype.com/publishing in
+      # that case. Once the secrets are set, remove continue-on-error so a
+      # real Central rejection stops the release again.
       - name: Publish to Maven Central
+        continue-on-error: true
         env:
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
