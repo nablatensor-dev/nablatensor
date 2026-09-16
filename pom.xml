@@ -64,6 +64,7 @@
     <module>nablatensor-engine-cuda</module>
     <module>nablatensor-engine-rocm</module>
     <module>nablatensor-engine-vulkan</module>
+    <module>nablatensor-engine-wgpu</module>
     <module>nablatensor-engine-opencl</module>
     <module>nablatensor-quant</module>
     <module>nablatensor-risk</module>
@@ -96,6 +97,11 @@
       <dependency>
         <groupId>com.nablatensor</groupId>
         <artifactId>nablatensor-engine-vulkan</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-engine-wgpu</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.nablatensor</groupId><artifactId>nablatensor-parent</artifactId><version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>nablatensor-engine-wgpu</artifactId>
+  <name>nablatensor-engine-wgpu</name>
+  <description>Everything wgpu: the java.lang.foreign runtime binding wgpu-native's C ABI
+    (webgpu.h) — instance/adapter/device bring-up, a WGSL compute pipeline per tape, and a
+    replay engine that mirrors the Vulkan one line-for-line, generating WGSL instead of GLSL.
+    No JNI, no native jar; the prebuilt libwgpu_native shared library is located at runtime
+    the same way libvulkan/libshaderc are. Single precision. Gates at runtime.</description>
+  <dependencies>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-tensor</artifactId></dependency>
+  </dependencies>
+</project>
