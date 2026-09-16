@@ -26,12 +26,14 @@ import com.nablatensor.risk.RiskMeasure;
 import com.nablatensor.tensor.NablaTensors;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
  * Every example is also a test: each {@code main} must run to completion on a
  * small scenario count. Keeps the docs pages from bit-rotting.
  */
+@Tag("mc")
 class ExamplesSmokeTest {
 
   @Test

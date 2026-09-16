@@ -29,6 +29,7 @@ import com.nablatensor.engine.AadTape;
 import com.nablatensor.engine.ADouble;
 import java.util.EnumSet;
 import java.util.Set;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -39,6 +40,7 @@ import org.junit.jupiter.api.Test;
  * support for {@code RANDU} / named streams must decline the tape (so selection
  * falls back), never silently produce a wrong number.
  */
+@Tag("mc")
 class AadOpConformanceTest {
 
   private static final long N = 200_000L;

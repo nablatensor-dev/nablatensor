@@ -24,14 +24,17 @@ import com.nablatensor.quant.analytic.GeneralizedBsm;
 import com.nablatensor.quant.estimate.Fit;
 import com.nablatensor.quant.estimate.Garch11;
 import java.util.function.BiConsumer;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * The fast Monte-Carlo smoke: one small, loose-tolerance run of every model path
- * that the {@code @Tag("mc")} validation classes cover in depth. This stays in
- * the default {@code mvn test}; the full closed-form-vs-Monte-Carlo checks run
- * with {@code -P mc}.
+ * A loose-tolerance run of every model path that the other {@code @Tag("mc")}
+ * validation classes cover in depth. Its cost is dominated by per-pricer
+ * cpu-jit compilation rather than path count, so it can't be shrunk to a
+ * sub-second default-run smoke test either; it runs with {@code -P mc}
+ * alongside the rest.
  */
+@Tag("mc")
 class McSmokeTest {
 
   private static final long PATHS = 60_000L;

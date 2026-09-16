@@ -22,6 +22,7 @@ import com.nablatensor.risk.RiskFactor;
 import com.nablatensor.risk.Sensitivities;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Test;
  * prescribed-bump vector — which costs one full netting-set exposure
  * re-simulation per shocked risk factor.
  */
+@Tag("mc")
 class CvaAdjointVsBumpTest {
 
   private static final long PATHS = 30_000L;

@@ -29,6 +29,7 @@ import com.nablatensor.engine.AadResult;
 import com.nablatensor.engine.AadTape;
 import com.nablatensor.engine.ADouble;
 import java.util.Locale;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -42,6 +43,7 @@ import org.junit.jupiter.api.Test;
  * automatically (priority sits below SIMD), so this is the test that keeps it
  * honest.
  */
+@Tag("mc")
 class OpenClAsianParityTest {
 
   private static final int FIXINGS = 50;

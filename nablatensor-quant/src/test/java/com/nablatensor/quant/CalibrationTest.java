@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nablatensor.engine.ADouble;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
  * smile generated from a known parameter set. One compiled objective, one
  * adjoint sweep per iteration, box-projected L-BFGS.
  */
+@Tag("mc")
 class CalibrationTest {
 
   private static final double F = 0.05;

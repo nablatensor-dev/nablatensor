@@ -22,6 +22,7 @@ import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.ADouble;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Test;
  * random numbers keep the residual surface smooth enough to recover the
  * parameters exactly.
  */
+@Tag("mc")
 class HestonCalibrationTest {
 
   private static final double S0 = 100, R = 0.02, T = 1.0;

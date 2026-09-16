@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nablatensor.engine.Nabla;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.Test;
  * the uniform one. A genuinely non-uniform grid still prices a European (whose
  * value depends only on the terminal marginal) against Black-Scholes.
  */
+@Tag("mc")
 class TimeGridTest {
 
   private static final EquityMarket M = EquityMarket.atmOneYear();

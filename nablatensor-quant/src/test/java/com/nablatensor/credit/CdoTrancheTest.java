@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nablatensor.engine.Nabla;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.Test;
  * opposite directions, and the recorded copula Monte-Carlo agrees with the
  * recursion and delivers a correlation delta from one adjoint sweep.
  */
+@Tag("mc")
 class CdoTrancheTest {
 
   @Test

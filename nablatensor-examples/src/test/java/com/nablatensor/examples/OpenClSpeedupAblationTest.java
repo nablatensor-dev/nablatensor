@@ -26,6 +26,7 @@ import com.nablatensor.engine.AadTape;
 import com.nablatensor.engine.ADouble;
 import java.util.List;
 import java.util.Locale;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -38,6 +39,7 @@ import org.junit.jupiter.api.Test;
  *
  * <p>Skips unless OpenCL is usable (nothing selects it automatically).
  */
+@Tag("mc")
 class OpenClSpeedupAblationTest {
 
   private static final int FIXINGS = 50;

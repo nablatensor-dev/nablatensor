@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
  * collapses to a single curve when the forecast quotes are the OIS par rates,
  * and its adjoint Jacobian matches a central bump and is block lower-triangular.
  */
+@Tag("mc")
 class MultiCurveBootstrapTest {
 
   private static final double[] OIS = {0.0300, 0.0315, 0.0325, 0.0332, 0.0338};   // 1y..5y

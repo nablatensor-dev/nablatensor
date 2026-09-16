@@ -25,6 +25,7 @@ import com.nablatensor.quant.adjust.TimingAdjustment;
 import com.nablatensor.quant.analytic.AnalyticGreeks;
 import com.nablatensor.quant.analytic.GeneralizedBsm;
 import java.util.Random;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.Test;
  * cash flow in the "wrong" measure, and the Ho-Lee limit of the Eurodollar
  * futures adjustment is {@code sigma^2 t1 t2 / 2}.
  */
+@Tag("mc")
 class AdjustmentTest {
 
   @Test

@@ -20,8 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nablatensor.risk.TimeProfile;
 import java.util.List;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+@Tag("mc")
 class ExposureSimulationTest {
 
   private static final long PATHS = 60_000L;

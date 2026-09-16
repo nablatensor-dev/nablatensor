@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Random;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.Test;
  * {@code (a, sigma)} calibration recovers the parameters a grid was generated
  * from.
  */
+@Tag("mc")
 class HullWhiteAnalyticTest {
 
   /** A mildly upward-sloping curve: zero rates 2.5% -> 3.4% over 1y..12y. */

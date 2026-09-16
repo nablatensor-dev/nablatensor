@@ -19,9 +19,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nablatensor.engine.ADouble;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /** Importance sampling and path filtering: both leave the target expectation intact. */
+@Tag("mc")
 class HooksExtraTest {
 
   private static final EquityMarket M = new EquityMarket(100, 130, 0.20, 0.03, 1.0);  // deep OTM call

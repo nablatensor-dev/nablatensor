@@ -21,9 +21,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.nablatensor.engine.ADouble;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /** Levenberg-Marquardt over a recorded residual vector (Jacobian from MultiOutput). */
+@Tag("mc")
 class CalibratorLmTest {
 
   private static final double F = 0.05;

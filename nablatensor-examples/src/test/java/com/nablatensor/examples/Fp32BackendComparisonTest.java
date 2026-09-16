@@ -28,6 +28,7 @@ import com.nablatensor.engine.ADouble;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -42,6 +43,7 @@ import org.junit.jupiter.api.Test;
  * <p>Prints a Markdown results table to stdout. Engines that are not usable here
  * are reported as {@code n/a} rather than failing the test.
  */
+@Tag("mc")
 class Fp32BackendComparisonTest {
 
   private static final int FIXINGS = 50;

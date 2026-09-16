@@ -22,10 +22,12 @@ import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.MonteCarlo;
 import com.nablatensor.quant.Products;
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /** The scenario DSL: shocks apply correctly, ladders/grids expand, and a
  *  ladder re-price recovers the adjoint delta at the base point. */
+@Tag("mc")
 class ScenarioTest {
 
   private static final EquityMarket M = EquityMarket.atmOneYear();

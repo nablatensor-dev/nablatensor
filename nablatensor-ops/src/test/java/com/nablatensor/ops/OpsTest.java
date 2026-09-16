@@ -24,13 +24,18 @@ import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.ADouble;
 import com.nablatensor.engine.Nabla;
 import java.util.function.BiFunction;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
  * The op vocabulary is a deterministic function of its input, so a one-scenario
  * replay returns {@code f(x)} exactly and the adjoint returns {@code f'(x)}
- * exactly — no Monte-Carlo error to allow for.
+ * exactly — no Monte-Carlo error to allow for. Slow because it sweeps every op
+ * across every real backend (GPU kernel compile + dispatch per op), not because
+ * of statistical noise; tagged {@code mc} anyway since that's the "excluded
+ * from the default build" group.
  */
+@Tag("mc")
 class OpsTest {
 
   record P(double x) {}

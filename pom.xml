@@ -47,10 +47,12 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>5.11.3</junit.version>
     <!--
-      JUnit tags excluded from the default test run. The "mc" group holds the
-      slow closed-form-vs-Monte-Carlo validation classes (minutes); the fast
-      McSmokeTest still exercises every model path on the default run. Use
-      `mvn test -P mc` (or -Dnt.test.excludedGroups=) to run the full set.
+      JUnit tags excluded from the default test run. The "mc" group holds every
+      test class that can't reasonably run in under a second: Monte-Carlo /
+      closed-form validation, CVA bump-and-revalue reconciliation, and anything
+      that exercises real GPU/OpenCL/Vulkan hardware. `mvn clean package` stays
+      a fast (seconds, not minutes) compile+unit-test loop; use `mvn test -P mc`
+      (or -Dnt.test.excludedGroups=) to run the full set, including these.
     -->
     <nt.test.excludedGroups>mc</nt.test.excludedGroups>
   </properties>
