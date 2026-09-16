@@ -35,14 +35,14 @@ import java.util.function.Consumer;
  *
  * <pre>{@code
  * Calibrator.Result r = Calibrator.of(rec -> {
- *         SDouble alpha = rec.input("alpha", 0.2);
- *         SDouble rho   = rec.input("rho",  0.0);
- *         SDouble nu    = rec.input("nu",   0.3);
- *         SDouble beta  = rec.constant(0.5);
- *         SDouble sse = rec.constant(0.0);
+ *         ADouble alpha = rec.input("alpha", 0.2);
+ *         ADouble rho   = rec.input("rho",  0.0);
+ *         ADouble nu    = rec.input("nu",   0.3);
+ *         ADouble beta  = rec.constant(0.5);
+ *         ADouble sse = rec.constant(0.0);
  *         for (Quote q : quotes) {
- *           SDouble model = SabrHagan.blackVol(rec, alpha, beta, rho, nu, F, q.strike(), T);
- *           SDouble d = model.sub(q.vol());
+ *           ADouble model = SabrHagan.blackVol(rec, alpha, beta, rho, nu, F, q.strike(), T);
+ *           ADouble d = model.sub(q.vol());
  *           sse = sse.add(d.mul(d));
  *         }
  *         rec.output(sse);

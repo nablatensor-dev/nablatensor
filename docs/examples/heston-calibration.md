@@ -20,13 +20,13 @@ enough that Levenberg-Marquardt walks straight to the parameters.
 
 ```java
 Calibrator.Result r = Calibrator.leastSquares(rec -> {
-        SDouble v0  = rec.input("v0",  0.03);
-        SDouble xi  = rec.input("xi",  0.35);
-        SDouble rho = rec.input("rho", -0.2);
-        Map<String, SDouble> resid = new LinkedHashMap<>();
-        SDouble[] terminal = hestonPath(rec, v0, xi, rho, kappa, theta);   // full-truncation Euler
+        ADouble v0  = rec.input("v0",  0.03);
+        ADouble xi  = rec.input("xi",  0.35);
+        ADouble rho = rec.input("rho", -0.2);
+        Map<String, ADouble> resid = new LinkedHashMap<>();
+        ADouble[] terminal = hestonPath(rec, v0, xi, rho, kappa, theta);   // full-truncation Euler
         for (int i = 0; i < strikes.length; i++) {
-            SDouble call = terminal[0].sub(strikes[i]).max(0.0).mul(disc);
+            ADouble call = terminal[0].sub(strikes[i]).max(0.0).mul(disc);
             resid.put("k" + i, call.sub(target[i]));
         }
         return resid;

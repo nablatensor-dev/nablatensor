@@ -27,8 +27,8 @@ import java.util.function.ToDoubleFunction;
  *
  * <pre>{@code
  * try (Nabla.Pricer pricer = Nabla.model(rec -> {
- *         SDouble spot = rec.input("S0", 100.0);
- *         SDouble vol  = rec.input("sigma", 0.2);
+ *         ADouble spot = rec.input("S0", 100.0);
+ *         ADouble vol  = rec.input("sigma", 0.2);
  *         ...
  *         rec.output(payoff);
  *       })
@@ -175,7 +175,7 @@ public final class Nabla {
    *
    * var market = new EquityMarket(100.0, 0.28, 0.03);
    * try (var pricer = Nabla.model(market, (rec, in) -> {
-   *         SDouble spot = in.of(EquityMarket::spot);
+   *         ADouble spot = in.of(EquityMarket::spot);
    *         ...
    *         rec.output(payoff);
    *       }).fp32().greeks().fastest().build()) {

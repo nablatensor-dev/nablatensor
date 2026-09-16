@@ -157,9 +157,9 @@ Příklad `(x+2)*x` zapsaný přesně tak, jak by ho napsala aplikace — proti
 
 ```java
 AadTape tape = AadRecorder.record(rec -> {
-  SDouble x = rec.input("x", 3.0);
-  SDouble a = x.add(2.0);   // uzel: ADD
-  SDouble z = a.mul(x);     // uzel: MUL
+  ADouble x = rec.input("x", 3.0);
+  ADouble a = x.add(2.0);   // uzel: ADD
+  ADouble z = a.mul(x);     // uzel: MUL
   rec.output(z);
 });
 ```
@@ -186,13 +186,13 @@ kde spot $S=105$, strike $K=100$, sazba $r=3\%$, splatnost $T=1$ rok.
 
 ```java
 AadTape tape = AadRecorder.record(rec -> {
-  SDouble S = rec.input("S", 105.0);
-  SDouble K = rec.constant(100.0);
-  SDouble r = rec.input("r", 0.03);
-  SDouble T = rec.constant(1.0);
+  ADouble S = rec.input("S", 105.0);
+  ADouble K = rec.constant(100.0);
+  ADouble r = rec.input("r", 0.03);
+  ADouble T = rec.constant(1.0);
 
-  SDouble payoff   = S.sub(K).max(0.0);   // max(S - K, 0)
-  SDouble discount = r.mul(T).neg().exp(); // exp(-r*T)
+  ADouble payoff   = S.sub(K).max(0.0);   // max(S - K, 0)
+  ADouble discount = r.mul(T).neg().exp(); // exp(-r*T)
   rec.output(payoff.mul(discount));
 });
 ```
@@ -323,7 +323,7 @@ spočítalo miliony čísel, které skutečný risk běh potřebuje. Náhodné t
 na pásce jen rezervují jako místa, negenerují se při zaznamenávání:
 
 ```java
-SDouble s = s0.mul(rec.randn().mul(vol).add(drift).exp());
+ADouble s = s0.mul(rec.randn().mul(vol).add(drift).exp());
 ```
 
 Poté vezme replay engine pro konkrétní zařízení (`cpu-jit`, `simd`,
@@ -349,7 +349,7 @@ dva důsledky:
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│  1. ZÁZNAM     napište výplatu jednou, v SDouble              │
+│  1. ZÁZNAM     napište výplatu jednou, v ADouble              │
 │                → AadRecorder zachytí plochý seznam uzlů       │
 │                                                                │
 │  2. DOPŘEDU    projděte uzly zleva doprava, počítejte          │

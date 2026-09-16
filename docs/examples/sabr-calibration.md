@@ -14,13 +14,13 @@ of parameters.
 
 ```java
 Calibrator.Result r = Calibrator.of(rec -> {
-        SDouble alpha = rec.input("alpha", 0.20);
-        SDouble rho   = rec.input("rho",   0.0);
-        SDouble nu    = rec.input("nu",    0.30);
-        SDouble beta  = rec.constant(0.5);
-        SDouble sse   = rec.constant(0.0);
+        ADouble alpha = rec.input("alpha", 0.20);
+        ADouble rho   = rec.input("rho",   0.0);
+        ADouble nu    = rec.input("nu",    0.30);
+        ADouble beta  = rec.constant(0.5);
+        ADouble sse   = rec.constant(0.0);
         for (int i = 0; i < strikes.length; i++) {
-            SDouble d = SabrHagan.blackVol(rec, alpha, beta, rho, nu, F, strikes[i], T)
+            ADouble d = SabrHagan.blackVol(rec, alpha, beta, rho, nu, F, strikes[i], T)
                                  .sub(targetVol[i]);
             sse = sse.add(d.mul(d));
         }

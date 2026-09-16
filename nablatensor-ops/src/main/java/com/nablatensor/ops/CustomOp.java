@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <pre>{@code
  * CustomOp.registerUnary("softplus", (rec, x) -> Smooth.ramp(rec, x, 0.05));
- * SDouble y = CustomOp.unary("softplus").apply(rec, x);
+ * ADouble y = CustomOp.unary("softplus").apply(rec, x);
  * }</pre>
  *
  * <p>A fused op with a hand-written {@code {forward(x), adjoint(x, gbar)}} and

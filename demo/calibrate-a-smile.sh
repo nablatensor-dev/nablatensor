@@ -85,14 +85,14 @@ say "built one time — every L-BFGS iteration just replays it forward and back.
 
 run <<'CODE'
 Consumer<AadRecorder> objective = rec -> {
-    SDouble alpha = rec.input("alpha", 0.20);
-    SDouble rho   = rec.input("rho",   0.0);
-    SDouble nu    = rec.input("nu",    0.30);
-    SDouble beta  = rec.constant(BETA);
-    SDouble sse   = rec.constant(0.0);
+    ADouble alpha = rec.input("alpha", 0.20);
+    ADouble rho   = rec.input("rho",   0.0);
+    ADouble nu    = rec.input("nu",    0.30);
+    ADouble beta  = rec.constant(BETA);
+    ADouble sse   = rec.constant(0.0);
     for (int i = 0; i < STRIKES.length; i++) {
-        SDouble model = SabrHagan.blackVol(rec, alpha, beta, rho, nu, F, STRIKES[i], T);
-        SDouble diff  = model.sub(target[i]);
+        ADouble model = SabrHagan.blackVol(rec, alpha, beta, rho, nu, F, STRIKES[i], T);
+        ADouble diff  = model.sub(target[i]);
         sse = sse.add(diff.mul(diff));
     }
     rec.output(sse);

@@ -16,18 +16,18 @@ Source: [`nablatensor-examples/.../SwapThePayoff.java`](../../nablatensor-exampl
 // A capped call: min(max(S_T - K, 0), cap), discounted. Not in the catalogue — three lines.
 static Product cappedCall(double cap) {
     return (rec, in, steps) -> {
-        SDouble spot = in.of(EquityMarket::spot);
-        SDouble strike = in.of(EquityMarket::strike);
-        SDouble rate = in.of(EquityMarket::rate);
-        SDouble vol = in.of(EquityMarket::vol);
-        SDouble maturity = in.of(EquityMarket::maturity);
+        ADouble spot = in.of(EquityMarket::spot);
+        ADouble strike = in.of(EquityMarket::strike);
+        ADouble rate = in.of(EquityMarket::rate);
+        ADouble vol = in.of(EquityMarket::vol);
+        ADouble maturity = in.of(EquityMarket::maturity);
 
         GbmPath model = new GbmPath(rec, rate, vol, steps, maturity);
-        SDouble s = spot;
+        ADouble s = spot;
         for (int t = 0; t < steps; t++) {
             s = model.step(s, rec.randn());
         }
-        SDouble payoff = s.sub(strike).max(0.0).min(rec.constant(cap));
+        ADouble payoff = s.sub(strike).max(0.0).min(rec.constant(cap));
         rec.output(payoff.mul(rate.neg().mul(maturity).exp()));
     };
 }

@@ -78,7 +78,7 @@ public final class LmmModel {
   /**
    * Per-step innovations. This minimal build uses independent innovations and
    * carries the flat {@code corr} only through the drift summation; a full
-   * SDouble Cholesky of the innovations (so {@code dV/dcorr} also picks up the
+   * ADouble Cholesky of the innovations (so {@code dV/dcorr} also picks up the
    * diffusion channel) is a later refinement.
    */
   public ADouble[] draw(AadRecorder rec) {

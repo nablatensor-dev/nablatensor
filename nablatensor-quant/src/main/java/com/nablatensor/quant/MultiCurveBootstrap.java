@@ -27,7 +27,7 @@ import java.util.TreeMap;
  * deposits and par swaps, then each tenor forecast curve from deposits and par
  * swaps whose annuity and float legs discount on the OIS curve.
  *
- * <p>The whole recursion is recorded once against {@code SDouble} quotes and
+ * <p>The whole recursion is recorded once against {@code ADouble} quotes and
  * replayed through a {@link MultiOutput}, so alongside the curves it returns the
  * exact {@code d(zero rate) / d(quote)} Jacobian from one adjoint sweep — the
  * bucket-delta transformation a rates desk applies to turn instrument PV01s into

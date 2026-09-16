@@ -20,11 +20,11 @@ form; this is its exact, backend-agnostic stand-in.
 
 ```java
 try (MultiOutput mo = MultiOutput.of(rec -> {
-        SDouble s0 = rec.input("S0", 100), k = rec.input("K", 100),
+        ADouble s0 = rec.input("S0", 100), k = rec.input("K", 100),
                 vol = rec.input("sigma", 0.2), r = rec.input("r", 0.03);
-        SDouble sT = /* ... GBM path over rec.randn() ... */ s0;
-        SDouble disc = r.neg().exp();
-        Map<String, SDouble> m = new LinkedHashMap<>();
+        ADouble sT = /* ... GBM path over rec.randn() ... */ s0;
+        ADouble disc = r.neg().exp();
+        Map<String, ADouble> m = new LinkedHashMap<>();
         m.put("call",     sT.sub(k).max(0.0).mul(disc));
         m.put("digital",  Smooth.gt(rec, sT, k, 1.0).mul(disc));
         m.put("straddle", sT.sub(k).abs().mul(disc));

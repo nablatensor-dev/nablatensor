@@ -151,9 +151,9 @@ against `ADouble` instead of `double`:
 
 ```java
 AadTape tape = AadRecorder.record(rec -> {
-  SDouble x = rec.input("x", 3.0);
-  SDouble a = x.add(2.0);   // node: ADD
-  SDouble z = a.mul(x);     // node: MUL
+  ADouble x = rec.input("x", 3.0);
+  ADouble a = x.add(2.0);   // node: ADD
+  ADouble z = a.mul(x);     // node: MUL
   rec.output(z);
 });
 ```
@@ -181,13 +181,13 @@ with spot $S=105$, strike $K=100$, rate $r=3\%$, maturity $T=1$ year.
 
 ```java
 AadTape tape = AadRecorder.record(rec -> {
-  SDouble S = rec.input("S", 105.0);
-  SDouble K = rec.constant(100.0);
-  SDouble r = rec.input("r", 0.03);
-  SDouble T = rec.constant(1.0);
+  ADouble S = rec.input("S", 105.0);
+  ADouble K = rec.constant(100.0);
+  ADouble r = rec.input("r", 0.03);
+  ADouble T = rec.constant(1.0);
 
-  SDouble payoff   = S.sub(K).max(0.0);   // max(S - K, 0)
-  SDouble discount = r.mul(T).neg().exp(); // exp(-r*T)
+  ADouble payoff   = S.sub(K).max(0.0);   // max(S - K, 0)
+  ADouble discount = r.mul(T).neg().exp(); // exp(-r*T)
   rec.output(payoff.mul(discount));
 });
 ```
@@ -316,7 +316,7 @@ compute the millions of numbers a real risk run needs. Random draws are
 reserved as slots in the tape, not generated during recording:
 
 ```java
-SDouble s = s0.mul(rec.randn().mul(vol).add(drift).exp());
+ADouble s = s0.mul(rec.randn().mul(vol).add(drift).exp());
 ```
 
 Afterwards, a device-specific replay engine (`cpu-jit`, `simd`, `vulkan`, ...)
@@ -341,7 +341,7 @@ details fall out of what you already learned:
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│  1. RECORD   write the payoff once, in SDouble               │
+│  1. RECORD   write the payoff once, in ADouble               │
 │              → AadRecorder captures a flat array of nodes    │
 │                                                                │
 │  2. FORWARD  walk nodes left→right, compute + remember values │

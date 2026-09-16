@@ -86,7 +86,7 @@ paint() {
   # for the later pass to match, so only the tail lit up. Longest names first so
   # the alternation prefers "ExoticProducts" over "Products".
   line="$(sed -E "
-    s/\\b(ExoticProducts|MonteCarlo|EquityMarket|Calibrator|AadRecorder|SabrHagan|OptionType|Products|Pricing|SDouble|Nabla)\\b/${KW}&${SRC}/g
+    s/\\b(ExoticProducts|MonteCarlo|EquityMarket|Calibrator|AadRecorder|SabrHagan|OptionType|Products|Pricing|ADouble|Nabla)\\b/${KW}&${SRC}/g
     s/\\b(var|for|int|void|double|long|new|return)\\b/${KW}&${SRC}/g
   " <<<"$line")"
   printf '%s%s%s' "$SRC" "$line" "$RESET"

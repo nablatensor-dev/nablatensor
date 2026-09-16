@@ -60,7 +60,7 @@ say "the row just says '--' and selection skips it."
 
 # ── act 2 ──────────────────────────────────────────────────────────────────
 banner "2 · Record the model once"
-say "An arithmetic-average Asian call, 252 fixings, recorded against SDouble."
+say "An arithmetic-average Asian call, 252 fixings, recorded against ADouble."
 say "The tape below IS the model. Every backend replays these same nodes."
 
 run <<'CODE'

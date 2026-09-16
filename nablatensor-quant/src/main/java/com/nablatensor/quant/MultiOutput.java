@@ -33,9 +33,9 @@ import java.util.Map;
  *
  * <pre>{@code
  * try (MultiOutput mo = MultiOutput.of(rec -> {
- *         SDouble s0 = rec.input("S0", 100), k = rec.input("K", 100),
+ *         ADouble s0 = rec.input("S0", 100), k = rec.input("K", 100),
  *                 vol = rec.input("sigma", 0.2), r = rec.input("r", 0.03);
- *         SDouble sT = s0.mul(r.sub(vol.mul(vol).mul(0.5)).add(vol.mul(rec.randn())).exp());
+ *         ADouble sT = s0.mul(r.sub(vol.mul(vol).mul(0.5)).add(vol.mul(rec.randn())).exp());
  *         return Map.of(
  *             "call",    sT.sub(k).max(0.0).mul(r.neg().exp()),
  *             "digital", com.nablatensor.ops.Smooth.gt(rec, sT, k, 1.0).mul(r.neg().exp()));

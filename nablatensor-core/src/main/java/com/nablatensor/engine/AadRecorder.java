@@ -22,8 +22,8 @@ import java.util.function.Consumer;
  *
  * <pre>{@code
  * AadTape tape = AadRecorder.record(rec -> {
- *   SDouble s0 = rec.input("S0", 100.0);
- *   SDouble s = s0;
+ *   ADouble s0 = rec.input("S0", 100.0);
+ *   ADouble s = s0;
  *   for (int t = 0; t < steps; t++) {
  *     s = s.mul(rec.randn().mul(vol).add(drift).exp());
  *   }

@@ -19,7 +19,7 @@ import com.nablatensor.ops.Smooth;
 CustomOp.registerUnary("softclamp", (rec, x) ->
     Smooth.ramp(rec, x.add(1.0), 0.05).sub(Smooth.ramp(rec, x.sub(1.0), 0.05)).sub(1.0));
 
-SDouble y = CustomOp.unary("softclamp").apply(rec, someScalar);
+ADouble y = CustomOp.unary("softclamp").apply(rec, someScalar);
 ```
 
 `CustomOp` ships with `relu`, `softplus`, `sigmoid` and `normCdf` pre-registered.

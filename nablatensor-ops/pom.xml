@@ -10,7 +10,7 @@
   <name>nablatensor-ops</name>
   <description>Tape-level vocabulary above the primitive ops: smoothed STEP/GT/band indicators
     for barrier and digital monitoring, the normal CDF/PDF and a general power, and a
-    macro-form custom-op registry (Seam 3). All expressed in primitive SDouble nodes, so the
+    macro-form custom-op registry (Seam 3). All expressed in primitive ADouble nodes, so the
     adjoint is exact and every backend runs them unchanged.</description>
   <dependencies>
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-core</artifactId></dependency>
