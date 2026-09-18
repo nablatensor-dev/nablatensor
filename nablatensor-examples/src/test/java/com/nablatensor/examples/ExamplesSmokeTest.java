@@ -193,6 +193,22 @@ class ExamplesSmokeTest {
   }
 
   @Test
+  void stressTest() {
+    System.setProperty("scenarios", "20000");
+    System.setProperty("engine", "cpu-jit");
+    System.setProperty("bankPositions", "10");
+    StressTestShowcase.main(new String[0]);
+  }
+
+  @Test
+  void climateScenario() {
+    System.setProperty("scenarios", "20000");
+    System.setProperty("engine", "cpu-jit");
+    System.setProperty("bankPositions", "10");
+    ClimateScenarioShowcase.main(new String[0]);
+  }
+
+  @Test
   void swapThePayoff() {
     System.setProperty("scenarios", "50000");
     System.setProperty("steps", "32");
