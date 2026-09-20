@@ -69,10 +69,11 @@ class SaCvaTest {
         .build();
 
     double atOne = new SaCva(PARAMETERS).charge(sensitivities).total();
-    SaCvaParameters raised = new SaCvaParameters(1.5, PARAMETERS.creditSpreadRw(),
-        PARAMETERS.creditSpreadVegaRw(), PARAMETERS.girrDeltaRw(), PARAMETERS.girrVegaRw(),
-        PARAMETERS.fxDeltaRw(), PARAMETERS.fxVegaRw(), PARAMETERS.creditSpreadRho(),
-        PARAMETERS.creditSpreadGamma(), PARAMETERS.fxGamma());
+    SaCvaParameters raised = SaCvaParameters.of().mCva(1.5).creditSpreadRw(PARAMETERS.creditSpreadRw())
+        .creditSpreadVegaRw(PARAMETERS.creditSpreadVegaRw()).girrDeltaRw(PARAMETERS.girrDeltaRw())
+        .girrVegaRw(PARAMETERS.girrVegaRw()).fxDeltaRw(PARAMETERS.fxDeltaRw())
+        .fxVegaRw(PARAMETERS.fxVegaRw()).creditSpreadRho(PARAMETERS.creditSpreadRho())
+        .creditSpreadGamma(PARAMETERS.creditSpreadGamma()).fxGamma(PARAMETERS.fxGamma()).build();
     double atOnePointFive = new SaCva(raised).charge(sensitivities).total();
 
     assertEquals(1.5, atOnePointFive / atOne, 1.0e-9);

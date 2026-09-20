@@ -58,6 +58,7 @@
   </properties>
 
   <modules>
+    <module>nablatensor-codegen</module>
     <module>nablatensor-tensor</module>
     <module>nablatensor-core</module>
     <module>nablatensor-engine-cpu</module>
@@ -76,6 +77,11 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>nablatensor-codegen</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
         <artifactId>nablatensor-tensor</artifactId>
