@@ -16,7 +16,7 @@
 package com.nablatensor.examples;
 
 import com.nablatensor.engine.Nabla;
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import com.nablatensor.quant.SchwartzMarket;
 import com.nablatensor.quant.SchwartzOneFactor;
 import com.nablatensor.quant.Seasonality;
@@ -43,14 +43,14 @@ public final class SparkSpreadShowcase {
   public static void main(String[] args) {
     long paths = Long.getLong("paths", 1_000_000L);
 
-    SpreadMarket m = new SpreadMarket(60.0, 45.0, 0.35, 0.30, 0.0, 0.0, 0.03);
+    SpreadMarket m = SpreadMarket.of().s1(60.0).s2(45.0).vol1(0.35).vol2(0.30).yield1(0.0).yield2(0.0).rate(0.03).build();
     double rho = 0.55;
     double k = 6.0;
     double t = 0.5;
 
     double kirk = KirkSpreadOption.price(m.s1(), m.s2(), k, m.vol1(), m.vol2(), rho, m.rate(),
         m.yield1(), m.yield2(), t);
-    double margrabe = Margrabe.of(m.s1(), m.s2(), m.vol1(), m.vol2(), rho, 0.0, 0.0, t).price();
+    double margrabe = Margrabe.of().s1(m.s1()).s2(m.s2()).vol1(m.vol1()).vol2(m.vol2()).rho(rho).yield1(0.0).yield2(0.0).maturity(t).build().price();
 
     var greeks = adjoint(m, SpreadProducts.spreadOption(k, rho, t, 64), paths);
     System.out.printf(Locale.ROOT, "Spark spread option  (power %.0f, gas-eq %.0f, K=%.0f, %.0fm)%n%n",
@@ -61,8 +61,8 @@ public final class SparkSpreadShowcase {
     System.out.printf(Locale.ROOT, "  one adjoint sweep:   dS1 = %+.4f   dS2 = %+.4f%n%n", greeks[1], greeks[2]);
 
     // Schwartz one-factor futures curve with a seasonal overlay.
-    SchwartzMarket sch = new SchwartzMarket(50.0, 1.4, Math.log(56.0), 0.28, 0.03);
-    Seasonality season = new Seasonality(new double[] {0.06, 0.0}, new double[] {0.03, 0.0});
+    SchwartzMarket sch = SchwartzMarket.of().spot(50.0).kappa(1.4).level(Math.log(56.0)).sigma(0.28).rate(0.03).build();
+    Seasonality season = Seasonality.of().aCos(new double[] {0.06, 0.0}).aSin(new double[] {0.03, 0.0}).build();
     System.out.printf(Locale.ROOT, "Schwartz one-factor futures curve (kappa=%.1f, long-run %.1f):%n", sch.kappa(),
         Math.exp(sch.level()));
     System.out.printf(Locale.ROOT, "  %-8s %12s %14s%n", "T (yr)", "futures", "+ seasonality");

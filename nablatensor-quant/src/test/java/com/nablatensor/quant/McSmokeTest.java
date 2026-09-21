@@ -39,7 +39,7 @@ class McSmokeTest {
 
   private static final long PATHS = 60_000L;
 
-  private static <M extends Record> double price(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> v,
+  private static <M> double price(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> v,
                                                  int steps, long seed) {
     try (Nabla.TypedPricer<M> p = Nabla.model(market, v).fp64().priceOnly().on("cpu-jit").build()) {
       return p.value().with(market).scenarios(PATHS).seed(seed).run().price();
@@ -48,29 +48,29 @@ class McSmokeTest {
 
   @Test
   void mertonAndKouJumpModelsPriceAndCollapseToBlackScholes() {
-    double bs = GeneralizedBsm.of(OptionType.CALL, 100, 100, 1.0, 0.03, 0.0, 0.2).price();
+    double bs = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(100).strike(100).maturity(1.0).rate(0.03).dividend(0.0).vol(0.2).build().price();
 
-    double merton0 = price(new MertonJumpMarket(100, 100, 0.2, 0.03, 1.0, 0.0, -0.1, 0.2),
-        MertonJumpModel.european(OptionType.CALL, 1.0, 32), 32, 1L);
+    double merton0 = price(MertonJumpMarket.of().spot(100).strike(100).vol(0.2).rate(0.03).maturity(1.0).jumpIntensity(0.0).jumpMean(-0.1).jumpVol(0.2).build(),
+        MertonJumpModel.european(OptionTypeEnum.CALL, 1.0, 32), 32, 1L);
     assertEquals(bs, merton0, 0.06 * bs, "Merton lambda=0 ~ BSM");
 
-    double kou0 = price(new KouMarket(100, 100, 0.2, 0.03, 1.0, 0.0, 0.4, 10.0, 5.0),
-        KouJumpModel.european(OptionType.CALL, 1.0, 32), 32, 2L);
+    double kou0 = price(KouMarket.of().spot(100).strike(100).vol(0.2).rate(0.03).maturity(1.0).jumpIntensity(0.0).probUp(0.4).etaUp(10.0).etaDown(5.0).build(),
+        KouJumpModel.european(OptionTypeEnum.CALL, 1.0, 32), 32, 2L);
     assertEquals(bs, kou0, 0.06 * bs, "Kou lambda=0 ~ BSM");
 
-    double merton = price(new MertonJumpMarket(100, 100, 0.16, 0.03, 1.0, 1.2, -0.03, 0.2),
-        MertonJumpModel.european(OptionType.CALL, 1.0, 32), 32, 3L);
+    double merton = price(MertonJumpMarket.of().spot(100).strike(100).vol(0.16).rate(0.03).maturity(1.0).jumpIntensity(1.2).jumpMean(-0.03).jumpVol(0.2).build(),
+        MertonJumpModel.european(OptionTypeEnum.CALL, 1.0, 32), 32, 3L);
     assertTrue(merton > 0.0 && merton < 40.0, "Merton with jumps prices sanely: " + merton);
   }
 
   @Test
   void schwartzFuturesAndSpreadOptionPriceSanely() {
-    SchwartzMarket sch = new SchwartzMarket(50.0, 1.4, Math.log(55.0), 0.28, 0.03);
-    double eST = price(sch, SchwartzOneFactor.european(OptionType.CALL, 0.0, 1.0, 48), 48, 5L)
+    SchwartzMarket sch = SchwartzMarket.of().spot(50.0).kappa(1.4).level(Math.log(55.0)).sigma(0.28).rate(0.03).build();
+    double eST = price(sch, SchwartzOneFactor.european(OptionTypeEnum.CALL, 0.0, 1.0, 48), 48, 5L)
         * Math.exp(sch.rate() * 1.0);
     assertEquals(SchwartzOneFactor.futuresPrice(sch, 1.0), eST, 0.03 * eST, "Schwartz E[S_T] ~ futures");
 
-    SpreadMarket sp = new SpreadMarket(60, 45, 0.32, 0.28, 0.0, 0.0, 0.03);
+    SpreadMarket sp = SpreadMarket.of().s1(60).s2(45).vol1(0.32).vol2(0.28).yield1(0.0).yield2(0.0).rate(0.03).build();
     double spread = price(sp, SpreadProducts.spreadOption(6.0, 0.55, 0.5, 32), 32, 7L);
     double kirk = com.nablatensor.quant.analytic.KirkSpreadOption.price(
         60, 45, 6.0, 0.32, 0.28, 0.55, 0.03, 0.0, 0.0, 0.5);
@@ -79,8 +79,8 @@ class McSmokeTest {
 
   @Test
   void bermudanLsmProducesALowerBoundWithGreeks() {
-    EquityMarket m = new EquityMarket(40, 40, 0.20, 0.06, 1.0);
-    BermudanLsm.Result r = BermudanLsm.price(m, OptionType.PUT, 8, 4, 2, 0.6, 30_000L, 42L);
+    EquityMarket m = EquityMarket.of().spot(40).strike(40).vol(0.20).rate(0.06).maturity(1.0).build();
+    BermudanLsm.Result r = BermudanLsm.price(m, OptionTypeEnum.PUT, 8, 4, 2, 0.6, 30_000L, 42L);
     assertTrue(r.price() >= r.europeanFloor() - 1e-6, "Bermudan >= European floor");
     assertTrue(r.greeks().spot() > -1.0 && r.greeks().spot() < 0.0, "put delta in (-1, 0)");
   }

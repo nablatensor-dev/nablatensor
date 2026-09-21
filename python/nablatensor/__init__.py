@@ -7,9 +7,12 @@ Java types the ``notebooks/`` need:
 
     >>> import nablatensor as nt
     >>> nt.start()
-    >>> market = nt.EquityMarket(100.0, 100.0, 0.28, 0.03, 1.0)
-    >>> note   = nt.ExoticProducts.barrier(
-    ...     nt.OptionType.PUT, nt.ExoticProducts.Barrier.DOWN_IN, 70.0, 1.0)
+    >>> market = (nt.EquityMarket.of().spot(100.0).strike(100.0).vol(0.28)
+    ...               .rate(0.03).maturity(1.0).build())
+    >>> note = (nt.ExoticProducts.BarrierOption.of()
+    ...             .type(nt.OptionTypeEnum.PUT)
+    ...             .kind(nt.ExoticProducts.BarrierEnum.DOWN_IN)
+    ...             .barrier(70.0).width(1.0).build())
     >>> mc = (nt.MonteCarlo.of(note).market(market).steps(252)
     ...         .fp32().greeks().on(nt.best_engine()).build())
     >>> p = mc.run(20_000_000, 42)
@@ -38,7 +41,7 @@ __all__ = [
     "best_engine",
     "jclass",
     "EquityMarket",
-    "OptionType",
+    "OptionTypeEnum",
     "ExoticProducts",
     "Products",
     "MonteCarlo",
@@ -56,7 +59,7 @@ _DEFAULT_JDK_HOME = "/opt/zulu25.30.17-ca-jdk25.0.1-linux_x64"
 # Fully qualified names of the Java types re-exported as module attributes.
 _EXPORTS = {
     "EquityMarket": "com.nablatensor.quant.EquityMarket",
-    "OptionType": "com.nablatensor.quant.OptionType",
+    "OptionTypeEnum": "com.nablatensor.quant.OptionTypeEnum",
     "ExoticProducts": "com.nablatensor.quant.ExoticProducts",
     "Products": "com.nablatensor.quant.Products",
     "MonteCarlo": "com.nablatensor.quant.MonteCarlo",

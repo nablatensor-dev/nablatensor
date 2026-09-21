@@ -20,9 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import com.nablatensor.risk.CorrelationScenario;
-import com.nablatensor.risk.RiskClass;
-import com.nablatensor.risk.RiskMeasure;
+import com.nablatensor.risk.CorrelationScenarioEnum;
+import com.nablatensor.risk.RiskClassEnum;
+import com.nablatensor.risk.RiskMeasureEnum;
 import com.nablatensor.tensor.NablaTensors;
 import java.util.List;
 import java.util.Map;
@@ -168,15 +168,15 @@ class ExamplesSmokeTest {
     assertTrue(netted.asMap().size() < tradeFactorObservations);
     var capital = FrtbFullShowcase.aggregate(parameters, netted);
 
-    for (RiskClass riskClass : RiskClass.values()) {
-      assertFalse(netted.ofClass(riskClass).ofMeasure(RiskMeasure.DELTA).isEmpty());
-      assertFalse(netted.ofClass(riskClass).ofMeasure(RiskMeasure.VEGA).isEmpty());
-      assertFalse(netted.ofClass(riskClass).ofMeasure(RiskMeasure.CURVATURE).isEmpty());
+    for (RiskClassEnum riskClass : RiskClassEnum.values()) {
+      assertFalse(netted.ofClass(riskClass).ofMeasure(RiskMeasureEnum.DELTA).isEmpty());
+      assertFalse(netted.ofClass(riskClass).ofMeasure(RiskMeasureEnum.VEGA).isEmpty());
+      assertFalse(netted.ofClass(riskClass).ofMeasure(RiskMeasureEnum.CURVATURE).isEmpty());
       var classCapital = capital.byClass().get(riskClass);
       assertTrue(classCapital.total() > 0.0);
       for (var measure : List.of(
           classCapital.delta(), classCapital.vega(), classCapital.curvature())) {
-        assertEquals(CorrelationScenario.values().length, measure.scenarios().size());
+        assertEquals(CorrelationScenarioEnum.values().length, measure.scenarios().size());
         assertEquals(measure.scenarios().values().stream().mapToDouble(Double::doubleValue).max()
             .orElseThrow(), measure.total(), 1e-12);
       }

@@ -18,7 +18,7 @@ package com.nablatensor.examples;
 import com.nablatensor.lattice.BinomialTree;
 import com.nablatensor.lattice.LatticeGreeks;
 import com.nablatensor.lattice.LatticePayoff.ExerciseSchedule;
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import com.nablatensor.quant.analytic.GeneralizedBsm;
 import java.util.Locale;
 
@@ -37,30 +37,30 @@ public final class LatticeConvergenceShowcase {
 
   public static void main(String[] args) {
     double s = 100, k = 100, r = 0.05, q = 0.0, vol = 0.20, t = 1.0;
-    double closed = GeneralizedBsm.of(OptionType.CALL, s, k, t, r, q, vol).price();
+    double closed = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(s).strike(k).maturity(t).rate(r).dividend(q).vol(vol).build().price();
 
     System.out.printf(Locale.ROOT, "European call, Black-Scholes = %.6f%n%n", closed);
     System.out.printf(Locale.ROOT, "  %-6s %14s %14s%n", "steps", "CRR error", "Leisen-Reimer error");
     for (int n : new int[] {10, 25, 50, 100, 250, 500}) {
-      double crr = BinomialTree.of(s, r, q, vol, t, n, BinomialTree.Method.CRR)
-          .priceVanilla(OptionType.CALL, k, ExerciseSchedule.EUROPEAN);
-      double lr = BinomialTree.of(s, r, q, vol, t, n, BinomialTree.Method.LEISEN_REIMER)
-          .priceVanilla(OptionType.CALL, k, ExerciseSchedule.EUROPEAN);
+      double crr = BinomialTree.of().spot(s).rate(r).dividendYield(q).vol(vol).maturity(t).steps(n).method(BinomialTree.MethodEnum.CRR).build()
+          .priceVanilla(OptionTypeEnum.CALL, k, ExerciseSchedule.EUROPEAN);
+      double lr = BinomialTree.of().spot(s).rate(r).dividendYield(q).vol(vol).maturity(t).steps(n).method(BinomialTree.MethodEnum.LEISEN_REIMER).build()
+          .priceVanilla(OptionTypeEnum.CALL, k, ExerciseSchedule.EUROPEAN);
       System.out.printf(Locale.ROOT, "  %-6d %+14.2e %+14.2e%n", n, crr - closed, lr - closed);
     }
 
     // Early exercise: an American put, which Monte-Carlo can only lower-bound.
-    double eur = BinomialTree.of(40, 0.06, 0.0, 0.20, 1.0, 2000, BinomialTree.Method.CRR)
-        .priceVanilla(OptionType.PUT, 40, ExerciseSchedule.EUROPEAN);
-    double amer = BinomialTree.of(40, 0.06, 0.0, 0.20, 1.0, 2000, BinomialTree.Method.CRR)
-        .priceVanilla(OptionType.PUT, 40, ExerciseSchedule.AMERICAN);
+    double eur = BinomialTree.of().spot(40).rate(0.06).dividendYield(0.0).vol(0.20).maturity(1.0).steps(2000).method(BinomialTree.MethodEnum.CRR).build()
+        .priceVanilla(OptionTypeEnum.PUT, 40, ExerciseSchedule.EUROPEAN);
+    double amer = BinomialTree.of().spot(40).rate(0.06).dividendYield(0.0).vol(0.20).maturity(1.0).steps(2000).method(BinomialTree.MethodEnum.CRR).build()
+        .priceVanilla(OptionTypeEnum.PUT, 40, ExerciseSchedule.AMERICAN);
     System.out.printf(Locale.ROOT, "%nAmerican put (S=K=40, sigma=0.20, T=1, r=0.06):%n");
     System.out.printf(Locale.ROOT, "  European %.4f   American %.4f   early-exercise premium %.4f%n",
         eur, amer, amer - eur);
 
-    LatticeGreeks g = LatticeGreeks.vanilla(s, r, q, vol, t, 800, BinomialTree.Method.CRR,
-        OptionType.CALL, k, ExerciseSchedule.EUROPEAN);
-    var ref = GeneralizedBsm.of(OptionType.CALL, s, k, t, r, q, vol).greeks();
+    LatticeGreeks g = LatticeGreeks.vanilla(s, r, q, vol, t, 800, BinomialTree.MethodEnum.CRR,
+        OptionTypeEnum.CALL, k, ExerciseSchedule.EUROPEAN);
+    var ref = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(s).strike(k).maturity(t).rate(r).dividend(q).vol(vol).build().greeks();
     System.out.printf(Locale.ROOT, "%nTree Greeks vs closed form:  delta %.4f/%.4f   gamma %.5f/%.5f   vega %.3f/%.3f%n",
         g.delta(), ref.delta(), g.gamma(), ref.gamma(), g.vega(), ref.vega());
   }

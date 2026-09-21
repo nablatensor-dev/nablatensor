@@ -71,7 +71,7 @@ say "trade at every step from analytic bonds, nets them, and accumulates the"
 say "pathwise CVA integrand against the survival curve."
 
 run <<'CODE'
-var sim = new ExposureSimulation(ns, STEPS).on(ENGINE);
+var sim = ExposureSimulation.of(ns, STEPS).on(ENGINE);
 var res = sim.run(mkt, N, SEED);
 bar(res.epeProfile());
 CODE
@@ -144,9 +144,9 @@ CODE
 
 run <<'CODE'
 System.out.printf(Locale.ROOT, "   SA-CVA   L %s   M %s   H %s   ->  %s  %s%n",
-    money(sa.perScenario().get(CorrelationScenario.LOW)),
-    money(sa.perScenario().get(CorrelationScenario.MEDIUM)),
-    money(sa.perScenario().get(CorrelationScenario.HIGH)),
+    money(sa.perScenario().get(CorrelationScenarioEnum.LOW)),
+    money(sa.perScenario().get(CorrelationScenarioEnum.MEDIUM)),
+    money(sa.perScenario().get(CorrelationScenarioEnum.HIGH)),
     sa.selected(), green(money(sa.total())));
 System.out.printf(Locale.ROOT, "   BA-CVA   reduced %s   full %s   hedge benefit %s%n",
     money(cap.baCva().reduced()), money(cap.baCva().full()),

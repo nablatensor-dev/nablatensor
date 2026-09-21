@@ -150,7 +150,7 @@ class OpsTest {
   }
 
   private static String firstAvailable(String... names) {
-    var usable = AadEngines.available(new AadOptions(AadOptions.Precision.FLOAT32, true))
+    var usable = AadEngines.available(AadOptions.of().precision(AadOptions.PrecisionEnum.FLOAT32).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build())
         .stream().map(e -> e.name()).toList();
     for (String n : names) {
       if (usable.contains(n)) {

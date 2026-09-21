@@ -23,7 +23,7 @@ package com.nablatensor.risk;
  * tables and is the single place a value changes.
  *
  * <p>All correlations returned here are <b>MEDIUM</b>-scenario values; the
- * engine applies the {@link CorrelationScenario} HIGH / LOW transforms.
+ * engine applies the {@link CorrelationScenarioEnum} HIGH / LOW transforms.
  *
  * <p>This interface carries no numbers. Its implementations do, and each of
  * those must cite the Basel paragraph and warn that the reader should verify
@@ -32,7 +32,7 @@ package com.nablatensor.risk;
 public interface RiskClassProfile {
 
   /** The risk class this profile parameterises. */
-  RiskClass riskClass();
+  RiskClassEnum riskClass();
 
   /** Delta risk weight for a delta risk factor (as a decimal fraction). */
   double deltaRiskWeight(RiskFactor k);

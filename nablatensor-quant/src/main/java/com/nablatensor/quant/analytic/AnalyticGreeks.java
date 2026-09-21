@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant.analytic;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A closed-form price and its first- and second-order sensitivities — the
  * reference an adjoint Monte-Carlo run is checked against.
@@ -41,11 +43,66 @@ package com.nablatensor.quant.analytic;
  * {@code ~1e-7} truncation error, which is what makes the record usable as an
  * oracle.
  */
-public record AnalyticGreeks(double price, double delta, double gamma, double vega,
-                             double theta, double rho, double strikeSensitivity) {
+@Of
+public final class AnalyticGreeks {
+
+  private final double price;
+  private final double delta;
+  private final double gamma;
+  private final double vega;
+  private final double theta;
+  private final double rho;
+  private final double strikeSensitivity;
+
+  private AnalyticGreeks(double price, double delta, double gamma, double vega, double theta, double rho, double strikeSensitivity) {
+    this.price = price;
+    this.delta = delta;
+    this.gamma = gamma;
+    this.vega = vega;
+    this.theta = theta;
+    this.rho = rho;
+    this.strikeSensitivity = strikeSensitivity;
+  }
+
+  static AnalyticGreeks create(double price, double delta, double gamma, double vega, double theta, double rho, double strikeSensitivity) {
+    return new AnalyticGreeks(price, delta, gamma, vega, theta, rho, strikeSensitivity);
+  }
+
+  public static AnalyticGreeksBuilder of() {
+    return new AnalyticGreeksBuilder();
+  }
+
+  public double price() {
+    return price;
+  }
+
+  public double delta() {
+    return delta;
+  }
+
+  public double gamma() {
+    return gamma;
+  }
+
+  public double vega() {
+    return vega;
+  }
+
+  public double theta() {
+    return theta;
+  }
+
+  public double rho() {
+    return rho;
+  }
+
+  public double strikeSensitivity() {
+    return strikeSensitivity;
+  }
+
 
   /** A price with all sensitivities zero — the degenerate {@code T=0} or {@code sigma=0} case. */
   public static AnalyticGreeks intrinsic(double price) {
-    return new AnalyticGreeks(price, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    return AnalyticGreeks.of().price(price).delta(0.0).gamma(0.0).vega(0.0).theta(0.0).rho(0.0).strikeSensitivity(0.0).build();
   }
 }

@@ -15,6 +15,8 @@
  */
 package com.nablatensor.credit;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A synthetic CDO tranche {@code [attach, detach]} on a homogeneous pool, priced
  * off the {@link PortfolioLossDistribution}: the protection leg pays the change
@@ -24,12 +26,34 @@ package com.nablatensor.credit;
  * <p>Losses fall on the pool's integer default grid, so the expected tranche
  * loss at each payment date is a single sum over that grid.
  */
-public record CdoTranche(double attach, double detach) {
+@Of
+public final class CdoTranche {
 
-  public CdoTranche {
+  private final double attach;
+  private final double detach;
+  static CdoTranche create(double attach, double detach) {
+    return new CdoTranche(attach, detach);
+  }
+
+  public static CdoTrancheBuilder of() {
+    return new CdoTrancheBuilder();
+  }
+
+  public double attach() {
+    return attach;
+  }
+
+  public double detach() {
+    return detach;
+  }
+
+
+  private CdoTranche(double attach, double detach) {
     if (!(detach > attach && attach >= 0.0 && detach <= 1.0)) {
       throw new IllegalArgumentException("need 0 <= attach < detach <= 1");
     }
+    this.attach = attach;
+    this.detach = detach;
   }
 
   public double width() {

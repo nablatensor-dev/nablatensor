@@ -17,10 +17,11 @@ package com.nablatensor.quant.analytic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.nablatensor.quant.BlackScholes;
 import com.nablatensor.quant.EquityMarket;
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -37,14 +38,21 @@ class AnalyticPricersTest {
   private static final double R = 0.03;
   private static final double VOL = 0.20;
 
+
+  @Test
+  void analyticBuilderRejectsMissingRequiredFields() {
+    assertThrows(IllegalStateException.class, () -> GeneralizedBsm.of()
+        .type(OptionTypeEnum.CALL).spot(S).strike(K).maturity(T).rate(R).dividend(0.0).build());
+  }
+
   @Test
   void generalizedBsmWithNoDividendMatchesBlackScholes() {
-    EquityMarket m = new EquityMarket(S, K, VOL, R, T);
+    EquityMarket m = EquityMarket.of().spot(S).strike(K).vol(VOL).rate(R).maturity(T).build();
     // BlackScholes uses a lighter erfc approximation for N(x) (abs error ~1.5e-7),
     // so it is the coarser side of this comparison; tolerances reflect that.
-    for (OptionType type : OptionType.values()) {
+    for (OptionTypeEnum type : OptionTypeEnum.values()) {
       BlackScholes ref = BlackScholes.of(type, m);
-      GeneralizedBsm got = GeneralizedBsm.of(type, S, K, T, R, 0.0, VOL);
+      GeneralizedBsm got = GeneralizedBsm.of().type(type).spot(S).strike(K).maturity(T).rate(R).dividend(0.0).vol(VOL).build();
 
       assertEquals(ref.price(), got.price(), 5e-5, type + " price");
       assertEquals(ref.delta(), got.greeks().delta(), 5e-6, type + " delta");
@@ -62,8 +70,8 @@ class AnalyticPricersTest {
     double d1 = (Math.log(S / K) + (b + 0.5 * VOL * VOL) * T) / (VOL * sqrtT);
     double closedFormGamma = Math.exp(-q * T) * Normal.pdf(d1) / (S * VOL * sqrtT);
 
-    AnalyticGreeks call = GeneralizedBsm.of(OptionType.CALL, S, K, T, R, q, VOL).greeks();
-    AnalyticGreeks put = GeneralizedBsm.of(OptionType.PUT, S, K, T, R, q, VOL).greeks();
+    AnalyticGreeks call = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(S).strike(K).maturity(T).rate(R).dividend(q).vol(VOL).build().greeks();
+    AnalyticGreeks put = GeneralizedBsm.of().type(OptionTypeEnum.PUT).spot(S).strike(K).maturity(T).rate(R).dividend(q).vol(VOL).build().greeks();
 
     assertEquals(closedFormGamma, call.gamma(), 1e-6, "call gamma");
     assertEquals(closedFormGamma, put.gamma(), 1e-6, "put gamma (same as call)");
@@ -73,9 +81,9 @@ class AnalyticPricersTest {
   void black76EqualsBsmAtTheForward() {
     double q = 0.015;
     double forward = S * Math.exp((R - q) * T);
-    for (OptionType type : OptionType.values()) {
+    for (OptionTypeEnum type : OptionTypeEnum.values()) {
       double black = Black76.price(type, forward, K, T, R, VOL);
-      double bsm = GeneralizedBsm.of(type, S, K, T, R, q, VOL).price();
+      double bsm = GeneralizedBsm.of().type(type).spot(S).strike(K).maturity(T).rate(R).dividend(q).vol(VOL).build().price();
       assertEquals(bsm, black, 1e-10, type + ": Black-76 at the forward vs generalized BSM");
     }
   }
@@ -84,11 +92,11 @@ class AnalyticPricersTest {
   void garmanKohlhagenForeignRhoIsNegativeCarryRho() {
     double rd = 0.04;
     double rf = 0.012;
-    GarmanKohlhagen call = GarmanKohlhagen.of(OptionType.CALL, 1.25, 1.20, 0.75, rd, rf, 0.11);
+    GarmanKohlhagen call = GarmanKohlhagen.of().type(OptionTypeEnum.CALL).spot(1.25).strike(1.20).maturity(0.75).rateDom(rd).rateForeign(rf).vol(0.11).build();
     // dV/dr_f by central difference on the price.
     double h = 1e-6;
-    double up = GarmanKohlhagen.of(OptionType.CALL, 1.25, 1.20, 0.75, rd, rf + h, 0.11).price();
-    double dn = GarmanKohlhagen.of(OptionType.CALL, 1.25, 1.20, 0.75, rd, rf - h, 0.11).price();
+    double up = GarmanKohlhagen.of().type(OptionTypeEnum.CALL).spot(1.25).strike(1.20).maturity(0.75).rateDom(rd).rateForeign(rf + h).vol(0.11).build().price();
+    double dn = GarmanKohlhagen.of().type(OptionTypeEnum.CALL).spot(1.25).strike(1.20).maturity(0.75).rateDom(rd).rateForeign(rf - h).vol(0.11).build().price();
     assertEquals((up - dn) / (2 * h), call.foreignRho(), 1e-4, "foreign rho");
     assertTrue(call.price() > 0.0, "positive price");
   }
@@ -97,8 +105,8 @@ class AnalyticPricersTest {
   void bachelierParityAndKnownAtmValue() {
     double f = 100.0;
     double normalVol = 10.0;
-    double call = Bachelier.price(OptionType.CALL, f, f, T, 0.0, normalVol);
-    double put = Bachelier.price(OptionType.PUT, f, f, T, 0.0, normalVol);
+    double call = Bachelier.price(OptionTypeEnum.CALL, f, f, T, 0.0, normalVol);
+    double put = Bachelier.price(OptionTypeEnum.PUT, f, f, T, 0.0, normalVol);
     // ATM: call = put = sigmaN sqrt(T) / sqrt(2 pi)
     double atm = normalVol * Math.sqrt(T) / Math.sqrt(2.0 * Math.PI);
     assertEquals(atm, call, 1e-10, "Bachelier ATM call");
@@ -107,16 +115,16 @@ class AnalyticPricersTest {
     // Put-call parity with a struck option and discounting.
     double kk = 105.0;
     double disc = Math.exp(-R * T);
-    double c = Bachelier.price(OptionType.CALL, f, kk, T, R, normalVol);
-    double p = Bachelier.price(OptionType.PUT, f, kk, T, R, normalVol);
+    double c = Bachelier.price(OptionTypeEnum.CALL, f, kk, T, R, normalVol);
+    double p = Bachelier.price(OptionTypeEnum.PUT, f, kk, T, R, normalVol);
     assertEquals(disc * (f - kk), c - p, 1e-10, "Bachelier put-call parity");
   }
 
   @Test
   void mertonCollapsesToBsmWhenIntensityIsZero() {
-    for (OptionType type : OptionType.values()) {
+    for (OptionTypeEnum type : OptionTypeEnum.values()) {
       double merton = MertonJumpDiffusion.price(type, S, K, T, R, VOL, 0.0, -0.1, 0.15);
-      double bsm = GeneralizedBsm.of(type, S, K, T, R, 0.0, VOL).price();
+      double bsm = GeneralizedBsm.of().type(type).spot(S).strike(K).maturity(T).rate(R).dividend(0.0).vol(VOL).build().price();
       assertEquals(bsm, merton, 1e-10, type + ": Merton with lambda=0 vs BSM");
     }
   }
@@ -126,9 +134,9 @@ class AnalyticPricersTest {
     double lambda = 0.75;
     double muJ = -0.05;
     double deltaJ = 0.18;
-    double call = MertonJumpDiffusion.price(OptionType.CALL, S, K, T, R, VOL, lambda, muJ, deltaJ);
-    double put = MertonJumpDiffusion.price(OptionType.PUT, S, K, T, R, VOL, lambda, muJ, deltaJ);
-    double bsmCall = GeneralizedBsm.of(OptionType.CALL, S, K, T, R, 0.0, VOL).price();
+    double call = MertonJumpDiffusion.price(OptionTypeEnum.CALL, S, K, T, R, VOL, lambda, muJ, deltaJ);
+    double put = MertonJumpDiffusion.price(OptionTypeEnum.PUT, S, K, T, R, VOL, lambda, muJ, deltaJ);
+    double bsmCall = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(S).strike(K).maturity(T).rate(R).dividend(0.0).vol(VOL).build().price();
 
     assertTrue(call > bsmCall, "jumps add value to an ATM call");
     // Risk-neutral drift is preserved, so the forward is still S e^{rT}.
@@ -138,13 +146,13 @@ class AnalyticPricersTest {
   @Test
   void barrierKnockInOutParityForAllEightCombinations() {
     double h = 0.20;
-    for (OptionType type : OptionType.values()) {
+    for (OptionTypeEnum type : OptionTypeEnum.values()) {
       double vanilla = com.nablatensor.quant.analytic.CostOfCarry.price(type, S, K, T, R, R, VOL);
 
-      double di = BarrierAnalytic.price(type, BarrierAnalytic.Kind.DOWN_IN, S, K, 90.0, T, R, R, VOL);
-      double doo = BarrierAnalytic.price(type, BarrierAnalytic.Kind.DOWN_OUT, S, K, 90.0, T, R, R, VOL);
-      double ui = BarrierAnalytic.price(type, BarrierAnalytic.Kind.UP_IN, S, K, 115.0, T, R, R, VOL);
-      double uo = BarrierAnalytic.price(type, BarrierAnalytic.Kind.UP_OUT, S, K, 115.0, T, R, R, VOL);
+      double di = BarrierAnalytic.price(type, BarrierAnalytic.KindEnum.DOWN_IN, S, K, 90.0, T, R, R, VOL);
+      double doo = BarrierAnalytic.price(type, BarrierAnalytic.KindEnum.DOWN_OUT, S, K, 90.0, T, R, R, VOL);
+      double ui = BarrierAnalytic.price(type, BarrierAnalytic.KindEnum.UP_IN, S, K, 115.0, T, R, R, VOL);
+      double uo = BarrierAnalytic.price(type, BarrierAnalytic.KindEnum.UP_OUT, S, K, 115.0, T, R, R, VOL);
 
       assertEquals(vanilla, di + doo, 1e-9, type + ": down in + down out = vanilla");
       assertEquals(vanilla, ui + uo, 1e-9, type + ": up in + up out = vanilla");
@@ -157,15 +165,15 @@ class AnalyticPricersTest {
 
   @Test
   void barrierUnreachableRecoversTheVanilla() {
-    double vanillaCall = CostOfCarry.price(OptionType.CALL, S, K, T, R, R, VOL);
+    double vanillaCall = CostOfCarry.price(OptionTypeEnum.CALL, S, K, T, R, R, VOL);
     // An up-and-out call with the barrier far above any plausible path ~ vanilla.
-    double farUp = BarrierAnalytic.price(OptionType.CALL, BarrierAnalytic.Kind.UP_OUT,
+    double farUp = BarrierAnalytic.price(OptionTypeEnum.CALL, BarrierAnalytic.KindEnum.UP_OUT,
         S, K, 100_000.0, T, R, R, VOL);
     assertEquals(vanillaCall, farUp, 1e-6, "unreachable up-and-out call = vanilla call");
 
     // A down-and-out put with the barrier far below ~ vanilla put.
-    double vanillaPut = CostOfCarry.price(OptionType.PUT, S, K, T, R, R, VOL);
-    double farDown = BarrierAnalytic.price(OptionType.PUT, BarrierAnalytic.Kind.DOWN_OUT,
+    double vanillaPut = CostOfCarry.price(OptionTypeEnum.PUT, S, K, T, R, R, VOL);
+    double farDown = BarrierAnalytic.price(OptionTypeEnum.PUT, BarrierAnalytic.KindEnum.DOWN_OUT,
         S, K, 1e-6, T, R, R, VOL);
     assertEquals(vanillaPut, farDown, 1e-6, "unreachable down-and-out put = vanilla put");
   }
@@ -174,7 +182,7 @@ class AnalyticPricersTest {
   void barrierDownOutCallFallsAsBarrierRises() {
     double last = Double.POSITIVE_INFINITY;
     for (double h = 80.0; h <= 99.0; h += 1.0) {
-      double v = BarrierAnalytic.price(OptionType.CALL, BarrierAnalytic.Kind.DOWN_OUT,
+      double v = BarrierAnalytic.price(OptionTypeEnum.CALL, BarrierAnalytic.KindEnum.DOWN_OUT,
           S, K, h, T, R, R, VOL);
       assertTrue(v <= last + 1e-12, "down-and-out call value decreases as the barrier approaches spot");
       last = v;

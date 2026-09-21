@@ -125,7 +125,7 @@ public final class DeviceAadExecutable extends GpuAadExecutable {
     this.runtime = runtime;
     this.kernel = kernel;
     this.plan = plan;
-    this.scratchElemBytes = options.precision() == AadOptions.Precision.FLOAT32
+    this.scratchElemBytes = options.precision() == AadOptions.PrecisionEnum.FLOAT32
         ? Float.BYTES : Double.BYTES;
     setMaxChunkSeconds(maxChunkSeconds);
   }

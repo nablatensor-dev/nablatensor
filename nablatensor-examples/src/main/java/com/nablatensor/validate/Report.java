@@ -15,6 +15,8 @@
  */
 package com.nablatensor.validate;
 
+import com.nablatensor.codegen.Of;
+
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.engine.Nabla;
 import java.io.IOException;
@@ -29,10 +31,93 @@ import java.util.Locale;
  * reproducible inputs, an independent reference, and a pass/fail line per
  * backend.
  */
-public record Report(String product, EquityMarket market, int steps, long scenarios, long seed,
-                     boolean fp32, double tolerance, String machine, Nabla.TypedValuation<EquityMarket> oracle,
-                     List<EngineComparison> comparisons, BumpCrossCheck bumpCrossCheck,
-                     AnalyticComparison analytic) {
+@Of
+public final class Report {
+
+  private final String product;
+  private final EquityMarket market;
+  private final int steps;
+  private final long scenarios;
+  private final long seed;
+  private final boolean fp32;
+  private final double tolerance;
+  private final String machine;
+  private final Nabla.TypedValuation<EquityMarket> oracle;
+  private final List<EngineComparison> comparisons;
+  private final BumpCrossCheck bumpCrossCheck;
+  private final AnalyticComparison analytic;
+
+  private Report(String product, EquityMarket market, int steps, long scenarios, long seed, boolean fp32, double tolerance, String machine, Nabla.TypedValuation<EquityMarket> oracle, List<EngineComparison> comparisons, BumpCrossCheck bumpCrossCheck, AnalyticComparison analytic) {
+    this.product = product;
+    this.market = market;
+    this.steps = steps;
+    this.scenarios = scenarios;
+    this.seed = seed;
+    this.fp32 = fp32;
+    this.tolerance = tolerance;
+    this.machine = machine;
+    this.oracle = oracle;
+    this.comparisons = comparisons;
+    this.bumpCrossCheck = bumpCrossCheck;
+    this.analytic = analytic;
+  }
+
+  static Report create(String product, EquityMarket market, int steps, long scenarios, long seed, boolean fp32, double tolerance, String machine, Nabla.TypedValuation<EquityMarket> oracle, List<EngineComparison> comparisons, BumpCrossCheck bumpCrossCheck, AnalyticComparison analytic) {
+    return new Report(product, market, steps, scenarios, seed, fp32, tolerance, machine, oracle, comparisons, bumpCrossCheck, analytic);
+  }
+
+  public static ReportBuilder of() {
+    return new ReportBuilder();
+  }
+
+  public String product() {
+    return product;
+  }
+
+  public EquityMarket market() {
+    return market;
+  }
+
+  public int steps() {
+    return steps;
+  }
+
+  public long scenarios() {
+    return scenarios;
+  }
+
+  public long seed() {
+    return seed;
+  }
+
+  public boolean fp32() {
+    return fp32;
+  }
+
+  public double tolerance() {
+    return tolerance;
+  }
+
+  public String machine() {
+    return machine;
+  }
+
+  public Nabla.TypedValuation<EquityMarket> oracle() {
+    return oracle;
+  }
+
+  public List<EngineComparison> comparisons() {
+    return comparisons;
+  }
+
+  public BumpCrossCheck bumpCrossCheck() {
+    return bumpCrossCheck;
+  }
+
+  public AnalyticComparison analytic() {
+    return analytic;
+  }
+
 
   public boolean passed() {
     return comparisons.stream().allMatch(EngineComparison::withinTolerance);

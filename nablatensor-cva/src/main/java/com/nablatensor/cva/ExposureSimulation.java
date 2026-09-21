@@ -62,7 +62,11 @@ public final class ExposureSimulation {
   private String engine = "cpu-jit";
   private Boolean fp64Override = null;
 
-  public ExposureSimulation(NettingSet nettingSet, int steps) {
+  public static ExposureSimulation of(NettingSet nettingSet, int steps) {
+    return ExposureSimulation.of(nettingSet, steps);
+  }
+
+  private ExposureSimulation(NettingSet nettingSet, int steps) {
     if (steps < 2) {
       throw new IllegalArgumentException("need at least 2 grid steps, got " + steps);
     }
@@ -127,7 +131,7 @@ public final class ExposureSimulation {
       ADouble fxVol = in.of(CvaMarket::fxVol);
       ADouble foreignRate = in.of(CvaMarket::fxForeignRate);
 
-      HwShortRate model = new HwShortRate(rec, shortRate0, level, meanReversion, hwSigma, dt);
+      HwShortRate model = HwShortRate.of(rec, shortRate0, level, meanReversion, hwSigma, dt);
       HwShortRate.State rateState = model.start();
       ADouble fxSpot = in.of(CvaMarket::fxSpot);
       ADouble fxDrift = shortRate0.sub(foreignRate).mul(dt).sub(fxVol.mul(fxVol).mul(0.5 * dt));
@@ -307,8 +311,7 @@ public final class ExposureSimulation {
     }
 
     TimeProfile[] profiles = profile(market, Math.min(paths, 50_000L), seed);
-    return new CvaResult(cvaValue, standardError, market, profiles[0], profiles[1],
-        gradient, sweepSeconds, buildSeconds, scenariosPerSecond, scenarios, engineName);
+    return CvaResult.of().value(cvaValue).standardError(standardError).market(market).epeProfile(profiles[0]).eeProfile(profiles[1]).gradient(gradient).sweepSeconds(sweepSeconds).buildSeconds(buildSeconds).scenariosPerSecond(scenariosPerSecond).scenarios(scenarios).engine(engineName).build();
   }
 
   private TimeProfile[] profile(CvaMarket market, long paths, long seed) {

@@ -220,7 +220,7 @@ public final class MultiCurveBootstrap {
     YieldCurve discount = curveFrom(values, ois);
     Map<String, YieldCurve> fc = new LinkedHashMap<>();
     forecast.forEach((tenor, insts) -> fc.put(tenor, curveFrom(values, insts)));
-    return new CurveSet(discount, fc);
+    return CurveSet.of().discount(discount).forecast(fc).build();
   }
 
   private static YieldCurve curveFrom(Map<String, Double> values, List<Inst> insts) {
@@ -230,7 +230,7 @@ public final class MultiCurveBootstrap {
       pillars[i] = insts.get(i).maturity();
       zeros[i] = values.get("z:" + insts.get(i).label());
     }
-    return new YieldCurve(pillars, zeros);
+    return YieldCurve.of().pillars(pillars).zeroRates(zeros).build();
   }
 
   // ---- builder -------------------------------------------------------

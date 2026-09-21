@@ -26,7 +26,7 @@ Source: [`nablatensor-quant/.../transform/`](../../nablatensor-quant/src/main/ja
 
 ```java
 double px = CosMethod.price(new HestonCf(r, v0, kappa, theta, xi, rho),
-                            OptionType.CALL, spot, strike, r, maturity);
+                            OptionTypeEnum.CALL, spot, strike, r, maturity);
 
 HestonCosCalibrator.Result fit = HestonCosCalibrator.calibrate(
     spot, r, quotes, new double[] {0.04, 1.0, 0.04, 0.3, -0.3});

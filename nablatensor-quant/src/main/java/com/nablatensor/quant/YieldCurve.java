@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant;
 
+import com.nablatensor.codegen.Of;
+
 import java.util.Arrays;
 
 /**
@@ -26,9 +28,29 @@ import java.util.Arrays;
  * {@link CurveBootstrap}, which produces one of these from par quotes together
  * with the analytic {@code d(zero) / d(quote)} Jacobian.
  */
-public record YieldCurve(double[] pillars, double[] zeroRates) {
+@Of
+public final class YieldCurve {
 
-  public YieldCurve {
+  private final double[] pillars;
+  private final double[] zeroRates;
+  static YieldCurve create(double[] pillars, double[] zeroRates) {
+    return new YieldCurve(pillars, zeroRates);
+  }
+
+  public static YieldCurveBuilder of() {
+    return new YieldCurveBuilder();
+  }
+
+  public double[] pillars() {
+    return pillars.clone();
+  }
+
+  public double[] zeroRates() {
+    return zeroRates.clone();
+  }
+
+
+  private YieldCurve(double[] pillars, double[] zeroRates) {
     if (pillars.length != zeroRates.length || pillars.length == 0) {
       throw new IllegalArgumentException("pillars and zeroRates must be non-empty and the same length");
     }
@@ -39,6 +61,8 @@ public record YieldCurve(double[] pillars, double[] zeroRates) {
     }
     pillars = pillars.clone();
     zeroRates = zeroRates.clone();
+    this.pillars = pillars;
+    this.zeroRates = zeroRates;
   }
 
   /** Zero rate at {@code t}. */

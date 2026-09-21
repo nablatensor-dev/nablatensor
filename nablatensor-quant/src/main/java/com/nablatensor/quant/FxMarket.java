@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * An FX market for a Garman-Kohlhagen option.
  *
@@ -24,7 +26,50 @@ package com.nablatensor.quant;
  * @param rateDom      domestic rate
  * @param rateForeign  foreign rate
  */
-public record FxMarket(double spot, double strike, double volFx, double rateDom, double rateForeign) {
+@Of
+public final class FxMarket {
+
+  private FxMarket(double spot, double strike, double volFx, double rateDom, double rateForeign) {
+    this.spot = spot;
+    this.strike = strike;
+    this.volFx = volFx;
+    this.rateDom = rateDom;
+    this.rateForeign = rateForeign;
+  }
+
+  private final double spot;
+  private final double strike;
+  private final double volFx;
+  private final double rateDom;
+  private final double rateForeign;
+  static FxMarket create(double spot, double strike, double volFx, double rateDom, double rateForeign) {
+    return new FxMarket(spot, strike, volFx, rateDom, rateForeign);
+  }
+
+  public static FxMarketBuilder of() {
+    return new FxMarketBuilder();
+  }
+
+  public double spot() {
+    return spot;
+  }
+
+  public double strike() {
+    return strike;
+  }
+
+  public double volFx() {
+    return volFx;
+  }
+
+  public double rateDom() {
+    return rateDom;
+  }
+
+  public double rateForeign() {
+    return rateForeign;
+  }
+
 
   public FxMarket validated() {
     if (!(spot > 0 && strike > 0 && volFx >= 0)) {
@@ -34,6 +79,6 @@ public record FxMarket(double spot, double strike, double volFx, double rateDom,
   }
 
   public static FxMarket eurusd() {
-    return new FxMarket(1.08, 1.10, 0.09, 0.035, 0.02);
+    return FxMarket.of().spot(1.08).strike(1.10).volFx(0.09).rateDom(0.035).rateForeign(0.02).build();
   }
 }

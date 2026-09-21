@@ -4,12 +4,12 @@ import com.nablatensor.engine.Nabla;
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.MonteCarlo;
 import com.nablatensor.quant.Products;
-import com.nablatensor.risk.CorrelationScenario;
+import com.nablatensor.risk.CorrelationScenarioEnum;
 import com.nablatensor.risk.NestedAggregation;
 import com.nablatensor.risk.Portfolio;
-import com.nablatensor.risk.RiskClass;
+import com.nablatensor.risk.RiskClassEnum;
 import com.nablatensor.risk.RiskFactor;
-import com.nablatensor.risk.RiskMeasure;
+import com.nablatensor.risk.RiskMeasureEnum;
 import com.nablatensor.risk.Sensitivities;
 import com.nablatensor.scenario.Scenario;
 import com.nablatensor.scenario.ScenarioRunner;
@@ -128,9 +128,7 @@ public final class FrtbFullShowcase {
       double upResidual = up - base - shock * delta;
       double downResidual = down - base + shock * delta;
       double cvr = -Math.min(upResidual, downResidual);
-      return new CurvatureRun(engine, scenarios, steps, base, up, down, delta,
-          shock, upResidual, downResidual, cvr, risk.seconds(),
-          pv.get("base").seconds(), pv.get("up").seconds(), pv.get("down").seconds());
+      return CurvatureRun.of().engine(engine).scenarios(scenarios).steps(steps).base(base).up(up).down(down).delta(delta).shock(shock).upResidual(upResidual).downResidual(downResidual).cvr(cvr).adjointSeconds(risk.seconds()).baseSeconds(pv.get("base").seconds()).upSeconds(pv.get("up").seconds()).downSeconds(pv.get("down").seconds()).build();
     }
   }
 
@@ -147,11 +145,11 @@ public final class FrtbFullShowcase {
           double level = marketData.levelFor(classEntry.getKey());
           double alternating = ((factorIndex++ + tradeIndex) & 1) == 0 ? 1.0 : -0.55;
           String name = classEntry.getKey() + "-FACTOR-" + bucket;
-          risk.add(new RiskFactor(classEntry.getKey(), RiskMeasure.DELTA, bucket, name),
+          risk.add(RiskFactor.of().riskClass(classEntry.getKey()).measure(RiskMeasureEnum.DELTA).bucket(bucket).name(name).tenor(0.0).tenor2(0.0).build(),
               scale * level * alternating);
-          risk.add(new RiskFactor(classEntry.getKey(), RiskMeasure.VEGA, bucket, name, 1.0),
+          risk.add(RiskFactor.of().riskClass(classEntry.getKey()).measure(RiskMeasureEnum.VEGA).bucket(bucket).name(name).tenor(1.0).tenor2(0.0).build(),
               scale * marketData.levels().get("IMPLIED-VOL") * (1.0 + tradeIndex * 0.1));
-          risk.add(new RiskFactor(classEntry.getKey(), RiskMeasure.CURVATURE, bucket, name),
+          risk.add(RiskFactor.of().riskClass(classEntry.getKey()).measure(RiskMeasureEnum.CURVATURE).bucket(bucket).name(name).tenor(0.0).tenor2(0.0).build(),
               Math.abs(scale) * 0.02 * alternating);
         }
       }
@@ -164,32 +162,32 @@ public final class FrtbFullShowcase {
   }
 
   public static Capital aggregate(ParameterSet parameters, Sensitivities sensitivities) {
-    Map<RiskClass, ClassCapital> byClass = new EnumMap<>(RiskClass.class);
-    for (RiskClass riskClass : RiskClass.values()) {
+    Map<RiskClassEnum, ClassCapital> byClass = new EnumMap<>(RiskClassEnum.class);
+    for (RiskClassEnum riskClass : RiskClassEnum.values()) {
       Map<String, BucketParameter> table = parameters.tables().get(riskClass);
       Sensitivities classRisk = sensitivities.ofClass(riskClass);
       byClass.put(riskClass, new ClassCapital(
-        aggregateMeasure(table, classRisk.ofMeasure(RiskMeasure.DELTA), RiskMeasure.DELTA),
-        aggregateMeasure(table, classRisk.ofMeasure(RiskMeasure.VEGA), RiskMeasure.VEGA),
-        aggregateMeasure(table, classRisk.ofMeasure(RiskMeasure.CURVATURE),
-          RiskMeasure.CURVATURE)));
+        aggregateMeasure(table, classRisk.ofMeasure(RiskMeasureEnum.DELTA), RiskMeasureEnum.DELTA),
+        aggregateMeasure(table, classRisk.ofMeasure(RiskMeasureEnum.VEGA), RiskMeasureEnum.VEGA),
+        aggregateMeasure(table, classRisk.ofMeasure(RiskMeasureEnum.CURVATURE),
+          RiskMeasureEnum.CURVATURE)));
     }
     return new Capital(byClass);
   }
 
   private static MeasureCapital aggregateMeasure(Map<String, BucketParameter> table,
                                                  Sensitivities sensitivities,
-                                                 RiskMeasure measure) {
-    Map<CorrelationScenario, Double> charges = new EnumMap<>(CorrelationScenario.class);
-    for (CorrelationScenario scenario : CorrelationScenario.values()) {
-      NestedAggregation aggregation = measure == RiskMeasure.CURVATURE
+                                                 RiskMeasureEnum measure) {
+    Map<CorrelationScenarioEnum, Double> charges = new EnumMap<>(CorrelationScenarioEnum.class);
+    for (CorrelationScenarioEnum scenario : CorrelationScenarioEnum.values()) {
+      NestedAggregation aggregation = measure == RiskMeasureEnum.CURVATURE
         ? NestedAggregation.curvature(
           (left, right) -> left.equals(right) ? 1.0
             : scenario.apply(table.get(left.bucket()).rho()),
           (left, right) -> left.equals(right) ? 1.0
             : scenario.apply(classGamma(table)))
         : NestedAggregation.delta(
-          factor -> measure == RiskMeasure.DELTA
+          factor -> measure == RiskMeasureEnum.DELTA
             ? table.get(factor.bucket()).deltaRw()
             : table.get(factor.bucket()).vegaRw(),
           (left, right) -> left.equals(right) ? 1.0
@@ -198,7 +196,7 @@ public final class FrtbFullShowcase {
             : scenario.apply(classGamma(table)));
       charges.put(scenario, aggregation.aggregate(sensitivities).total());
     }
-    CorrelationScenario selected = charges.entrySet().stream()
+    CorrelationScenarioEnum selected = charges.entrySet().stream()
       .max(Map.Entry.comparingByValue()).orElseThrow().getKey();
     return new MeasureCapital(charges, selected);
     }
@@ -268,7 +266,7 @@ public final class FrtbFullShowcase {
 
     System.out.printf(Locale.ROOT, "%n[2/8] LOAD REGULATORY PARAMETER TABLES (%d BUCKETS)%n",
       parameters.bucketCount());
-    for (RiskClass riskClass : RiskClass.values()) {
+    for (RiskClassEnum riskClass : RiskClassEnum.values()) {
       Map<String, BucketParameter> table = parameters.tables().get(riskClass);
       System.out.printf(Locale.ROOT, "      %-15s %2d buckets%n", riskClass, table.size());
       printWeights(table);
@@ -330,15 +328,15 @@ public final class FrtbFullShowcase {
       portfolio.trades().size(), netted.asMap().size());
     System.out.println("      Asian CUDA CVR enters EQUITY bucket 5; the other demo vectors enter here.");
     System.out.println("\n      class              factors   raw delta    raw vega     raw CVR");
-    for (RiskClass riskClass : RiskClass.values()) {
+    for (RiskClassEnum riskClass : RiskClassEnum.values()) {
       Sensitivities classRisk = netted.ofClass(riskClass);
       System.out.printf(Locale.ROOT, "      %-18s %4d %12.4f %12.4f %12.4f%n",
-        riskClass, classRisk.asMap().size(), sum(classRisk, RiskMeasure.DELTA),
-        sum(classRisk, RiskMeasure.VEGA), sum(classRisk, RiskMeasure.CURVATURE));
+        riskClass, classRisk.asMap().size(), sum(classRisk, RiskMeasureEnum.DELTA),
+        sum(classRisk, RiskMeasureEnum.VEGA), sum(classRisk, RiskMeasureEnum.CURVATURE));
     }
     }
 
-    private static double sum(Sensitivities sensitivities, RiskMeasure measure) {
+    private static double sum(Sensitivities sensitivities, RiskMeasureEnum measure) {
     return sensitivities.ofMeasure(measure).asMap().values().stream()
       .mapToDouble(Double::doubleValue).sum();
     }
@@ -346,7 +344,7 @@ public final class FrtbFullShowcase {
     private static void printAggregation(Capital capital) {
     System.out.println("\n[5/8] APPLY RW, BUCKET CORRELATIONS, AND LOW/MEDIUM/HIGH SCENARIOS");
     System.out.println("      WS=RW*s -> Kb within bucket -> Sb clamp -> class charge -> max scenario");
-    for (RiskClass riskClass : RiskClass.values()) {
+    for (RiskClassEnum riskClass : RiskClassEnum.values()) {
       ClassCapital value = capital.byClass().get(riskClass);
       System.out.printf(Locale.ROOT, "      %s%n", riskClass);
       printMeasure("delta", value.delta());
@@ -361,9 +359,9 @@ public final class FrtbFullShowcase {
     System.out.printf(Locale.ROOT,
           "      %-9s L=%8.4f M=%8.4f H=%8.4f -> %-4s %8.4f%n",
       label,
-      capital.scenarios().get(CorrelationScenario.LOW),
-      capital.scenarios().get(CorrelationScenario.MEDIUM),
-      capital.scenarios().get(CorrelationScenario.HIGH),
+      capital.scenarios().get(CorrelationScenarioEnum.LOW),
+      capital.scenarios().get(CorrelationScenarioEnum.MEDIUM),
+      capital.scenarios().get(CorrelationScenarioEnum.HIGH),
       capital.selected(), capital.total());
     }
 
@@ -398,13 +396,237 @@ public final class FrtbFullShowcase {
     System.out.println("      Educational evidence package; not a regulatory filing.");
   }
 
-  public record CurvatureRun(String engine, long scenarios, int steps,
-                             double base, double up, double down, double delta,
-                             double shock, double upResidual, double downResidual,
-                             double cvr, double adjointSeconds, double baseSeconds,
-                             double upSeconds, double downSeconds) {
+  public static final class CurvatureRun {
+    private final String engine;
+    private final long scenarios;
+    private final int steps;
+    private final double base;
+    private final double up;
+    private final double down;
+    private final double delta;
+    private final double shock;
+    private final double upResidual;
+    private final double downResidual;
+    private final double cvr;
+    private final double adjointSeconds;
+    private final double baseSeconds;
+    private final double upSeconds;
+    private final double downSeconds;
+
+    private CurvatureRun(String engine, long scenarios, int steps, double base, double up, double down, double delta, double shock, double upResidual, double downResidual, double cvr, double adjointSeconds, double baseSeconds, double upSeconds, double downSeconds) {
+      this.engine = engine;
+      this.scenarios = scenarios;
+      this.steps = steps;
+      this.base = base;
+      this.up = up;
+      this.down = down;
+      this.delta = delta;
+      this.shock = shock;
+      this.upResidual = upResidual;
+      this.downResidual = downResidual;
+      this.cvr = cvr;
+      this.adjointSeconds = adjointSeconds;
+      this.baseSeconds = baseSeconds;
+      this.upSeconds = upSeconds;
+      this.downSeconds = downSeconds;
+    }
+
+    public static Builder of() { return new Builder(); }
+
+    public String engine() { return engine; }
+
+    public long scenarios() { return scenarios; }
+
+    public int steps() { return steps; }
+
+    public double base() { return base; }
+
+    public double up() { return up; }
+
+    public double down() { return down; }
+
+    public double delta() { return delta; }
+
+    public double shock() { return shock; }
+
+    public double upResidual() { return upResidual; }
+
+    public double downResidual() { return downResidual; }
+
+    public double cvr() { return cvr; }
+
+    public double adjointSeconds() { return adjointSeconds; }
+
+    public double baseSeconds() { return baseSeconds; }
+
+    public double upSeconds() { return upSeconds; }
+
+    public double downSeconds() { return downSeconds; }
+
     public double seconds() {
       return adjointSeconds + baseSeconds + upSeconds + downSeconds;
+    }
+
+    public static final class Builder {
+      private String engine;
+      private boolean engineSet;
+      private long scenarios;
+      private boolean scenariosSet;
+      private int steps;
+      private boolean stepsSet;
+      private double base;
+      private boolean baseSet;
+      private double up;
+      private boolean upSet;
+      private double down;
+      private boolean downSet;
+      private double delta;
+      private boolean deltaSet;
+      private double shock;
+      private boolean shockSet;
+      private double upResidual;
+      private boolean upResidualSet;
+      private double downResidual;
+      private boolean downResidualSet;
+      private double cvr;
+      private boolean cvrSet;
+      private double adjointSeconds;
+      private boolean adjointSecondsSet;
+      private double baseSeconds;
+      private boolean baseSecondsSet;
+      private double upSeconds;
+      private boolean upSecondsSet;
+      private double downSeconds;
+      private boolean downSecondsSet;
+
+      public Builder engine(String value) {
+        this.engine = value;
+        this.engineSet = true;
+        return this;
+      }
+
+      public Builder scenarios(long value) {
+        this.scenarios = value;
+        this.scenariosSet = true;
+        return this;
+      }
+
+      public Builder steps(int value) {
+        this.steps = value;
+        this.stepsSet = true;
+        return this;
+      }
+
+      public Builder base(double value) {
+        this.base = value;
+        this.baseSet = true;
+        return this;
+      }
+
+      public Builder up(double value) {
+        this.up = value;
+        this.upSet = true;
+        return this;
+      }
+
+      public Builder down(double value) {
+        this.down = value;
+        this.downSet = true;
+        return this;
+      }
+
+      public Builder delta(double value) {
+        this.delta = value;
+        this.deltaSet = true;
+        return this;
+      }
+
+      public Builder shock(double value) {
+        this.shock = value;
+        this.shockSet = true;
+        return this;
+      }
+
+      public Builder upResidual(double value) {
+        this.upResidual = value;
+        this.upResidualSet = true;
+        return this;
+      }
+
+      public Builder downResidual(double value) {
+        this.downResidual = value;
+        this.downResidualSet = true;
+        return this;
+      }
+
+      public Builder cvr(double value) {
+        this.cvr = value;
+        this.cvrSet = true;
+        return this;
+      }
+
+      public Builder adjointSeconds(double value) {
+        this.adjointSeconds = value;
+        this.adjointSecondsSet = true;
+        return this;
+      }
+
+      public Builder baseSeconds(double value) {
+        this.baseSeconds = value;
+        this.baseSecondsSet = true;
+        return this;
+      }
+
+      public Builder upSeconds(double value) {
+        this.upSeconds = value;
+        this.upSecondsSet = true;
+        return this;
+      }
+
+      public Builder downSeconds(double value) {
+        this.downSeconds = value;
+        this.downSecondsSet = true;
+        return this;
+      }
+
+      public Builder from(CurvatureRun value) {
+        if (value == null) throw new NullPointerException("value");
+        engine(value.engine());
+        scenarios(value.scenarios());
+        steps(value.steps());
+        base(value.base());
+        up(value.up());
+        down(value.down());
+        delta(value.delta());
+        shock(value.shock());
+        upResidual(value.upResidual());
+        downResidual(value.downResidual());
+        cvr(value.cvr());
+        adjointSeconds(value.adjointSeconds());
+        baseSeconds(value.baseSeconds());
+        upSeconds(value.upSeconds());
+        downSeconds(value.downSeconds());
+        return this;
+      }
+
+      public CurvatureRun build() {
+        if (!engineSet) throw new IllegalStateException("Missing required value: engine");
+        if (!scenariosSet) throw new IllegalStateException("Missing required value: scenarios");
+        if (!stepsSet) throw new IllegalStateException("Missing required value: steps");
+        if (!baseSet) throw new IllegalStateException("Missing required value: base");
+        if (!upSet) throw new IllegalStateException("Missing required value: up");
+        if (!downSet) throw new IllegalStateException("Missing required value: down");
+        if (!deltaSet) throw new IllegalStateException("Missing required value: delta");
+        if (!shockSet) throw new IllegalStateException("Missing required value: shock");
+        if (!upResidualSet) throw new IllegalStateException("Missing required value: upResidual");
+        if (!downResidualSet) throw new IllegalStateException("Missing required value: downResidual");
+        if (!cvrSet) throw new IllegalStateException("Missing required value: cvr");
+        if (!adjointSecondsSet) throw new IllegalStateException("Missing required value: adjointSeconds");
+        if (!baseSecondsSet) throw new IllegalStateException("Missing required value: baseSeconds");
+        if (!upSecondsSet) throw new IllegalStateException("Missing required value: upSeconds");
+        if (!downSecondsSet) throw new IllegalStateException("Missing required value: downSeconds");
+        return new CurvatureRun(engine, scenarios, steps, base, up, down, delta, shock, upResidual, downResidual, cvr, adjointSeconds, baseSeconds, upSeconds, downSeconds);
+      }
     }
   }
 
@@ -412,13 +634,13 @@ public final class FrtbFullShowcase {
   }
 
   public record ParameterSet(String version,
-                             Map<RiskClass, Map<String, BucketParameter>> tables) {
+                             Map<RiskClassEnum, Map<String, BucketParameter>> tables) {
     public ParameterSet {
-      EnumMap<RiskClass, Map<String, BucketParameter>> copy = new EnumMap<>(RiskClass.class);
+      EnumMap<RiskClassEnum, Map<String, BucketParameter>> copy = new EnumMap<>(RiskClassEnum.class);
       tables.forEach((riskClass, table) -> copy.put(riskClass,
           Collections.unmodifiableMap(new LinkedHashMap<>(table))));
       tables = Collections.unmodifiableMap(copy);
-      if (tables.size() != RiskClass.values().length) {
+      if (tables.size() != RiskClassEnum.values().length) {
         throw new IllegalArgumentException("a table is required for every risk class");
       }
     }
@@ -428,23 +650,23 @@ public final class FrtbFullShowcase {
     }
 
     public static ParameterSet demoMar21() {
-      EnumMap<RiskClass, Map<String, BucketParameter>> tables = new EnumMap<>(RiskClass.class);
-      tables.put(RiskClass.GIRR, named(new String[] {"USD", "EUR", "JPY"},
+      EnumMap<RiskClassEnum, Map<String, BucketParameter>> tables = new EnumMap<>(RiskClassEnum.class);
+      tables.put(RiskClassEnum.GIRR, named(new String[] {"USD", "EUR", "JPY"},
           new double[] {0.017, 0.017, 0.017}, 1.0, 0.40, 0.50));
-      tables.put(RiskClass.CSR_NON_SEC, numbered(new double[] {
+      tables.put(RiskClassEnum.CSR_NON_SEC, numbered(new double[] {
           0.005, 0.010, 0.050, 0.030, 0.030, 0.020, 0.015, 0.025, 0.020,
           0.040, 0.120, 0.070, 0.085, 0.055, 0.050, 0.120, 0.015, 0.050
       }, 1.0, 0.35, 0.40));
-      tables.put(RiskClass.CSR_SEC, interpolated(25, 0.009, 0.075, 1.0, 0.40, 0.40));
-      tables.put(RiskClass.CSR_SEC_CTP, interpolated(16, 0.040, 0.130, 1.0, 0.35, 0.40));
-      tables.put(RiskClass.EQUITY, numbered(new double[] {
+      tables.put(RiskClassEnum.CSR_SEC, interpolated(25, 0.009, 0.075, 1.0, 0.40, 0.40));
+      tables.put(RiskClassEnum.CSR_SEC_CTP, interpolated(16, 0.040, 0.130, 1.0, 0.35, 0.40));
+      tables.put(RiskClassEnum.EQUITY, numbered(new double[] {
           0.55, 0.60, 0.45, 0.55, 0.30, 0.35, 0.40,
           0.50, 0.70, 0.50, 0.70, 0.15, 0.25
       }, 1.0, 0.25, 0.15));
-      tables.put(RiskClass.COMMODITY, numbered(new double[] {
+      tables.put(RiskClassEnum.COMMODITY, numbered(new double[] {
           0.30, 0.35, 0.60, 0.80, 0.40, 0.45, 0.20, 0.35, 0.25, 0.35, 0.50
       }, 1.0, 0.55, 0.20));
-      tables.put(RiskClass.FX, named(new String[] {"EURUSD", "USDJPY", "GBPUSD"},
+      tables.put(RiskClassEnum.FX, named(new String[] {"EURUSD", "USDJPY", "GBPUSD"},
           new double[] {0.15, 0.15, 0.15}, 1.0, 1.0, 0.60));
       return new ParameterSet(PARAMETER_VERSION, tables);
     }
@@ -486,7 +708,7 @@ public final class FrtbFullShowcase {
       return new MarketData(LocalDate.of(2026, 9, 2), parseCsv(csv));
     }
 
-    public double levelFor(RiskClass riskClass) {
+    public double levelFor(RiskClassEnum riskClass) {
       return switch (riskClass) {
         case GIRR -> levels.get("USD-OIS-5Y");
         case CSR_NON_SEC, CSR_SEC, CSR_SEC_CTP -> levels.get("ACME-SPREAD-5Y");
@@ -505,8 +727,8 @@ public final class FrtbFullShowcase {
     }
   }
 
-  public record MeasureCapital(Map<CorrelationScenario, Double> scenarios,
-                               CorrelationScenario selected) {
+  public record MeasureCapital(Map<CorrelationScenarioEnum, Double> scenarios,
+                               CorrelationScenarioEnum selected) {
     public MeasureCapital {
       scenarios = Map.copyOf(scenarios);
     }
@@ -523,9 +745,9 @@ public final class FrtbFullShowcase {
     }
   }
 
-  public record Capital(Map<RiskClass, ClassCapital> byClass) {
+  public record Capital(Map<RiskClassEnum, ClassCapital> byClass) {
     public Capital {
-      EnumMap<RiskClass, ClassCapital> copy = new EnumMap<>(RiskClass.class);
+      EnumMap<RiskClassEnum, ClassCapital> copy = new EnumMap<>(RiskClassEnum.class);
       copy.putAll(byClass);
       byClass = Collections.unmodifiableMap(copy);
     }
@@ -555,10 +777,10 @@ public final class FrtbFullShowcase {
     public static SignOff review(ParameterSet parameters, MarketData marketData,
                                  Portfolio portfolio, Capital capital,
                                  DrcResult drc, RraoResult rrao) {
-      boolean complete = parameters.tables().size() == RiskClass.values().length
+      boolean complete = parameters.tables().size() == RiskClassEnum.values().length
           && !marketData.levels().isEmpty()
           && !portfolio.trades().isEmpty()
-          && capital.byClass().size() == RiskClass.values().length
+          && capital.byClass().size() == RiskClassEnum.values().length
           && drc.total() >= 0.0 && rrao.total() >= 0.0;
       List<String> controls = List.of(
           "market snapshot is dated and non-empty",

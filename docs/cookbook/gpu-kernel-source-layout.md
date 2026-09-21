@@ -105,7 +105,7 @@ public record GpuKernel(String name, String source, int blockDimX, int blockDimY
 ```java
 public final class GpuKernels {
 
-  /** Elementwise binary op dispatch; `op` indexes {@link Op} in declaration order. */
+  /** Elementwise binary op dispatch; `op` indexes {@link OpEnum} in declaration order. */
   static final GpuKernel EW_BINARY = new GpuKernel("ew_binary", """
       extern "C" __global__ void ew_binary(float* out, const float* a, const float* b,
           int n, int op) {
@@ -254,7 +254,7 @@ static final GpuKernel EW_UNARY = CudaC.kernel("ew_unary")
       b.guard(i + " >= n");
       var x = b.declareFloat("x", "a[" + i + "]");
       b.switchOn("op", sw -> {
-        for (Op op : Op.unaryOps()) {
+        for (OpEnum op : OpEnum.unaryOps()) {
           sw.caseOf(op.ordinal(), "out[" + i + "] = " + unaryExpr(op, x) + ";");
         }
       });

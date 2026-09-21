@@ -69,7 +69,7 @@ public final class NablaTensors {
 
   public static Tensor arrayOn(float[] data, Shape shape, Device device) {
     ComputeBackend backend = BackendRegistry.forDevice(device);
-    DeviceBuffer buffer = backend.upload(data, shape, DType.F32, device);
+    DeviceBuffer buffer = backend.upload(data, shape, DTypeEnum.F32, device);
     return new Tensor(backend, buffer);
   }
 

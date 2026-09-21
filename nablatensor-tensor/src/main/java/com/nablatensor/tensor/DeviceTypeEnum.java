@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.nablatensor.risk;
+package com.nablatensor.tensor;
 
-/** Whether a sensitivity is a first-order delta, a vega, or a curvature (CVR). */
-public enum RiskMeasure {
-  /** First-order sensitivity to a risk factor (price move per unit factor move). */
-  DELTA,
-  /** Sensitivity to implied volatility. */
-  VEGA,
-  /** Curvature (CVR): the second-order risk left over after the delta hedge. */
-  CURVATURE
+/** Kinds of compute devices nablatensor can target. */
+public enum DeviceTypeEnum {
+  /** Host CPU (scalar or SIMD). */
+  CPU,
+  /** NVIDIA GPU via CUDA. */
+  CUDA,
+  /** AMD GPU via ROCm/HIP. */
+  ROCM,
+  /** Any GPU via a Vulkan compute backend. */
+  VULKAN
 }

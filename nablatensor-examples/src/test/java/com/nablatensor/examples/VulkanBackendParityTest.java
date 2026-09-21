@@ -18,12 +18,12 @@ package com.nablatensor.examples;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import com.nablatensor.tensor.Backend;
+import com.nablatensor.tensor.BackendEnum;
 import com.nablatensor.tensor.BackendRegistry;
 import com.nablatensor.tensor.ConvSpec;
-import com.nablatensor.tensor.DType;
+import com.nablatensor.tensor.DTypeEnum;
 import com.nablatensor.tensor.Device;
-import com.nablatensor.tensor.Op;
+import com.nablatensor.tensor.OpEnum;
 import com.nablatensor.tensor.Shape;
 import com.nablatensor.tensor.spi.ComputeBackend;
 import com.nablatensor.tensor.spi.DeviceBuffer;
@@ -47,7 +47,7 @@ class VulkanBackendParityTest {
   static void pick() {
     ComputeBackend backend = null;
     try {
-      backend = BackendRegistry.forSelector(Backend.VULKAN);
+      backend = BackendRegistry.forSelector(BackendEnum.VULKAN);
     } catch (RuntimeException noVulkan) {
       // left null -> tests skip
     }
@@ -58,7 +58,7 @@ class VulkanBackendParityTest {
   private static final Device DEV = Device.vulkan();
 
   private static float[] up(ComputeBackend b, float[] data, Shape shape) {
-    return b.download(b.upload(data, shape, DType.F32, DEV));
+    return b.download(b.upload(data, shape, DTypeEnum.F32, DEV));
   }
 
   private static float[] random(int n, long seed) {
@@ -87,8 +87,8 @@ class VulkanBackendParityTest {
           ref[i * n + j] = (float) acc;
         }
       }
-      DeviceBuffer da = vk.upload(a, Shape.of(m, k), DType.F32, DEV);
-      DeviceBuffer db = vk.upload(b, Shape.of(k, n), DType.F32, DEV);
+      DeviceBuffer da = vk.upload(a, Shape.of(m, k), DTypeEnum.F32, DEV);
+      DeviceBuffer db = vk.upload(b, Shape.of(k, n), DTypeEnum.F32, DEV);
       float[] got = vk.download(vk.matmul(da, db));
       assertArrayEquals(ref, got, 1e-3f, "matmul " + m + "x" + k + "x" + n);
     }
@@ -104,7 +104,7 @@ class VulkanBackendParityTest {
         ref[j * rows + i] = a[i * cols + j];
       }
     }
-    float[] got = vk.download(vk.transpose(vk.upload(a, Shape.of(rows, cols), DType.F32, DEV)));
+    float[] got = vk.download(vk.transpose(vk.upload(a, Shape.of(rows, cols), DTypeEnum.F32, DEV)));
     assertArrayEquals(ref, got, 0f);
   }
 
@@ -118,7 +118,7 @@ class VulkanBackendParityTest {
       sum += v;
       max = Math.max(max, v);
     }
-    DeviceBuffer buf = vk.upload(a, Shape.of(n), DType.F32, DEV);
+    DeviceBuffer buf = vk.upload(a, Shape.of(n), DTypeEnum.F32, DEV);
     assertArrayEquals(new float[] {(float) sum},
         vk.download(vk.reduceSum(buf)), Math.abs((float) sum) * 1e-4f + 1e-3f, "reduceSum");
     assertArrayEquals(new float[] {max}, vk.download(vk.reduceMax(buf)), 0f, "reduceMax");
@@ -150,7 +150,7 @@ class VulkanBackendParityTest {
         argRef[o * inner + in] = bestIdx;
       }
     }
-    DeviceBuffer buf = vk.upload(a, shape, DType.F32, DEV);
+    DeviceBuffer buf = vk.upload(a, shape, DTypeEnum.F32, DEV);
     assertArrayEquals(sumRef, vk.download(vk.sumAxis(buf, 1, false)), 1e-4f, "sumAxis");
     assertArrayEquals(maxRef, vk.download(vk.maxAxis(buf, 1, false)), 0f, "maxAxis");
     assertArrayEquals(argRef, vk.download(vk.argMaxAxis(buf, 1)), 0f, "argMaxAxis");
@@ -162,7 +162,7 @@ class VulkanBackendParityTest {
         gradRef[(o * axis + (int) argRef[o * inner + in]) * inner + in] = upstream[o * inner + in];
       }
     }
-    DeviceBuffer up = vk.upload(upstream, Shape.of(outer, inner), DType.F32, DEV);
+    DeviceBuffer up = vk.upload(upstream, Shape.of(outer, inner), DTypeEnum.F32, DEV);
     assertArrayEquals(gradRef, vk.download(vk.maxAxisBackward(up, buf, 1)), 0f, "maxAxisBackward");
   }
 
@@ -176,7 +176,7 @@ class VulkanBackendParityTest {
         ref[j] += a[i * cols + j];
       }
     }
-    float[] got = vk.download(vk.sumAxis0(vk.upload(a, Shape.of(rows, cols), DType.F32, DEV)));
+    float[] got = vk.download(vk.sumAxis0(vk.upload(a, Shape.of(rows, cols), DTypeEnum.F32, DEV)));
     assertArrayEquals(ref, got, 1e-4f);
   }
 
@@ -193,7 +193,7 @@ class VulkanBackendParityTest {
         }
       }
     }
-    float[] got = vk.download(vk.broadcastTo(vk.upload(a, src, DType.F32, DEV), target));
+    float[] got = vk.download(vk.broadcastTo(vk.upload(a, src, DTypeEnum.F32, DEV), target));
     assertArrayEquals(ref, got, 0f);
   }
 
@@ -206,14 +206,14 @@ class VulkanBackendParityTest {
     for (int i = 0; i < n; i++) {
       ref[i] = in[i] > 0 ? up[i] : 0;
     }
-    DeviceBuffer dUp = vk.upload(up, Shape.of(n), DType.F32, DEV);
-    DeviceBuffer dIn = vk.upload(in, Shape.of(n), DType.F32, DEV);
+    DeviceBuffer dUp = vk.upload(up, Shape.of(n), DTypeEnum.F32, DEV);
+    DeviceBuffer dIn = vk.upload(in, Shape.of(n), DTypeEnum.F32, DEV);
     assertArrayEquals(ref, vk.download(vk.reluBackward(dUp, dIn)), 0f);
   }
 
   @Test
   void conv2dForwardAndGrads() {
-    ConvSpec spec = new ConvSpec(2, 9, 8, 3, 3, 1, 1);
+    ConvSpec spec = ConvSpec.of().inChannels(2).inHeight(9).inWidth(8).outChannels(3).kernel(3).stride(1).pad(1).build();
     int batch = 2;
     float[] x = random(batch * spec.inputSize(), 61);
     float[] w = random(spec.outChannels() * spec.weightSize(), 62);
@@ -246,14 +246,14 @@ class VulkanBackendParityTest {
       }
     }
 
-    DeviceBuffer dx = vk.upload(x, spec.inputShape(batch), DType.F32, DEV);
-    DeviceBuffer dw = vk.upload(w, spec.weightShape(), DType.F32, DEV);
+    DeviceBuffer dx = vk.upload(x, spec.inputShape(batch), DTypeEnum.F32, DEV);
+    DeviceBuffer dw = vk.upload(w, spec.weightShape(), DTypeEnum.F32, DEV);
     float[] fwd = vk.download(vk.conv2d(dx, dw, spec));
     assertArrayEquals(fwdRef, fwd, 1e-3f, "conv2d_fwd");
 
     // gradients: check they agree with a finite-difference-free direct transpose
     float[] gOut = random(batch * spec.outputSize(), 63);
-    DeviceBuffer dGOut = vk.upload(gOut, spec.outputShape(batch), DType.F32, DEV);
+    DeviceBuffer dGOut = vk.upload(gOut, spec.outputShape(batch), DTypeEnum.F32, DEV);
 
     float[] gxRef = new float[batch * spec.inputSize()];
     float[] gwRef = new float[spec.outChannels() * spec.weightSize()];
@@ -299,10 +299,10 @@ class VulkanBackendParityTest {
       mulScalarRef[i] = a[i] * 2.5f;
       expRef[i] = (float) Math.exp(a[i]);
     }
-    DeviceBuffer da = vk.upload(a, Shape.of(n), DType.F32, DEV);
-    DeviceBuffer db = vk.upload(b, Shape.of(n), DType.F32, DEV);
-    assertArrayEquals(addRef, vk.download(vk.binary(Op.ADD, da, db)), 1e-5f, "add");
-    assertArrayEquals(mulScalarRef, vk.download(vk.scalar(Op.MUL, da, 2.5)), 1e-5f, "scalar mul");
-    assertArrayEquals(expRef, vk.download(vk.unary(Op.EXP, da)), 1e-4f, "exp");
+    DeviceBuffer da = vk.upload(a, Shape.of(n), DTypeEnum.F32, DEV);
+    DeviceBuffer db = vk.upload(b, Shape.of(n), DTypeEnum.F32, DEV);
+    assertArrayEquals(addRef, vk.download(vk.binary(OpEnum.ADD, da, db)), 1e-5f, "add");
+    assertArrayEquals(mulScalarRef, vk.download(vk.scalar(OpEnum.MUL, da, 2.5)), 1e-5f, "scalar mul");
+    assertArrayEquals(expRef, vk.download(vk.unary(OpEnum.EXP, da)), 1e-4f, "exp");
   }
 }

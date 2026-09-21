@@ -15,6 +15,8 @@
  */
 package com.nablatensor.cva;
 
+import com.nablatensor.codegen.Of;
+
 import com.nablatensor.engine.ADouble;
 import java.util.Locale;
 
@@ -40,29 +42,71 @@ import java.util.Locale;
  * @param maturityYears final payment date in years
  * @param accrualYears payment period in years (e.g. {@code 0.5} for semi-annual)
  */
-public record InterestRateSwap(String id, Side side, double notional, double fixedRate,
-                               double startYears, double maturityYears, double accrualYears)
-    implements CvaTrade {
+@Of
+public final class InterestRateSwap implements CvaTrade {
 
-  public enum Side {
+  private final String id;
+  private final SideEnum side;
+  private final double notional;
+  private final double fixedRate;
+  private final double startYears;
+  private final double maturityYears;
+  private final double accrualYears;
+  static InterestRateSwap create(String id, SideEnum side, double notional, double fixedRate, double startYears, double maturityYears, double accrualYears) {
+    return new InterestRateSwap(id, side, notional, fixedRate, startYears, maturityYears, accrualYears);
+  }
+
+  public static InterestRateSwapBuilder of() {
+    return new InterestRateSwapBuilder();
+  }
+
+  public String id() {
+    return id;
+  }
+
+  public SideEnum side() {
+    return side;
+  }
+
+  public double notional() {
+    return notional;
+  }
+
+  public double fixedRate() {
+    return fixedRate;
+  }
+
+  public double startYears() {
+    return startYears;
+  }
+
+  public double maturityYears() {
+    return maturityYears;
+  }
+
+  public double accrualYears() {
+    return accrualYears;
+  }
+
+
+  public enum SideEnum {
     /** Receive the fixed coupon, pay the floating leg. */
     RECEIVE_FIXED,
     /** Pay the fixed coupon, receive the floating leg. */
     PAY_FIXED
   }
 
-  public InterestRateSwap {
+  private InterestRateSwap(String id, SideEnum side, double notional, double fixedRate, double startYears, double maturityYears, double accrualYears) {
     if (!(notional > 0.0) || !(accrualYears > 0.0) || !(maturityYears > startYears)) {
       throw new IllegalArgumentException("need notional>0, accrualYears>0, maturityYears>startYears");
     }
-  }
-
-  public static InterestRateSwap payer(String id, double notional, double fixedRate, double maturityYears) {
-    return new InterestRateSwap(id, Side.PAY_FIXED, notional, fixedRate, 0.0, maturityYears, 0.5);
-  }
-
-  public static InterestRateSwap receiver(String id, double notional, double fixedRate, double maturityYears) {
-    return new InterestRateSwap(id, Side.RECEIVE_FIXED, notional, fixedRate, 0.0, maturityYears, 0.5);
+    this.id = id;
+    this.side = side;
+    this.notional = notional;
+    this.fixedRate = fixedRate;
+    this.startYears = startYears;
+    this.maturityYears = maturityYears;
+    this.accrualYears = accrualYears;
   }
 
   @Override
@@ -106,6 +150,6 @@ public record InterestRateSwap(String id, Side side, double notional, double fix
     }
     ADouble floatingLeg = resetBond.sub(endBond);
     ADouble receiveFixedValue = annuity.mul(fixedRate).sub(floatingLeg).mul(notional);
-    return receiveFixedValue.mul(side == Side.RECEIVE_FIXED ? 1.0 : -1.0);
+    return receiveFixedValue.mul(side == SideEnum.RECEIVE_FIXED ? 1.0 : -1.0);
   }
 }

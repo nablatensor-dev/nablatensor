@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant.analytic;
 
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 
 /**
  * Reiner-Rubinstein closed forms for a single-barrier European option with
@@ -37,14 +37,14 @@ import com.nablatensor.quant.OptionType;
 public final class BarrierAnalytic {
 
   /** Knock direction. */
-  public enum Kind {
-    /** Barrier above spot; the option only activates once the barrier is hit. */
+  public enum KindEnum {
+    /** BarrierEnum above spot; the option only activates once the barrier is hit. */
     UP_IN,
-    /** Barrier above spot; the option is extinguished once the barrier is hit. */
+    /** BarrierEnum above spot; the option is extinguished once the barrier is hit. */
     UP_OUT,
-    /** Barrier below spot; the option only activates once the barrier is hit. */
+    /** BarrierEnum below spot; the option only activates once the barrier is hit. */
     DOWN_IN,
-    /** Barrier below spot; the option is extinguished once the barrier is hit. */
+    /** BarrierEnum below spot; the option is extinguished once the barrier is hit. */
     DOWN_OUT
   }
 
@@ -62,7 +62,7 @@ public final class BarrierAnalytic {
    * @param carry    cost of carry {@code b} (use {@code r} for a non-dividend stock)
    * @param vol      lognormal volatility {@code sigma}
    */
-  public static AnalyticGreeks of(OptionType type, Kind kind, double spot, double strike, double barrier,
+  private static AnalyticGreeks calculate(OptionTypeEnum type, KindEnum kind, double spot, double strike, double barrier,
                                   double maturity, double rate, double carry, double vol) {
     if (maturity <= 0.0 || vol <= 0.0) {
       return AnalyticGreeks.intrinsic(price(type, kind, spot, strike, barrier, maturity, rate, carry, vol));
@@ -71,8 +71,23 @@ public final class BarrierAnalytic {
     return Greeking.central(f, spot, strike, maturity, rate, vol);
   }
 
+
+  public static Builder of() { return new Builder(); }
+  public static final class Builder {
+    private OptionTypeEnum type; private KindEnum kind; private Double spot,strike,barrier,maturity,rate,carry,vol;
+    private Builder() {}
+    public Builder type(OptionTypeEnum v){type=v;return this;} public Builder kind(KindEnum v){kind=v;return this;}
+    public Builder spot(double v){spot=v;return this;} public Builder strike(double v){strike=v;return this;}
+    public Builder barrier(double v){barrier=v;return this;} public Builder maturity(double v){maturity=v;return this;}
+    public Builder rate(double v){rate=v;return this;} public Builder carry(double v){carry=v;return this;}
+    public Builder vol(double v){vol=v;return this;}
+    public AnalyticGreeks build(){return calculate(req(type,"type"),req(kind,"kind"),req(spot,"spot"),req(strike,"strike"),
+        req(barrier,"barrier"),req(maturity,"maturity"),req(rate,"rate"),req(carry,"carry"),req(vol,"vol"));}
+  }
+  private static <T>T req(T v,String n){if(v==null)throw new IllegalStateException("Required field "+n+" is not set");return v;}
+
   /** Bare price. */
-  public static double price(OptionType type, Kind kind, double spot, double strike, double barrier,
+  public static double price(OptionTypeEnum type, KindEnum kind, double spot, double strike, double barrier,
                              double maturity, double rate, double carry, double vol) {
     double s = spot;
     double k = strike;
@@ -96,8 +111,8 @@ public final class BarrierAnalytic {
     }
 
     // Knocked-out already / knocked-in already: reduce to the trivial value.
-    boolean up = kind == Kind.UP_IN || kind == Kind.UP_OUT;
-    boolean in = kind == Kind.UP_IN || kind == Kind.DOWN_IN;
+    boolean up = kind == KindEnum.UP_IN || kind == KindEnum.UP_OUT;
+    boolean in = kind == KindEnum.UP_IN || kind == KindEnum.DOWN_IN;
     double vanilla = CostOfCarry.price(type, s, k, t, r, b, sig);
     if (up && s >= h) {
       return in ? vanilla : 0.0;
@@ -135,7 +150,7 @@ public final class BarrierAnalytic {
     boolean strikeAboveBarrier = k >= h;
 
     double inValue;
-    if (type == OptionType.CALL) {
+    if (type == OptionTypeEnum.CALL) {
       if (!up) { // down-and-in call
         inValue = strikeAboveBarrier ? c : a - bb + d;
       } else {   // up-and-in call

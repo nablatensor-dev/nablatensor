@@ -15,10 +15,10 @@
  */
 package com.nablatensor.cva;
 
-import com.nablatensor.risk.CorrelationScenario;
+import com.nablatensor.risk.CorrelationScenarioEnum;
 import com.nablatensor.risk.NestedAggregation;
-import com.nablatensor.risk.RiskClass;
-import com.nablatensor.risk.RiskMeasure;
+import com.nablatensor.risk.RiskClassEnum;
+import com.nablatensor.risk.RiskMeasureEnum;
 import com.nablatensor.risk.Sensitivities;
 import java.util.EnumMap;
 import java.util.Map;
@@ -33,8 +33,8 @@ import java.util.Map;
  */
 public final class SaCva {
 
-  private static final RiskClass[] RISK_TYPES = {
-      RiskClass.GIRR, RiskClass.CSR_NON_SEC, RiskClass.FX
+  private static final RiskClassEnum[] RISK_TYPES = {
+      RiskClassEnum.GIRR, RiskClassEnum.CSR_NON_SEC, RiskClassEnum.FX
   };
 
   private final SaCvaParameters parameters;
@@ -44,16 +44,16 @@ public final class SaCva {
   }
 
   public SaCvaResult charge(Sensitivities cvaSensitivities) {
-    Map<CorrelationScenario, Double> perScenario = new EnumMap<>(CorrelationScenario.class);
-    Map<CorrelationScenario, Map<RiskClass, Double>> byTypeByScenario =
-        new EnumMap<>(CorrelationScenario.class);
+    Map<CorrelationScenarioEnum, Double> perScenario = new EnumMap<>(CorrelationScenarioEnum.class);
+    Map<CorrelationScenarioEnum, Map<RiskClassEnum, Double>> byTypeByScenario =
+        new EnumMap<>(CorrelationScenarioEnum.class);
 
-    for (CorrelationScenario scenario : CorrelationScenario.values()) {
-      Map<RiskClass, Double> byType = new EnumMap<>(RiskClass.class);
+    for (CorrelationScenarioEnum scenario : CorrelationScenarioEnum.values()) {
+      Map<RiskClassEnum, Double> byType = new EnumMap<>(RiskClassEnum.class);
       double sumOfSquares = 0.0;
-      for (RiskClass riskType : RISK_TYPES) {
-        double delta = aggregate(cvaSensitivities, riskType, RiskMeasure.DELTA, scenario, false);
-        double vega = aggregate(cvaSensitivities, riskType, RiskMeasure.VEGA, scenario, true);
+      for (RiskClassEnum riskType : RISK_TYPES) {
+        double delta = aggregate(cvaSensitivities, riskType, RiskMeasureEnum.DELTA, scenario, false);
+        double vega = aggregate(cvaSensitivities, riskType, RiskMeasureEnum.VEGA, scenario, true);
         double kRiskType = Math.hypot(delta, vega);
         byType.put(riskType, kRiskType);
         sumOfSquares += kRiskType * kRiskType;
@@ -62,13 +62,13 @@ public final class SaCva {
       perScenario.put(scenario, parameters.mCva() * Math.sqrt(sumOfSquares));
     }
 
-    CorrelationScenario selected = perScenario.entrySet().stream()
+    CorrelationScenarioEnum selected = perScenario.entrySet().stream()
         .max(Map.Entry.comparingByValue()).orElseThrow().getKey();
     return new SaCvaResult(perScenario, byTypeByScenario.get(selected), selected, perScenario.get(selected));
   }
 
-  private double aggregate(Sensitivities all, RiskClass riskType, RiskMeasure measure,
-                           CorrelationScenario scenario, boolean vega) {
+  private double aggregate(Sensitivities all, RiskClassEnum riskType, RiskMeasureEnum measure,
+                           CorrelationScenarioEnum scenario, boolean vega) {
     Sensitivities slice = all.ofClass(riskType).ofMeasure(measure);
     if (slice.isEmpty()) {
       return 0.0;

@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant.transform;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * Variance-Gamma characteristic function of the log-return. VG is Brownian
  * motion with drift {@code theta} and volatility {@code sigma} evaluated at a
@@ -29,8 +31,44 @@ package com.nablatensor.quant.transform;
  * volatility {@code sigma}. This is also the closed-form pricing route for the
  * VG model that the F7 Monte-Carlo step block deferred.
  */
-public record VarianceGammaCf(double rate, double sigma, double nu, double theta)
-    implements CharacteristicFunction {
+@Of
+public final class VarianceGammaCf implements CharacteristicFunction {
+
+  private VarianceGammaCf(double rate, double sigma, double nu, double theta) {
+    this.rate = rate;
+    this.sigma = sigma;
+    this.nu = nu;
+    this.theta = theta;
+  }
+
+  private final double rate;
+  private final double sigma;
+  private final double nu;
+  private final double theta;
+  static VarianceGammaCf create(double rate, double sigma, double nu, double theta) {
+    return new VarianceGammaCf(rate, sigma, nu, theta);
+  }
+
+  public static VarianceGammaCfBuilder of() {
+    return new VarianceGammaCfBuilder();
+  }
+
+  public double rate() {
+    return rate;
+  }
+
+  public double sigma() {
+    return sigma;
+  }
+
+  public double nu() {
+    return nu;
+  }
+
+  public double theta() {
+    return theta;
+  }
+
 
   private double omega() {
     return Math.log(1.0 - theta * nu - 0.5 * sigma * sigma * nu) / nu;

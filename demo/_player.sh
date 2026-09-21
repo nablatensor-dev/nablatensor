@@ -86,7 +86,7 @@ paint() {
   # for the later pass to match, so only the tail lit up. Longest names first so
   # the alternation prefers "ExoticProducts" over "Products".
   line="$(sed -E "
-    s/\\b(ExoticProducts|MonteCarlo|EquityMarket|Calibrator|AadRecorder|SabrHagan|OptionType|Products|Pricing|ADouble|Nabla)\\b/${KW}&${SRC}/g
+    s/\\b(ExoticProducts|MonteCarlo|EquityMarket|Calibrator|AadRecorder|SabrHagan|OptionTypeEnum|Products|Pricing|ADouble|Nabla)\\b/${KW}&${SRC}/g
     s/\\b(var|for|int|void|double|long|new|return)\\b/${KW}&${SRC}/g
   " <<<"$line")"
   printf '%s%s%s' "$SRC" "$line" "$RESET"
@@ -248,7 +248,13 @@ SETUP
     ENGINE="${NABLATENSOR_DEMO_ENGINE}"
   else
     ENGINE="$(capture <<PROBE
-var _opt = new AadOptions(AadOptions.Precision.${DEMO_PRECISION}, true);
+var _opt = (AadOptions.of()
+    .precision(AadOptions.PrecisionEnum.${DEMO_PRECISION})
+    .adjoints(true)
+    .threads(0)
+    .jit(JitOptimizations.NONE)
+    .engineOptions(Map.of())
+    .build());
 var _n = AadEngines.available(_opt).stream().map(AadEngine::name).toList();
 System.out.println(_n.contains("cuda") ? "cuda" : _n.contains("vulkan") ? "vulkan" : _n.contains("rocm") ? "rocm" : "cpu-jit");
 PROBE

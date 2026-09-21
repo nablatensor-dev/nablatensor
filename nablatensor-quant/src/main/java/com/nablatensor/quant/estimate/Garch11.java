@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant.estimate;
 
+import com.nablatensor.codegen.Of;
+
 import com.nablatensor.engine.ADouble;
 import com.nablatensor.quant.Calibrator;
 import java.util.LinkedHashMap;
@@ -40,12 +42,40 @@ import java.util.Map;
  * finite-difference Hessian of the log-likelihood at the optimum, in the
  * natural {@code (omega, alpha, beta)} coordinates.
  */
-public record Garch11(double omega, double alpha, double beta) {
+@Of
+public final class Garch11 {
 
-  public Garch11 {
+  private final double omega;
+  private final double alpha;
+  private final double beta;
+  static Garch11 create(double omega, double alpha, double beta) {
+    return new Garch11(omega, alpha, beta);
+  }
+
+  public static Garch11Builder of() {
+    return new Garch11Builder();
+  }
+
+  public double omega() {
+    return omega;
+  }
+
+  public double alpha() {
+    return alpha;
+  }
+
+  public double beta() {
+    return beta;
+  }
+
+
+  private Garch11(double omega, double alpha, double beta) {
     if (!(omega > 0.0) || !(alpha >= 0.0) || !(beta >= 0.0)) {
       throw new IllegalArgumentException("need omega>0, alpha>=0, beta>=0");
     }
+    this.omega = omega;
+    this.alpha = alpha;
+    this.beta = beta;
   }
 
   /** Unconditional (long-run) variance {@code omega / (1 - alpha - beta)}. */
@@ -133,7 +163,7 @@ public record Garch11(double omega, double alpha, double beta) {
     double alpha = persistence * share;
     double beta = persistence - alpha;
 
-    Garch11 params = new Garch11(Math.max(omega, 1e-12), Math.max(alpha, 0.0), Math.max(beta, 0.0));
+    Garch11 params = Garch11.of().omega(Math.max(omega, 1e-12)).alpha(Math.max(alpha, 0.0)).beta(Math.max(beta, 0.0)).build();
     double logLik = -negLogLikelihood(params.omega(), params.alpha(), params.beta(), returns, var0);
     double[] se = standardErrors(params, returns, var0);
     return new Fit(params, logLik, res.iterations(), res.converged(), se, params.conditionalVariance(returns));

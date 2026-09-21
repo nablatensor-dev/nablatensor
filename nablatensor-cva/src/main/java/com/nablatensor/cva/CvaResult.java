@@ -15,6 +15,8 @@
  */
 package com.nablatensor.cva;
 
+import com.nablatensor.codegen.Of;
+
 import com.nablatensor.risk.TimeProfile;
 
 /**
@@ -34,11 +36,87 @@ import com.nablatensor.risk.TimeProfile;
  * @param scenarios           path count
  * @param engine              the engine the tape ran on
  */
-public record CvaResult(double value, double standardError, CvaMarket market,
-                        TimeProfile epeProfile, TimeProfile eeProfile,
-                        CvaMarket gradient,
-                        double sweepSeconds, double buildSeconds,
-                        double scenariosPerSecond, long scenarios, String engine) {
+@Of
+public final class CvaResult {
+
+  private final double value;
+  private final double standardError;
+  private final CvaMarket market;
+  private final TimeProfile epeProfile;
+  private final TimeProfile eeProfile;
+  private final CvaMarket gradient;
+  private final double sweepSeconds;
+  private final double buildSeconds;
+  private final double scenariosPerSecond;
+  private final long scenarios;
+  private final String engine;
+
+  private CvaResult(double value, double standardError, CvaMarket market, TimeProfile epeProfile, TimeProfile eeProfile, CvaMarket gradient, double sweepSeconds, double buildSeconds, double scenariosPerSecond, long scenarios, String engine) {
+    this.value = value;
+    this.standardError = standardError;
+    this.market = market;
+    this.epeProfile = epeProfile;
+    this.eeProfile = eeProfile;
+    this.gradient = gradient;
+    this.sweepSeconds = sweepSeconds;
+    this.buildSeconds = buildSeconds;
+    this.scenariosPerSecond = scenariosPerSecond;
+    this.scenarios = scenarios;
+    this.engine = engine;
+  }
+
+  static CvaResult create(double value, double standardError, CvaMarket market, TimeProfile epeProfile, TimeProfile eeProfile, CvaMarket gradient, double sweepSeconds, double buildSeconds, double scenariosPerSecond, long scenarios, String engine) {
+    return new CvaResult(value, standardError, market, epeProfile, eeProfile, gradient, sweepSeconds, buildSeconds, scenariosPerSecond, scenarios, engine);
+  }
+
+  public static CvaResultBuilder of() {
+    return new CvaResultBuilder();
+  }
+
+  public double value() {
+    return value;
+  }
+
+  public double standardError() {
+    return standardError;
+  }
+
+  public CvaMarket market() {
+    return market;
+  }
+
+  public TimeProfile epeProfile() {
+    return epeProfile;
+  }
+
+  public TimeProfile eeProfile() {
+    return eeProfile;
+  }
+
+  public CvaMarket gradient() {
+    return gradient;
+  }
+
+  public double sweepSeconds() {
+    return sweepSeconds;
+  }
+
+  public double buildSeconds() {
+    return buildSeconds;
+  }
+
+  public double scenariosPerSecond() {
+    return scenariosPerSecond;
+  }
+
+  public long scenarios() {
+    return scenarios;
+  }
+
+  public String engine() {
+    return engine;
+  }
+
 
   /** Plain time-average expected positive exposure over the profile. */
   public double expectedPositiveExposure() {

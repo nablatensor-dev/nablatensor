@@ -20,7 +20,7 @@ import com.nablatensor.quant.KouJumpModel;
 import com.nablatensor.quant.KouMarket;
 import com.nablatensor.quant.MertonJumpMarket;
 import com.nablatensor.quant.MertonJumpModel;
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import com.nablatensor.quant.analytic.GeneralizedBsm;
 import com.nablatensor.quant.analytic.MertonJumpDiffusion;
 import java.util.Locale;
@@ -48,22 +48,22 @@ public final class JumpDiffusionShowcase {
     double t = 0.5;
     double sigma = 0.15;
 
-    MertonJumpMarket merton = new MertonJumpMarket(s0, 100, sigma, r, t, 1.2, -0.09, 0.18);
+    MertonJumpMarket merton = MertonJumpMarket.of().spot(s0).strike(100).vol(sigma).rate(r).maturity(t).jumpIntensity(1.2).jumpMean(-0.09).jumpVol(0.18).build();
 
-    double mc = price(merton, MertonJumpModel.european(OptionType.CALL, t, steps), paths, 42L);
-    double exact = MertonJumpDiffusion.price(OptionType.CALL, s0, 100, t, r, sigma,
+    double mc = price(merton, MertonJumpModel.european(OptionTypeEnum.CALL, t, steps), paths, 42L);
+    double exact = MertonJumpDiffusion.price(OptionTypeEnum.CALL, s0, 100, t, r, sigma,
         merton.jumpIntensity(), merton.jumpMean(), merton.jumpVol());
     System.out.printf(Locale.ROOT, "Merton ATM call: MC %.4f   exact series %.4f   (%.0f k paths, %d steps)%n%n",
         mc, exact, paths / 1e3, steps);
 
-    KouMarket kou = new KouMarket(s0, 100, sigma, r, t, 1.2, 0.35, 12.0, 7.0);
+    KouMarket kou = KouMarket.of().spot(s0).strike(100).vol(sigma).rate(r).maturity(t).jumpIntensity(1.2).probUp(0.35).etaUp(12.0).etaDown(7.0).build();
 
     System.out.printf(Locale.ROOT, "Implied volatility smile (%.0fm option):%n", t * 12);
     System.out.printf(Locale.ROOT, "  %-8s %10s %10s %10s%n", "strike", "Black", "Merton", "Kou");
     for (double k : new double[] {80, 90, 100, 110, 120}) {
-      double bs = GeneralizedBsm.of(OptionType.CALL, s0, k, t, r, 0.0, sigma).price();
-      double pm = price(withStrike(merton, k), MertonJumpModel.european(OptionType.CALL, t, steps), paths, 7L);
-      double pk = price(withStrike(kou, k), KouJumpModel.european(OptionType.CALL, t, steps), paths, 7L);
+      double bs = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(s0).strike(k).maturity(t).rate(r).dividend(0.0).vol(sigma).build().price();
+      double pm = price(withStrike(merton, k), MertonJumpModel.european(OptionTypeEnum.CALL, t, steps), paths, 7L);
+      double pk = price(withStrike(kou, k), KouJumpModel.european(OptionTypeEnum.CALL, t, steps), paths, 7L);
       System.out.printf(Locale.ROOT, "  %-8.0f %10.4f %10.4f %10.4f  | ivol  B %.2f%%  M %.2f%%  K %.2f%%%n",
           k, bs, pm, pk,
           100 * impliedVol(bs, s0, k, t, r), 100 * impliedVol(pm, s0, k, t, r), 100 * impliedVol(pk, s0, k, t, r));
@@ -71,16 +71,14 @@ public final class JumpDiffusionShowcase {
   }
 
   private static MertonJumpMarket withStrike(MertonJumpMarket m, double k) {
-    return new MertonJumpMarket(m.spot(), k, m.vol(), m.rate(), m.maturity(),
-        m.jumpIntensity(), m.jumpMean(), m.jumpVol());
+    return MertonJumpMarket.of().spot(m.spot()).strike(k).vol(m.vol()).rate(m.rate()).maturity(m.maturity()).jumpIntensity(m.jumpIntensity()).jumpMean(m.jumpMean()).jumpVol(m.jumpVol()).build();
   }
 
   private static KouMarket withStrike(KouMarket m, double k) {
-    return new KouMarket(m.spot(), k, m.vol(), m.rate(), m.maturity(),
-        m.jumpIntensity(), m.probUp(), m.etaUp(), m.etaDown());
+    return KouMarket.of().spot(m.spot()).strike(k).vol(m.vol()).rate(m.rate()).maturity(m.maturity()).jumpIntensity(m.jumpIntensity()).probUp(m.probUp()).etaUp(m.etaUp()).etaDown(m.etaDown()).build();
   }
 
-  private static <M extends Record> double price(M market,
+  private static <M> double price(M market,
       java.util.function.BiConsumer<com.nablatensor.engine.AadRecorder, Nabla.Inputs<M>> v,
       long paths, long seed) {
     try (Nabla.TypedPricer<M> p = Nabla.model(market, v).fp64().priceOnly().on("cpu-jit").build()) {
@@ -94,7 +92,7 @@ public final class JumpDiffusionShowcase {
     double hi = 3.0;
     for (int i = 0; i < 100; i++) {
       double mid = 0.5 * (lo + hi);
-      double pv = GeneralizedBsm.of(OptionType.CALL, s, k, t, r, 0.0, mid).price();
+      double pv = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(s).strike(k).maturity(t).rate(r).dividend(0.0).vol(mid).build().price();
       if (pv > price) {
         hi = mid;
       } else {

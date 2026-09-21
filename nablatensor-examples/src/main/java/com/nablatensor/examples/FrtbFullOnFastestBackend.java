@@ -27,7 +27,7 @@ import com.nablatensor.examples.FrtbFullShowcase.RraoResult;
 import com.nablatensor.examples.FrtbFullShowcase.SignOff;
 import com.nablatensor.examples.FrtbFullShowcase.TradeSpec;
 import com.nablatensor.risk.Portfolio;
-import com.nablatensor.risk.RiskClass;
+import com.nablatensor.risk.RiskClassEnum;
 import com.nablatensor.risk.Sensitivities;
 import java.util.List;
 import java.util.Locale;
@@ -93,8 +93,8 @@ public final class FrtbFullOnFastestBackend {
    * safe probe — an engine whose runtime is missing must not throw out of here.
    */
   static Choice fastestUsable(String requested) {
-    List<String> fp32 = usableNames(AadOptions.Precision.FLOAT32);
-    List<String> fp64 = usableNames(AadOptions.Precision.FLOAT64);
+    List<String> fp32 = usableNames(AadOptions.PrecisionEnum.FLOAT32);
+    List<String> fp64 = usableNames(AadOptions.PrecisionEnum.FLOAT64);
     for (AadEngine engine : AadEngines.discovered()) {
       if (requested != null && !requested.isBlank() && !engine.name().equalsIgnoreCase(requested)) {
         continue;
@@ -111,8 +111,8 @@ public final class FrtbFullOnFastestBackend {
         + "; fp32: " + fp32 + ", fp64: " + fp64);
   }
 
-  private static List<String> usableNames(AadOptions.Precision precision) {
-    return AadEngines.available(new AadOptions(precision, true)).stream()
+  private static List<String> usableNames(AadOptions.PrecisionEnum precision) {
+    return AadEngines.available(AadOptions.of().precision(precision).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build()).stream()
         .map(AadEngine::name)
         .toList();
   }
@@ -147,7 +147,7 @@ public final class FrtbFullOnFastestBackend {
   private static void printCapital(Sensitivities netted, Capital capital,
                                    DrcResult drc, RraoResult rrao, SignOff signOff) {
     System.out.printf(Locale.ROOT, "NETTED BOOK  %d shared risk factors across %d classes%n",
-        netted.asMap().size(), RiskClass.values().length);
+        netted.asMap().size(), RiskClassEnum.values().length);
     System.out.printf(Locale.ROOT, "  SBM        %10.4f $m%n", capital.total());
     System.out.printf(Locale.ROOT, "  DRC        %10.4f $m%n", drc.total());
     System.out.printf(Locale.ROOT, "  RRAO       %10.4f $m%n", rrao.total());

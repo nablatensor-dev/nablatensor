@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.nablatensor.tensor.Op;
+import com.nablatensor.tensor.OpEnum;
 import com.nablatensor.tensor.Shape;
 import org.junit.jupiter.api.Test;
 
@@ -42,14 +42,14 @@ class BackendSupportTest {
 
   @Test
   void opCodesMatchTheKernelSwitchLabels() {
-    assertEquals(0, OpCodes.binary(Op.ADD));
-    assertEquals(3, OpCodes.binary(Op.DIV));
-    assertEquals(5, OpCodes.binary(Op.MIN));
-    assertEquals(1, OpCodes.unary(Op.EXP));
-    assertEquals(6, OpCodes.unary(Op.SIGMOID));
-    assertEquals(9, OpCodes.unary(Op.SIGN));
-    assertThrows(IllegalArgumentException.class, () -> OpCodes.binary(Op.EXP));
-    assertThrows(IllegalArgumentException.class, () -> OpCodes.unary(Op.ADD));
+    assertEquals(0, OpCodes.binary(OpEnum.ADD));
+    assertEquals(3, OpCodes.binary(OpEnum.DIV));
+    assertEquals(5, OpCodes.binary(OpEnum.MIN));
+    assertEquals(1, OpCodes.unary(OpEnum.EXP));
+    assertEquals(6, OpCodes.unary(OpEnum.SIGMOID));
+    assertEquals(9, OpCodes.unary(OpEnum.SIGN));
+    assertThrows(IllegalArgumentException.class, () -> OpCodes.binary(OpEnum.EXP));
+    assertThrows(IllegalArgumentException.class, () -> OpCodes.unary(OpEnum.ADD));
   }
 
   @Test

@@ -50,7 +50,7 @@ public final class CdoTrancheShowcase {
     System.out.printf(Locale.ROOT, "  tranche      EL fraction, by base correlation%n");
     System.out.printf(Locale.ROOT, "  %-12s %10s %10s %10s%n", "", "rho=0.15", "rho=0.30", "rho=0.45");
     for (double[] tr : tranches) {
-      CdoTranche t = new CdoTranche(tr[0], tr[1]);
+      CdoTranche t = CdoTranche.of().attach(tr[0]).detach(tr[1]).build();
       System.out.printf(Locale.ROOT, "  %4.0f-%4.0f%%    %10.4f %10.4f %10.4f%n",
           100 * tr[0], 100 * tr[1],
           t.expectedLossFraction(PortfolioLossDistribution.homogeneous(pd, names, 0.15, lgd, 96)),
@@ -59,7 +59,7 @@ public final class CdoTrancheShowcase {
     }
 
     // Adjoint risk on the equity tranche from the recorded copula Monte-Carlo.
-    CopulaMarket m = new CopulaMarket(0.30, pd);
+    CopulaMarket m = CopulaMarket.of().rho(0.30).pd(pd).build();
     var equity = CopulaMonteCarlo.trancheLoss(0.0, 0.03, names, lgd, maturity, rate, 5e-3);
     try (Nabla.TypedPricer<CopulaMarket> p = Nabla.model(m, equity).fp64().greeks().on("cpu-jit").build()) {
       Nabla.TypedValuation<CopulaMarket> v = p.value().with(m).scenarios(1_000_000L).seed(42L).run();

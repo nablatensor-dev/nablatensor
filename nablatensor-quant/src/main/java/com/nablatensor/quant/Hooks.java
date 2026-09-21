@@ -73,7 +73,7 @@ public final class Hooks {
    * @param controlMean {@code E[X]}, the analytic value of the control
    * @param beta        control coefficient
    */
-  public static Product<EquityMarket> controlVariate(PathPayoff target, PathPayoff control,
+  private static Product<EquityMarket> controlVariate(PathPayoff target, PathPayoff control,
                                        double controlMean, double beta) {
     return new Named("control-variate", (rec, in, grid) -> {
       List<ADouble> z = new ArrayList<>();
@@ -90,7 +90,7 @@ public final class Hooks {
    * {@code muPerStep}; a positive shift concentrates paths where an
    * out-of-the-money payoff pays.
    */
-  public static Product<EquityMarket> importanceSampling(PathPayoff payoff, double muPerStep) {
+  private static Product<EquityMarket> importanceSampling(PathPayoff payoff, double muPerStep) {
     return new Named("importance-sampling", (rec, in, grid) -> {
       ADouble[] logW = {rec.constant(0.0)};
       int[] n = {0};
@@ -112,7 +112,7 @@ public final class Hooks {
    * draws whose sign selects the paths to keep. Note this is
    * {@code E[f * 1{...}]}, not the conditional expectation {@code E[f | ...]}.
    */
-  public static Product<EquityMarket> pathFilter(PathPayoff payoff, PathPayoff condition, double width) {
+  private static Product<EquityMarket> pathFilter(PathPayoff payoff, PathPayoff condition, double width) {
     return new Named("path-filter", (rec, in, grid) -> {
       List<ADouble> z = new ArrayList<>();
       ADouble f = payoff.value(rec, in, capturing(rec, z), grid);
@@ -121,7 +121,117 @@ public final class Hooks {
     });
   }
 
+
+  /** Named construction for a control-variate payoff wrapper. */
+  public static final class ControlVariate {
+    private PathPayoff target;
+    private PathPayoff control;
+    private Double controlMean;
+    private Double beta;
+
+    private ControlVariate() {
+    }
+
+    public static ControlVariate of() {
+      return new ControlVariate();
+    }
+
+    public ControlVariate target(PathPayoff value) {
+      target = value;
+      return this;
+    }
+
+    public ControlVariate control(PathPayoff value) {
+      control = value;
+      return this;
+    }
+
+    public ControlVariate controlMean(double value) {
+      controlMean = value;
+      return this;
+    }
+
+    public ControlVariate beta(double value) {
+      beta = value;
+      return this;
+    }
+
+    public Product<EquityMarket> build() {
+      return controlVariate(required(target, "target"), required(control, "control"),
+          required(controlMean, "controlMean"), required(beta, "beta"));
+    }
+  }
+
+  /** Named construction for an importance-sampling payoff wrapper. */
+  public static final class ImportanceSampling {
+    private PathPayoff payoff;
+    private Double muPerStep;
+
+    private ImportanceSampling() {
+    }
+
+    public static ImportanceSampling of() {
+      return new ImportanceSampling();
+    }
+
+    public ImportanceSampling payoff(PathPayoff value) {
+      payoff = value;
+      return this;
+    }
+
+    public ImportanceSampling muPerStep(double value) {
+      muPerStep = value;
+      return this;
+    }
+
+    public Product<EquityMarket> build() {
+      return importanceSampling(required(payoff, "payoff"), required(muPerStep, "muPerStep"));
+    }
+  }
+
+  /** Named construction for a path-filter payoff wrapper. */
+  public static final class PathFilter {
+    private PathPayoff payoff;
+    private PathPayoff condition;
+    private Double width;
+
+    private PathFilter() {
+    }
+
+    public static PathFilter of() {
+      return new PathFilter();
+    }
+
+    public PathFilter payoff(PathPayoff value) {
+      payoff = value;
+      return this;
+    }
+
+    public PathFilter condition(PathPayoff value) {
+      condition = value;
+      return this;
+    }
+
+    public PathFilter width(double value) {
+      width = value;
+      return this;
+    }
+
+    public Product<EquityMarket> build() {
+      return pathFilter(required(payoff, "payoff"), required(condition, "condition"),
+          required(width, "width"));
+    }
+  }
+
+  private static <T> T required(T value, String name) {
+    if (value == null) {
+      throw new IllegalStateException("Required field '" + name + "' is not set");
+    }
+    return value;
+  }
+
   private static Draws capturing(AadRecorder rec, List<ADouble> sink) {
+
     return () -> {
       ADouble draw = rec.randn();
       sink.add(draw);

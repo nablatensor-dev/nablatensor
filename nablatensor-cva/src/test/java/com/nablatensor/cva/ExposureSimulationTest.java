@@ -30,17 +30,15 @@ class ExposureSimulationTest {
   private static final long SEED = 20260902L;
 
   private static NettingSet demoNettingSet() {
-    CreditName counterparty = new CreditName("CPTY-A",
-        HazardCurve.fromFlatSpread(150.0, 0.40, 10.0), 0.40,
-        CreditName.Rating.BBB, CreditName.Sector.FINANCIAL);
-    return new NettingSet("NS-CPTY-A", counterparty, List.of(
-        InterestRateSwap.payer("SWAP-PAY", 100_000_000.0, 0.032, 5.0),
-        InterestRateSwap.receiver("SWAP-REC", 40_000_000.0, 0.028, 5.0)));
+    CreditName counterparty = CreditName.of().id("CPTY-A").curve(HazardCurve.fromFlatSpread(150.0, 0.40, 10.0)).recovery(0.40).rating(CreditName.RatingEnum.BBB).sector(CreditName.SectorEnum.FINANCIAL).build();
+    return NettingSet.of().id("NS-CPTY-A").counterparty(counterparty).trades(List.of(
+        InterestRateSwap.of().id("SWAP-PAY").side(InterestRateSwap.SideEnum.PAY_FIXED).notional(100_000_000.0).fixedRate(0.032).startYears(0.0).maturityYears(5.0).accrualYears(0.5).build(),
+        InterestRateSwap.of().id("SWAP-REC").side(InterestRateSwap.SideEnum.RECEIVE_FIXED).notional(40_000_000.0).fixedRate(0.028).startYears(0.0).maturityYears(5.0).accrualYears(0.5).build())).collateral(CollateralAgreement.uncollateralised()).build();
   }
 
   @Test
   void cvaIsPositiveAndExposureProfileIsHumped() {
-    ExposureSimulation simulation = new ExposureSimulation(demoNettingSet(), 20).on("cpu-jit");
+    ExposureSimulation simulation = ExposureSimulation.of(demoNettingSet(), 20).on("cpu-jit");
     CvaResult result = simulation.run(CvaMarket.demo(), PATHS, SEED);
 
     assertTrue(result.value() > 0.0, "CVA must be a positive charge, got " + result.value());
@@ -57,12 +55,11 @@ class ExposureSimulationTest {
   @Test
   void collateralReducesTheCharge() {
     NettingSet uncollateralised = demoNettingSet();
-    NettingSet margined = new NettingSet(uncollateralised.id(), uncollateralised.counterparty(),
-        uncollateralised.trades(), CollateralAgreement.dailyMargined(0.0));
+    NettingSet margined = NettingSet.of().id(uncollateralised.id()).counterparty(uncollateralised.counterparty()).trades(uncollateralised.trades()).collateral(CollateralAgreement.dailyMargined(0.0)).build();
 
-    double withoutCsa = new ExposureSimulation(uncollateralised, 20).on("cpu-jit")
+    double withoutCsa = ExposureSimulation.of(uncollateralised, 20).on("cpu-jit")
         .run(CvaMarket.demo(), PATHS, SEED).value();
-    double withCsa = new ExposureSimulation(margined, 20).on("cpu-jit")
+    double withCsa = ExposureSimulation.of(margined, 20).on("cpu-jit")
         .run(CvaMarket.demo(), PATHS, SEED).value();
 
     assertTrue(withCsa < withoutCsa,
@@ -72,7 +69,7 @@ class ExposureSimulationTest {
 
   @Test
   void oneSweepGradientMatchesBumpAndRevalue() {
-    ExposureSimulation simulation = new ExposureSimulation(demoNettingSet(), 20).on("cpu-jit");
+    ExposureSimulation simulation = ExposureSimulation.of(demoNettingSet(), 20).on("cpu-jit");
     CvaMarket base = CvaMarket.demo();
     CvaResult swept = simulation.run(base, PATHS, SEED);
 

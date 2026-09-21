@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant.adjust;
 
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import com.nablatensor.quant.QuantoMarket;
 import com.nablatensor.quant.analytic.AnalyticGreeks;
 import com.nablatensor.quant.analytic.Black76;
@@ -49,16 +49,9 @@ public final class QuantoAdjustment {
    * Quanto option value in domestic currency:
    * {@code fixedFx * e^{-rateDom T} * Black(F_quanto, K, T, volAsset)}.
    */
-  public static AnalyticGreeks quantoOption(OptionType type, QuantoMarket m, double maturity, double fixedFx) {
+  public static AnalyticGreeks quantoOption(OptionTypeEnum type, QuantoMarket m, double maturity, double fixedFx) {
     double fq = quantoForward(m, maturity);
-    AnalyticGreeks black = Black76.of(type, fq, m.strike(), maturity, m.rateDom(), m.volAsset());
-    return new AnalyticGreeks(
-        fixedFx * black.price(),
-        fixedFx * black.delta(),
-        fixedFx * black.gamma(),
-        fixedFx * black.vega(),
-        fixedFx * black.theta(),
-        fixedFx * black.rho(),
-        fixedFx * black.strikeSensitivity());
+    AnalyticGreeks black = Black76.of().type(type).forward(fq).strike(m.strike()).maturity(maturity).rate(m.rateDom()).vol(m.volAsset()).build();
+    return AnalyticGreeks.of().price(fixedFx * black.price()).delta(fixedFx * black.delta()).gamma(fixedFx * black.gamma()).vega(fixedFx * black.vega()).theta(fixedFx * black.theta()).rho(fixedFx * black.rho()).strikeSensitivity(fixedFx * black.strikeSensitivity()).build();
   }
 }

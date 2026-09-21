@@ -32,7 +32,7 @@ mvn -o compile          # once
 | `--fast` | no typing delay — for when you just want the numbers |
 | `--cpu` | force the `cpu-jit` engine instead of a GPU one |
 
-## Backend
+## BackendEnum
 
 `black-scholes-both-ways.sh`, `greeks-on-gpu.sh`, `adjoint-vs-bump.sh`,
 `frtb-curvature-on-cuda.sh`, `frtb-full-on-cuda.sh`, `isda-simm-full.sh`,

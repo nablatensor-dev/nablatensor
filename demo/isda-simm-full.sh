@@ -24,7 +24,7 @@ PROBE
 quiet <<'SETUP'
 import com.nablatensor.risk.*;
 import com.nablatensor.examples.SimmShowcase;
-import com.nablatensor.examples.SimmShowcase.ProductClass;
+import com.nablatensor.examples.SimmShowcase.ProductClassEnum;
 int BOOK = Integer.getInteger("nablatensor.demo.book", GPU ? 24 : 6);
 long N = Long.getLong("nablatensor.demo.paths", GPU ? 1_300_000L : 400_000L);
 long SEED = 42L;
@@ -53,7 +53,7 @@ for (var t : book)
 CODE
 
 run <<'CODE'
-for (var pc : ProductClass.values())
+for (var pc : ProductClassEnum.values())
   System.out.printf(Locale.ROOT, "   %-10s <- %s%n", pc, pc.riskClasses());
 System.out.printf(Locale.ROOT, "   %s   %d buckets across %d risk classes%n",
     params.version(), params.bucketCount(), SimmShowcase.SIMM_CLASSES.size());
@@ -79,7 +79,7 @@ say "keys of its product's risk classes — the Common Risk Interchange Format"
 say "row set every SIMM implementation consumes."
 
 run <<'CODE'
-for (var pc : ProductClass.values()) {
+for (var pc : ProductClassEnum.values()) {
   int factors = 0;
   for (var rc : pc.riskClasses())
     factors += Math.min(2, params.tables().get(rc).size()) * 3;
@@ -148,11 +148,11 @@ say "A book this small stays under the thresholds, so CR_b = 1 here; a"
 say "concentrated position is where the factor would bite."
 
 run <<'CODE'
-var girrDelta = crif.ofClass(RiskClass.GIRR).ofMeasure(RiskMeasure.DELTA);
+var girrDelta = crif.ofClass(RiskClassEnum.GIRR).ofMeasure(RiskMeasureEnum.DELTA);
 var sums = new java.util.LinkedHashMap<String, Double>();
 for (var e : girrDelta.asMap().entrySet())
   sums.merge(e.getKey().bucket(), e.getValue(), Double::sum);
-double tG = params.tables().get(RiskClass.GIRR).values().iterator().next().deltaThreshold();
+double tG = params.tables().get(RiskClassEnum.GIRR).values().iterator().next().deltaThreshold();
 for (var e : sums.entrySet())
   System.out.printf(Locale.ROOT, "   bucket %-4s  S_b %+9.3f  T_b %.0f  CR_b %.3f%n",
       e.getKey(), e.getValue(), tG, Math.max(1.0, Math.sqrt(Math.abs(e.getValue()) / tG)));
@@ -163,7 +163,7 @@ say "WS_k = RW_k * s_k * CR_k, aggregated inside each bucket with rho, then"
 say "across buckets with gamma. Shown inline for GIRR, then every class."
 
 run <<'CODE'
-var tGirr = params.tables().get(RiskClass.GIRR);
+var tGirr = params.tables().get(RiskClassEnum.GIRR);
 double gammaGirr = tGirr.values().iterator().next().gamma();
 var aggGirr = NestedAggregation.delta(
     f -> tGirr.get(f.bucket()).deltaRw(),
@@ -178,7 +178,7 @@ run <<'CODE'
 var res = SimmShowcase.simm(params, crif);
 for (var rc : SimmShowcase.SIMM_CLASSES)
   System.out.printf(Locale.ROOT, "   %-12s delta %8.3f%n", rc,
-      res.byClass().get(rc).get(RiskMeasure.DELTA));
+      res.byClass().get(rc).get(RiskMeasureEnum.DELTA));
 CODE
 
 banner "9 · Vega and curvature margin per risk class"
@@ -189,8 +189,8 @@ say "between same-sign shocks."
 run <<'CODE'
 for (var rc : SimmShowcase.SIMM_CLASSES)
   System.out.printf(Locale.ROOT, "   %-12s vega %8.3f   curvature %8.3f%n", rc,
-      res.byClass().get(rc).get(RiskMeasure.VEGA),
-      res.byClass().get(rc).get(RiskMeasure.CURVATURE));
+      res.byClass().get(rc).get(RiskMeasureEnum.VEGA),
+      res.byClass().get(rc).get(RiskMeasureEnum.CURVATURE));
 CODE
 
 banner "10 · IM per product class"
@@ -199,11 +199,11 @@ say "risk-class correlation psi: IM = sqrt( sum K_r^2 + sum psi_rs K_r K_s )."
 say "RatesFX pairs IR with FX (psi 0.28); Credit pairs the two credit classes."
 
 run <<'CODE'
-for (var pc : ProductClass.values()) {
+for (var pc : ProductClassEnum.values()) {
   var im = res.byProduct().get(pc);
   System.out.printf(Locale.ROOT, "   %-10s delta %7.3f  vega %7.3f  curv %7.3f  ->  %s%n",
-      pc, im.get(RiskMeasure.DELTA), im.get(RiskMeasure.VEGA),
-      im.get(RiskMeasure.CURVATURE), money(res.productTotal().get(pc)));
+      pc, im.get(RiskMeasureEnum.DELTA), im.get(RiskMeasureEnum.VEGA),
+      im.get(RiskMeasureEnum.CURVATURE), money(res.productTotal().get(pc)));
 }
 CODE
 

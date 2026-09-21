@@ -78,7 +78,7 @@ public final class SimdAadEngine implements AadEngine {
           "the Vector API is not on the module path; start the JVM with "
               + "--add-modules jdk.incubator.vector");
     }
-    return options.precision() == AadOptions.Precision.FLOAT32
+    return options.precision() == AadOptions.PrecisionEnum.FLOAT32
         ? new VectorReplayF32(tape, options)
         : new VectorReplayF64(tape, options);
   }

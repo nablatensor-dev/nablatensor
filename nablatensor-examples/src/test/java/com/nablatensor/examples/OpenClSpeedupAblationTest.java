@@ -72,8 +72,8 @@ class OpenClSpeedupAblationTest {
 
   @Test
   void ablateKeptOpenClSpeedups() {
-    AadOptions fp64 = new AadOptions(AadOptions.Precision.FLOAT64, true);
-    AadOptions fp32 = new AadOptions(AadOptions.Precision.FLOAT32, true);
+    AadOptions fp64 = AadOptions.of().precision(AadOptions.PrecisionEnum.FLOAT64).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build();
+    AadOptions fp32 = AadOptions.of().precision(AadOptions.PrecisionEnum.FLOAT32).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build();
     assumeTrue(AadEngines.find("opencl", fp32).isPresent(), "no usable OpenCL engine");
 
     AadTape tape = AadRecorder.record(OpenClSpeedupAblationTest::asianCall);

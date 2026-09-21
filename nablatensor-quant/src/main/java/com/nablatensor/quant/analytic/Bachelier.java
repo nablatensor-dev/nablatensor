@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant.analytic;
 
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 
 /**
  * The Bachelier (normal) model — the forward is arithmetic Brownian rather than
@@ -38,11 +38,6 @@ public final class Bachelier {
   private Bachelier() {
   }
 
-  public static AnalyticGreeks of(OptionType type, double forward, double strike, double maturity,
-                                  double normalVol) {
-    return of(type, forward, strike, maturity, 0.0, normalVol);
-  }
-
   /**
    * @param forward   forward price / rate {@code F}
    * @param strike    strike {@code K}
@@ -50,7 +45,7 @@ public final class Bachelier {
    * @param rate      continuously-compounded discount rate {@code r}
    * @param normalVol absolute (normal) volatility {@code sigmaN}, price units per sqrt(year)
    */
-  public static AnalyticGreeks of(OptionType type, double forward, double strike, double maturity,
+  private static AnalyticGreeks calculate(OptionTypeEnum type, double forward, double strike, double maturity,
                                   double rate, double normalVol) {
     if (maturity <= 0.0 || normalVol <= 0.0) {
       return AnalyticGreeks.intrinsic(price(type, forward, strike, maturity, rate, normalVol));
@@ -59,8 +54,25 @@ public final class Bachelier {
         forward, strike, maturity, rate, normalVol);
   }
 
+
+  /** Starts a Bachelier calculation; the discount rate defaults to zero. */
+  public static Builder of() { return new Builder(); }
+  public static final class Builder {
+    private OptionTypeEnum type; private Double forward, strike, maturity, normalVol; private double rate;
+    private Builder() {}
+    public Builder type(OptionTypeEnum v) { type=v; return this; }
+    public Builder forward(double v) { forward=v; return this; }
+    public Builder strike(double v) { strike=v; return this; }
+    public Builder maturity(double v) { maturity=v; return this; }
+    public Builder rate(double v) { rate=v; return this; }
+    public Builder normalVol(double v) { normalVol=v; return this; }
+    public AnalyticGreeks build() { return calculate(req(type,"type"),req(forward,"forward"),req(strike,"strike"),
+        req(maturity,"maturity"),rate,req(normalVol,"normalVol")); }
+  }
+  private static <T> T req(T v,String n) { if(v==null) throw new IllegalStateException("Required field "+n+" is not set"); return v; }
+
   /** Bare price. */
-  public static double price(OptionType type, double forward, double strike, double maturity,
+  public static double price(OptionTypeEnum type, double forward, double strike, double maturity,
                              double rate, double normalVol) {
     double disc = Math.exp(-rate * maturity);
     if (maturity <= 0.0 || normalVol <= 0.0) {
@@ -68,7 +80,7 @@ public final class Bachelier {
     }
     double stdev = normalVol * Math.sqrt(maturity);
     double d = (forward - strike) / stdev;
-    if (type == OptionType.CALL) {
+    if (type == OptionTypeEnum.CALL) {
       return disc * ((forward - strike) * Normal.cdf(d) + stdev * Normal.pdf(d));
     }
     return disc * ((strike - forward) * Normal.cdf(-d) + stdev * Normal.pdf(d));

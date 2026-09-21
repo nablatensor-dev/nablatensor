@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant;
 
+import com.nablatensor.codegen.Of;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -35,10 +37,32 @@ import java.util.Map;
  * maturity {@code N} adds exactly one forecast pillar. Sub-annual float
  * frequencies and interpolation inside the solve are a later refinement.
  */
-public record CurveSet(YieldCurve discount, Map<String, YieldCurve> forecast) {
+@Of
+public final class CurveSet {
 
-  public CurveSet {
+  private final YieldCurve discount;
+  private final Map<String, YieldCurve> forecast;
+  static CurveSet create(YieldCurve discount, Map<String, YieldCurve> forecast) {
+    return new CurveSet(discount, forecast);
+  }
+
+  public static CurveSetBuilder of() {
+    return new CurveSetBuilder();
+  }
+
+  public YieldCurve discount() {
+    return discount;
+  }
+
+  public Map<String, YieldCurve> forecast() {
+    return forecast;
+  }
+
+
+  private CurveSet(YieldCurve discount, Map<String, YieldCurve> forecast) {
     forecast = Map.copyOf(forecast);
+    this.discount = discount;
+    this.forecast = forecast;
   }
 
   public YieldCurve forecast(String tenor) {

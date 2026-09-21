@@ -17,7 +17,7 @@ package com.nablatensor.examples;
 
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.MonteCarlo;
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import com.nablatensor.quant.Products;
 import com.nablatensor.quant.analytic.AnalyticGreeks;
 import com.nablatensor.quant.analytic.Black76;
@@ -48,12 +48,10 @@ public final class AnalyticVsAdjoint {
     long scenarios = Long.getLong("scenarios", 2_000_000L);
     long seed = Long.getLong("seed", 42L);
 
-    AnalyticGreeks bsm = GeneralizedBsm.of(OptionType.CALL,
-        market.spot(), market.strike(), market.maturity(), market.rate(), 0.0, market.vol()).greeks();
+    AnalyticGreeks bsm = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(market.spot()).strike(market.strike()).maturity(market.maturity()).rate(market.rate()).dividend(0.0).vol(market.vol()).build().greeks();
 
     double forward = market.spot() * Math.exp(market.rate() * market.maturity());
-    AnalyticGreeks black76 = Black76.of(OptionType.CALL,
-        forward, market.strike(), market.maturity(), market.rate(), market.vol());
+    AnalyticGreeks black76 = Black76.of().type(OptionTypeEnum.CALL).forward(forward).strike(market.strike()).maturity(market.maturity()).rate(market.rate()).vol(market.vol()).build();
 
     try (MonteCarlo<EquityMarket> mc = MonteCarlo.of(Products.europeanCall())
         .market(market).steps(1).fp64().greeks().on("cpu-jit").build()) {
@@ -77,8 +75,7 @@ public final class AnalyticVsAdjoint {
         .market(market).steps(1)
         .scenarios(Math.min(scenarios, 500_000L)).seed(seed)
         .fp64().tolerance(1e-6)
-        .analyticReference(m -> GeneralizedBsm.of(OptionType.CALL,
-            m.spot(), m.strike(), m.maturity(), m.rate(), 0.0, m.vol()).greeks())
+        .analyticReference(m -> GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(m.spot()).strike(m.strike()).maturity(m.maturity()).rate(m.rate()).dividend(0.0).vol(m.vol()).build().greeks())
         .run();
     System.out.println(report);
   }

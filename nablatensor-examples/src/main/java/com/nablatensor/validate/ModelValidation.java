@@ -111,8 +111,9 @@ public final class ModelValidation {
    * evidence pack adds a section diffing the scalar oracle's adjoint price and
    * gradient against it — see {@link AnalyticComparison}. The function is passed
    * the same {@link EquityMarket} the run prices, and typically closes over the
-   * option type, e.g. {@code m -> GeneralizedBsm.of(CALL, m.spot(), m.strike(),
-   * m.maturity(), m.rate(), 0.0, m.vol()).greeks()}.
+   * option type, e.g. {@code m -> GeneralizedBsm.of().type(CALL)
+   *     .spot(m.spot()).strike(m.strike()).maturity(m.maturity())
+   *     .rate(m.rate()).dividend(0.0).vol(m.vol()).build().greeks()}.
    */
   public ModelValidation analyticReference(Function<EquityMarket, AnalyticGreeks> reference) {
     this.analyticReference = reference;
@@ -143,8 +144,7 @@ public final class ModelValidation {
     AnalyticComparison analytic = analyticReference == null ? null
         : AnalyticComparison.of(oracle, analyticReference.apply(market));
 
-    return new Report(product.label(), market, steps, scenarios, seed, fp32, tolerance,
-        machineInfo(), oracle, comparisons, crossCheck, analytic);
+    return Report.of().product(product.label()).market(market).steps(steps).scenarios(scenarios).seed(seed).fp32(fp32).tolerance(tolerance).machine(machineInfo()).oracle(oracle).comparisons(comparisons).bumpCrossCheck(crossCheck).analytic(analytic).build();
   }
 
   private MonteCarlo<EquityMarket> build(String engine) {
@@ -153,8 +153,7 @@ public final class ModelValidation {
   }
 
   private List<String> candidateEngines() {
-    AadOptions options = new AadOptions(
-        fp32 ? AadOptions.Precision.FLOAT32 : AadOptions.Precision.FLOAT64, true);
+    AadOptions options = AadOptions.of().precision(fp32 ? AadOptions.PrecisionEnum.FLOAT32 : AadOptions.PrecisionEnum.FLOAT64).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build();
     List<String> names = new ArrayList<>();
     for (AadEngine engine : AadEngines.available(options)) {
       if (!engine.name().equals("cpu")) {

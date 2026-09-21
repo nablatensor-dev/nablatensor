@@ -51,7 +51,7 @@ public final class WgpuAadEngine implements AadEngine {
 
   @Override
   public boolean supports(AadOptions options) {
-    return options.precision() == AadOptions.Precision.FLOAT32;
+    return options.precision() == AadOptions.PrecisionEnum.FLOAT32;
   }
 
   @Override

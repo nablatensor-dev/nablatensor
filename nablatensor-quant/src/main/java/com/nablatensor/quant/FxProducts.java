@@ -38,7 +38,7 @@ public final class FxProducts {
 
   /** European FX call/put, discounted at the domestic rate. */
   public static BiConsumer<AadRecorder, Nabla.Inputs<FxMarket>> fxOption(
-      OptionType type, double maturity, int steps) {
+      OptionTypeEnum type, double maturity, int steps) {
     return (rec, in) -> {
       ADouble x = in.of(FxMarket::spot);
       ADouble strike = in.of(FxMarket::strike);
@@ -51,7 +51,7 @@ public final class FxProducts {
       for (int t = 0; t < steps; t++) {
         x = x.mul(drift.add(vol.mul(sqrtDt).mul(rec.randn())).exp());
       }
-      ADouble intrinsic = type == OptionType.CALL ? x.sub(strike).max(0.0) : strike.sub(x).max(0.0);
+      ADouble intrinsic = type == OptionTypeEnum.CALL ? x.sub(strike).max(0.0) : strike.sub(x).max(0.0);
       rec.output(intrinsic.mul(rd.neg().mul(maturity).exp()));
     };
   }
@@ -61,7 +61,7 @@ public final class FxProducts {
    * currency, {@code K} and {@code S} in foreign units.
    */
   public static BiConsumer<AadRecorder, Nabla.Inputs<QuantoMarket>> quantoOption(
-      OptionType type, double maturity, int steps, double fixedFx) {
+      OptionTypeEnum type, double maturity, int steps, double fixedFx) {
     return (rec, in) -> {
       ADouble s = in.of(QuantoMarket::assetSpot);
       ADouble strike = in.of(QuantoMarket::strike);
@@ -77,7 +77,7 @@ public final class FxProducts {
       for (int t = 0; t < steps; t++) {
         s = s.mul(drift.add(volS.mul(sqrtDt).mul(rec.randn())).exp());
       }
-      ADouble intrinsic = type == OptionType.CALL ? s.sub(strike).max(0.0) : strike.sub(s).max(0.0);
+      ADouble intrinsic = type == OptionTypeEnum.CALL ? s.sub(strike).max(0.0) : strike.sub(s).max(0.0);
       rec.output(intrinsic.mul(fixedFx).mul(rd.neg().mul(maturity).exp()));
     };
   }

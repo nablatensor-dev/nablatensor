@@ -2,7 +2,7 @@
 
 A thin JPype wrapper that boots one JDK 25 JVM against a NablaTensor checkout's
 compiled `*/target/classes` and re-exports the quant/adjoint Java types
-(`EquityMarket`, `ExoticProducts`, `OptionType`, `MonteCarlo`, `Pricing`,
+(`EquityMarket`, `ExoticProducts`, `OptionTypeEnum`, `MonteCarlo`, `Pricing`,
 `AadEngines`) so notebooks can drive the exact same code as `demo/*.sh`.
 
 It is a convenience for the examples in [`../notebooks/`](../notebooks/), not a

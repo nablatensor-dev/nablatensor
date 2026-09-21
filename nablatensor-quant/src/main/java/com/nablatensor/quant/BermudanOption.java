@@ -58,14 +58,14 @@ public final class BermudanOption {
    * @param decisionWidth smoothing width of the exercise decision, in spot units
    * @param continuation  continuation-value estimator ({@link ContinuationValue#EUROPEAN} for the shell)
    */
-  public static Product<EquityMarket> option(OptionType type, int exerciseDates, int stepsPerDate,
+  private static Product<EquityMarket> option(OptionTypeEnum type, int exerciseDates, int stepsPerDate,
                                double decisionWidth, ContinuationValue continuation) {
     return new Named("Bermudan " + type, (rec, in, ignoredGrid) -> {
       ADouble spot = in.of(EquityMarket::spot);
       ADouble strike = in.of(EquityMarket::strike);
       ADouble rate = in.of(EquityMarket::rate);
       ADouble maturity = in.of(EquityMarket::maturity);
-      GbmPath model = new GbmPath(rec, rate, in.of(EquityMarket::vol), exerciseDates * stepsPerDate, maturity);
+      GbmPath model = GbmPath.of(rec, rate, in.of(EquityMarket::vol), exerciseDates * stepsPerDate, maturity);
 
       ADouble stepDiscount = rate.neg().mul(maturity).div(exerciseDates * stepsPerDate).exp();
       ADouble discount = rec.constant(1.0);
@@ -79,7 +79,7 @@ public final class BermudanOption {
           s = model.step(s, rec.randn(), stepIdx++);
           discount = discount.mul(stepDiscount);
         }
-        ADouble exercise = (type == OptionType.CALL ? s.sub(strike) : strike.sub(s)).max(0.0);
+        ADouble exercise = (type == OptionTypeEnum.CALL ? s.sub(strike) : strike.sub(s)).max(0.0);
         ADouble contEst = continuation.estimate(rec, d, s, discount);
         boolean lastDate = d == exerciseDates - 1;
         ADouble exerciseNow = lastDate
@@ -92,7 +92,64 @@ public final class BermudanOption {
     });
   }
 
+
+  /** Starts named construction of a Bermudan option. */
+  public static Builder of() {
+    return new Builder();
+  }
+
+  /** Builder whose field names document the exercise schedule. */
+  public static final class Builder {
+    private OptionTypeEnum type;
+    private Integer exerciseDates;
+    private Integer stepsPerDate;
+    private Double decisionWidth;
+    private ContinuationValue continuation;
+
+    private Builder() {
+    }
+
+    public Builder type(OptionTypeEnum value) {
+      type = value;
+      return this;
+    }
+
+    public Builder exerciseDates(int value) {
+      exerciseDates = value;
+      return this;
+    }
+
+    public Builder stepsPerDate(int value) {
+      stepsPerDate = value;
+      return this;
+    }
+
+    public Builder decisionWidth(double value) {
+      decisionWidth = value;
+      return this;
+    }
+
+    public Builder continuation(ContinuationValue value) {
+      continuation = value;
+      return this;
+    }
+
+    public Product<EquityMarket> build() {
+      return option(required(type, "type"), required(exerciseDates, "exerciseDates"),
+          required(stepsPerDate, "stepsPerDate"), required(decisionWidth, "decisionWidth"),
+          required(continuation, "continuation"));
+    }
+  }
+
+  private static <T> T required(T value, String name) {
+    if (value == null) {
+      throw new IllegalStateException("Required field '" + name + "' is not set");
+    }
+    return value;
+  }
+
   private record Named(String label, Product<EquityMarket> body) implements Product<EquityMarket> {
+
     @Override
     public void record(AadRecorder rec, Nabla.Inputs<EquityMarket> in, TimeGrid grid) {
       body.record(rec, in, grid);

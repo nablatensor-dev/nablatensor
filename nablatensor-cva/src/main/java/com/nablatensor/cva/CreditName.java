@@ -15,6 +15,8 @@
  */
 package com.nablatensor.cva;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A credit name — the counterparty of a netting set or the reference of a CDS
  * hedge — with the curve that drives its default and the rating / sector keys
@@ -26,13 +28,52 @@ package com.nablatensor.cva;
  * @param rating   credit-quality bucket for the BA-CVA risk weight
  * @param sector   sector bucket for the BA-CVA risk weight and SA-CVA correlations
  */
-public record CreditName(String id, HazardCurve curve, double recovery,
-                         Rating rating, Sector sector) {
+@Of
+public final class CreditName {
 
-  public CreditName {
+  private final String id;
+  private final HazardCurve curve;
+  private final double recovery;
+  private final RatingEnum rating;
+  private final SectorEnum sector;
+  static CreditName create(String id, HazardCurve curve, double recovery, RatingEnum rating, SectorEnum sector) {
+    return new CreditName(id, curve, recovery, rating, sector);
+  }
+
+  public static CreditNameBuilder of() {
+    return new CreditNameBuilder();
+  }
+
+  public String id() {
+    return id;
+  }
+
+  public HazardCurve curve() {
+    return curve;
+  }
+
+  public double recovery() {
+    return recovery;
+  }
+
+  public RatingEnum rating() {
+    return rating;
+  }
+
+  public SectorEnum sector() {
+    return sector;
+  }
+
+
+  private CreditName(String id, HazardCurve curve, double recovery, RatingEnum rating, SectorEnum sector) {
     if (!(recovery >= 0.0 && recovery < 1.0)) {
       throw new IllegalArgumentException("recovery must be in [0, 1), got " + recovery);
     }
+    this.id = id;
+    this.curve = curve;
+    this.recovery = recovery;
+    this.rating = rating;
+    this.sector = sector;
   }
 
   public double lossGivenDefault() {
@@ -40,7 +81,7 @@ public record CreditName(String id, HazardCurve curve, double recovery,
   }
 
   /** Credit-quality buckets used by the BA-CVA risk-weight table (MAR50.5). */
-  public enum Rating {
+  public enum RatingEnum {
     /** Prime — highest credit quality. */
     AAA,
     /** High grade. */
@@ -59,8 +100,8 @@ public record CreditName(String id, HazardCurve curve, double recovery,
     UNRATED
   }
 
-  /** Sector buckets used by the BA-CVA risk weights and the SA-CVA correlations. */
-  public enum Sector {
+  /** SectorEnum buckets used by the BA-CVA risk weights and the SA-CVA correlations. */
+  public enum SectorEnum {
     /** Central governments and central banks. */
     SOVEREIGN,
     /** Regional and local governments, and government-backed non-financial entities. */

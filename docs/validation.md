@@ -23,7 +23,7 @@ assert report.passed();
 
 It does two things:
 
-1. **Backend reproduction.** Replays on every engine this machine can run and
+1. **BackendEnum reproduction.** Replays on every engine this machine can run and
    diffs price and each gradient against the oracle (relative, divided by
    `1 + |oracle|`).
 2. **Adjoint cross-check.** Central bump-and-revalue on the oracle, run with

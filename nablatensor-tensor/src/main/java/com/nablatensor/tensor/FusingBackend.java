@@ -45,7 +45,7 @@ final class FusingBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceType deviceType() {
+  public DeviceTypeEnum deviceType() {
     return delegate.deviceType();
   }
 
@@ -65,7 +65,7 @@ final class FusingBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceBuffer upload(float[] data, Shape shape, DType dtype, Device device) {
+  public DeviceBuffer upload(float[] data, Shape shape, DTypeEnum dtype, Device device) {
     return leaf(delegate.upload(data, shape, dtype, device));
   }
 
@@ -75,7 +75,7 @@ final class FusingBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceBuffer binary(Op op, DeviceBuffer a, DeviceBuffer b) {
+  public DeviceBuffer binary(OpEnum op, DeviceBuffer a, DeviceBuffer b) {
     ExprBuffer left = traced(a);
     ExprBuffer right = traced(b);
     Merged merged = merge(left, right);
@@ -84,13 +84,13 @@ final class FusingBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceBuffer scalar(Op op, DeviceBuffer a, double value) {
+  public DeviceBuffer scalar(OpEnum op, DeviceBuffer a, double value) {
     ExprBuffer in = traced(a);
     return new ExprBuffer(new Expr.Scalar(op, in.expr(), value), in.leaves(), in.shape(), in.dtype(), in.device());
   }
 
   @Override
-  public DeviceBuffer unary(Op op, DeviceBuffer a) {
+  public DeviceBuffer unary(OpEnum op, DeviceBuffer a) {
     ExprBuffer in = traced(a);
     return new ExprBuffer(new Expr.Unary(op, in.expr()), in.leaves(), in.shape(), in.dtype(), in.device());
   }

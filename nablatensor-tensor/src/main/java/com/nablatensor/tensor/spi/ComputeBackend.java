@@ -16,10 +16,10 @@
 package com.nablatensor.tensor.spi;
 
 import com.nablatensor.tensor.ConvSpec;
-import com.nablatensor.tensor.DType;
+import com.nablatensor.tensor.DTypeEnum;
 import com.nablatensor.tensor.Device;
-import com.nablatensor.tensor.DeviceType;
-import com.nablatensor.tensor.Op;
+import com.nablatensor.tensor.DeviceTypeEnum;
+import com.nablatensor.tensor.OpEnum;
 import com.nablatensor.tensor.Shape;
 import com.nablatensor.tensor.expr.Expr;
 
@@ -39,15 +39,15 @@ public interface ComputeBackend {
 
   String name();
 
-  DeviceType deviceType();
+  DeviceTypeEnum deviceType();
 
   /** Whether this backend can run on the current machine (drivers/GPU present). */
   boolean isAvailable();
 
-  /** Higher wins when {@code Backend.AUTO} selects a default (CUDA &gt; Vulkan &gt; ROCm &gt; CPU). */
+  /** Higher wins when {@code BackendEnum.AUTO} selects a default (CUDA &gt; Vulkan &gt; ROCm &gt; CPU). */
   int priority();
 
-  DeviceBuffer upload(float[] data, Shape shape, DType dtype, Device device);
+  DeviceBuffer upload(float[] data, Shape shape, DTypeEnum dtype, Device device);
 
   /** Deterministic counter-based uniform values in {@code [0, 1)}. */
   default DeviceBuffer randomUniform(long seed, long counter, Shape shape, Device device) {
@@ -56,7 +56,7 @@ public interface ComputeBackend {
     for (int i = 0; i < size; i++) {
       values[i] = uniform(seed, counter + i);
     }
-    return upload(values, shape, DType.F32, device);
+    return upload(values, shape, DTypeEnum.F32, device);
   }
 
   /** Deterministic counter-based standard-normal values generated with Box-Muller. */
@@ -68,16 +68,16 @@ public interface ComputeBackend {
       float u2 = uniform(seed, counter + 2L * i + 1);
       values[i] = (float) (Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2));
     }
-    return upload(values, shape, DType.F32, device);
+    return upload(values, shape, DTypeEnum.F32, device);
   }
 
   float[] download(DeviceBuffer buffer);
 
-  DeviceBuffer binary(Op op, DeviceBuffer a, DeviceBuffer b);
+  DeviceBuffer binary(OpEnum op, DeviceBuffer a, DeviceBuffer b);
 
-  DeviceBuffer scalar(Op op, DeviceBuffer a, double value);
+  DeviceBuffer scalar(OpEnum op, DeviceBuffer a, double value);
 
-  DeviceBuffer unary(Op op, DeviceBuffer a);
+  DeviceBuffer unary(OpEnum op, DeviceBuffer a);
 
   DeviceBuffer transpose(DeviceBuffer a);
 

@@ -43,8 +43,8 @@ say "Seven risk classes, 89 buckets. Every bucket carries a delta risk weight,"
 say "a vega risk weight, a within-bucket rho and an across-bucket gamma."
 
 run <<'CODE'
-var eqTable = params.tables().get(RiskClass.EQUITY);
-for (var rc : RiskClass.values()) {
+var eqTable = params.tables().get(RiskClassEnum.EQUITY);
+for (var rc : RiskClassEnum.values()) {
   System.out.printf(Locale.ROOT, "   %-12s %2d buckets%n",
       rc, params.tables().get(rc).size());
 }
@@ -143,8 +143,8 @@ say "WS = RW x s, aggregated inside each bucket, then across buckets. FRTB"
 say "runs that three times and keeps whichever correlation scenario hurts most."
 
 run <<'CODE'
-var eqDelta = netted.ofClass(RiskClass.EQUITY).ofMeasure(RiskMeasure.DELTA);
-for (var sc : CorrelationScenario.values()) {
+var eqDelta = netted.ofClass(RiskClassEnum.EQUITY).ofMeasure(RiskMeasureEnum.DELTA);
+for (var sc : CorrelationScenarioEnum.values()) {
   var agg = NestedAggregation.delta(
       k -> eqTable.get(k.bucket()).deltaRw(),
       (k, l) -> k.equals(l) ? 1.0 : sc.apply(eqTable.get(k.bucket()).rho()),
@@ -160,12 +160,12 @@ void scen(String label, MeasureCapital m) {
   var s = m.scenarios();
   System.out.printf(Locale.ROOT, "     %s L %8.3f  M %8.3f  H %8.3f  -> %s%n",
       silver(String.format("%-9s", label)),
-      s.get(CorrelationScenario.LOW), s.get(CorrelationScenario.MEDIUM),
-      s.get(CorrelationScenario.HIGH),
+      s.get(CorrelationScenarioEnum.LOW), s.get(CorrelationScenarioEnum.MEDIUM),
+      s.get(CorrelationScenarioEnum.HIGH),
       green(String.format("%-6s %.3f", m.selected(), m.total())));
 }
 var capital = FrtbFullShowcase.aggregate(params, netted);
-for (var rc : RiskClass.values()) {
+for (var rc : RiskClassEnum.values()) {
   var c = capital.byClass().get(rc);
   System.out.println(cyan("   " + rc));
   scen("delta", c.delta());

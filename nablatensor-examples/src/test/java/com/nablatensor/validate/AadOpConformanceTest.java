@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.nablatensor.engine.AadEngine;
 import com.nablatensor.engine.AadEngines;
-import com.nablatensor.engine.AadOp;
+import com.nablatensor.engine.AadOpEnum;
 import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.AadResult;
@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * Every {@link AadOp} must be handled by every backend that claims to run here:
+ * Every {@link AadOpEnum} must be handled by every backend that claims to run here:
  * a tape that exercises the whole op set (both random kinds included) is
  * compiled on each available engine and its price and gradient are diffed
  * against the {@code cpu} scalar oracle. A backend that has not grown native
@@ -62,16 +62,16 @@ class AadOpConformanceTest {
 
   @Test
   void everyAadOpIsExercisedByThisTape() {
-    Set<AadOp> touched = EnumSet.of(
-        AadOp.CONST, AadOp.INPUT, AadOp.RANDN, AadOp.RANDU, AadOp.ADD, AadOp.SUB, AadOp.MUL,
-        AadOp.DIV, AadOp.NEG, AadOp.EXP, AadOp.LOG, AadOp.SQRT, AadOp.ABS, AadOp.MAX, AadOp.MIN);
-    Set<AadOp> missing = EnumSet.allOf(AadOp.class);
+    Set<AadOpEnum> touched = EnumSet.of(
+        AadOpEnum.CONST, AadOpEnum.INPUT, AadOpEnum.RANDN, AadOpEnum.RANDU, AadOpEnum.ADD, AadOpEnum.SUB, AadOpEnum.MUL,
+        AadOpEnum.DIV, AadOpEnum.NEG, AadOpEnum.EXP, AadOpEnum.LOG, AadOpEnum.SQRT, AadOpEnum.ABS, AadOpEnum.MAX, AadOpEnum.MIN);
+    Set<AadOpEnum> missing = EnumSet.allOf(AadOpEnum.class);
     missing.removeAll(touched);
     assertTrue(missing.isEmpty(),
-        "AadOp added without extending the conformance tape / every backend: " + missing);
+        "AadOpEnum added without extending the conformance tape / every backend: " + missing);
 
     AadTape tape = AadRecorder.record(AadOpConformanceTest::everyOp);
-    Set<AadOp> onTape = EnumSet.noneOf(AadOp.class);
+    Set<AadOpEnum> onTape = EnumSet.noneOf(AadOpEnum.class);
     for (int i = 0; i < tape.size(); i++) {
       onTape.add(tape.op(i));
     }
@@ -80,7 +80,7 @@ class AadOpConformanceTest {
 
   @Test
   void everyAvailableBackendMatchesTheOracleOrDeclines() {
-    AadOptions fp64 = new AadOptions(AadOptions.Precision.FLOAT64, true);
+    AadOptions fp64 = AadOptions.of().precision(AadOptions.PrecisionEnum.FLOAT64).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build();
     AadTape tape = AadRecorder.record(AadOpConformanceTest::everyOp);
 
     AadEngine cpu = AadEngines.require("cpu", fp64);

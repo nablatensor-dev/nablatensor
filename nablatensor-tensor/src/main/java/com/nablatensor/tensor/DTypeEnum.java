@@ -15,14 +15,34 @@
  */
 package com.nablatensor.tensor;
 
-/** Kinds of compute devices nablatensor can target. */
-public enum DeviceType {
-  /** Host CPU (scalar or SIMD). */
-  CPU,
-  /** NVIDIA GPU via CUDA. */
-  CUDA,
-  /** AMD GPU via ROCm/HIP. */
-  ROCM,
-  /** Any GPU via a Vulkan compute backend. */
-  VULKAN
+/** Numeric element types supported by nablatensor tensors. */
+public enum DTypeEnum {
+  /** 32-bit IEEE-754 float. */
+  F32(4),
+  /** 64-bit IEEE-754 float. */
+  F64(8),
+  /** 16-bit IEEE-754 half float. */
+  F16(2),
+  /** 8-bit signed integer. */
+  I8(1),
+  /** 32-bit signed integer. */
+  I32(4),
+  /** 64-bit signed integer. */
+  I64(8),
+  /** Boolean, stored in one byte. */
+  BOOL(1);
+
+  private final int bytes;
+
+  DTypeEnum(int bytes) {
+    this.bytes = bytes;
+  }
+
+  public int byteSize() {
+    return bytes;
+  }
+
+  public boolean isFloating() {
+    return this == F32 || this == F64 || this == F16;
+  }
 }

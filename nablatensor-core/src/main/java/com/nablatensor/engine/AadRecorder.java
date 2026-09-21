@@ -44,7 +44,7 @@ public final class AadRecorder {
     return recorder.builder.build();
   }
 
-  ADouble node(AadOp op, int a, int b) {
+  ADouble node(AadOpEnum op, int a, int b) {
     return new ADouble(this, builder.add(op, a, b, 0.0));
   }
 
@@ -54,7 +54,7 @@ public final class AadRecorder {
   }
 
   public ADouble constant(double value) {
-    return new ADouble(this, builder.add(AadOp.CONST, -1, -1, value));
+    return new ADouble(this, builder.add(AadOpEnum.CONST, -1, -1, value));
   }
 
   /**

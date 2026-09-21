@@ -18,6 +18,8 @@ package com.nablatensor.validate;
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.MonteCarlo;
 import com.nablatensor.quant.Product;
+import java.util.function.BiFunction;
+import java.util.function.ToDoubleFunction;
 
 /**
  * Central bump-and-revalue on the scalar oracle, run with common random numbers
@@ -34,20 +36,14 @@ public record BumpCrossCheck(EquityMarket adjoint, EquityMarket bump, EquityMark
     try (MonteCarlo<EquityMarket> price = configure(MonteCarlo.of(product)
         .market(market).steps(steps).priceOnly().on("cpu"), fp32).build()) {
 
-      double[] base = {market.spot(), market.strike(), market.vol(), market.rate(), market.maturity()};
-      double[] grad = new double[5];
-      for (int i = 0; i < 5; i++) {
-        double h = relativeBump * Math.max(1.0, Math.abs(base[i]));
-        grad[i] = (price.run(shift(market, i, h), scenarios, seed).price()
-                 - price.run(shift(market, i, -h), scenarios, seed).price()) / (2 * h);
+      double[] grad = new double[EquityFactorEnum.values().length];
+      for (EquityFactorEnum factor : EquityFactorEnum.values()) {
+        double h = relativeBump * Math.max(1.0, Math.abs(factor.value.applyAsDouble(market)));
+        grad[factor.ordinal()] = (price.run(factor.bump.apply(market, h), scenarios, seed).price()
+            - price.run(factor.bump.apply(market, -h), scenarios, seed).price()) / (2 * h);
       }
-      EquityMarket bumpGreeks = new EquityMarket(grad[0], grad[1], grad[2], grad[3], grad[4]);
-      EquityMarket diff = new EquityMarket(
-          Math.abs(grad[0] - adjointGreeks.spot()),
-          Math.abs(grad[1] - adjointGreeks.strike()),
-          Math.abs(grad[2] - adjointGreeks.vol()),
-          Math.abs(grad[3] - adjointGreeks.rate()),
-          Math.abs(grad[4] - adjointGreeks.maturity()));
+      EquityMarket bumpGreeks = EquityMarket.of().spot(grad[0]).strike(grad[1]).vol(grad[2]).rate(grad[3]).maturity(grad[4]).build();
+      EquityMarket diff = EquityMarket.of().spot(Math.abs(grad[0] - adjointGreeks.spot())).strike(Math.abs(grad[1] - adjointGreeks.strike())).vol(Math.abs(grad[2] - adjointGreeks.vol())).rate(Math.abs(grad[3] - adjointGreeks.rate())).maturity(Math.abs(grad[4] - adjointGreeks.maturity())).build();
       return new BumpCrossCheck(adjointGreeks, bumpGreeks, diff, relativeBump);
     }
   }
@@ -56,15 +52,21 @@ public record BumpCrossCheck(EquityMarket adjoint, EquityMarket bump, EquityMark
     return fp32 ? b.fp32() : b.fp64();
   }
 
-  private static EquityMarket shift(EquityMarket m, int component, double h) {
-    return switch (component) {
-      case 0 -> m.withSpot(m.spot() + h);
-      case 1 -> m.withStrike(m.strike() + h);
-      case 2 -> m.withVol(m.vol() + h);
-      case 3 -> m.withRate(m.rate() + h);
-      case 4 -> m.withMaturity(m.maturity() + h);
-      default -> throw new IllegalArgumentException("component " + component);
-    };
+  private enum EquityFactorEnum {
+    SPOT(EquityMarket::spot, (market, bump) -> market.withSpot(market.spot() + bump)),
+    STRIKE(EquityMarket::strike, (market, bump) -> market.withStrike(market.strike() + bump)),
+    VOL(EquityMarket::vol, (market, bump) -> market.withVol(market.vol() + bump)),
+    RATE(EquityMarket::rate, (market, bump) -> market.withRate(market.rate() + bump)),
+    MATURITY(EquityMarket::maturity, (market, bump) -> market.withMaturity(market.maturity() + bump));
+
+    private final ToDoubleFunction<EquityMarket> value;
+    private final BiFunction<EquityMarket, Double, EquityMarket> bump;
+
+    EquityFactorEnum(ToDoubleFunction<EquityMarket> value,
+                    BiFunction<EquityMarket, Double, EquityMarket> bump) {
+      this.value = value;
+      this.bump = bump;
+    }
   }
 
   public double maxAbsDiff() {

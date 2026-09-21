@@ -16,10 +16,10 @@
 package com.nablatensor.backend.vulkan;
 
 import com.nablatensor.tensor.ConvSpec;
-import com.nablatensor.tensor.DType;
+import com.nablatensor.tensor.DTypeEnum;
 import com.nablatensor.tensor.Device;
-import com.nablatensor.tensor.DeviceType;
-import com.nablatensor.tensor.Op;
+import com.nablatensor.tensor.DeviceTypeEnum;
+import com.nablatensor.tensor.OpEnum;
 import com.nablatensor.tensor.Shape;
 import com.nablatensor.tensor.expr.Expr;
 import com.nablatensor.tensor.spi.AxisReduction;
@@ -69,8 +69,8 @@ public final class VulkanBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceType deviceType() {
-    return DeviceType.VULKAN;
+  public DeviceTypeEnum deviceType() {
+    return DeviceTypeEnum.VULKAN;
   }
 
   @Override
@@ -119,10 +119,10 @@ public final class VulkanBackend implements ComputeBackend {
   // ---- data movement ---------------------------------------------------------
 
   @Override
-  public DeviceBuffer upload(float[] data, Shape shape, DType dtype, Device device) {
+  public DeviceBuffer upload(float[] data, Shape shape, DTypeEnum dtype, Device device) {
     ensureInitialized();
     requireVulkanDevice(device);
-    if (dtype != DType.F32) {
+    if (dtype != DTypeEnum.F32) {
       throw new UnsupportedOperationException("Vulkan float upload supports F32 only, got " + dtype);
     }
     long[] handles = VulkanRuntime.alloc(Math.max(4L, (long) data.length * Float.BYTES));
@@ -141,7 +141,7 @@ public final class VulkanBackend implements ComputeBackend {
   // ---- elementwise ---------------------------------------------------------
 
   @Override
-  public DeviceBuffer binary(Op op, DeviceBuffer a, DeviceBuffer b) {
+  public DeviceBuffer binary(OpEnum op, DeviceBuffer a, DeviceBuffer b) {
     ensureInitialized();
     VulkanBuffer left = vk(a);
     VulkanBuffer right = vk(b);
@@ -156,7 +156,7 @@ public final class VulkanBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceBuffer scalar(Op op, DeviceBuffer a, double value) {
+  public DeviceBuffer scalar(OpEnum op, DeviceBuffer a, double value) {
     ensureInitialized();
     VulkanBuffer left = vk(a);
     int n = left.count();
@@ -167,7 +167,7 @@ public final class VulkanBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceBuffer unary(Op op, DeviceBuffer a) {
+  public DeviceBuffer unary(OpEnum op, DeviceBuffer a) {
     ensureInitialized();
     VulkanBuffer left = vk(a);
     int n = left.count();
@@ -294,7 +294,7 @@ public final class VulkanBackend implements ComputeBackend {
     return Float.toString(f);   // always contains '.' or an exponent -> a valid GLSL float
   }
 
-  private static String glslBinary(Op op, String l, String r) {
+  private static String glslBinary(OpEnum op, String l, String r) {
     return switch (op) {
       case ADD -> "(" + l + " + " + r + ")";
       case SUB -> "(" + l + " - " + r + ")";
@@ -308,7 +308,7 @@ public final class VulkanBackend implements ComputeBackend {
     };
   }
 
-  private static String glslUnary(Op op, String x) {
+  private static String glslUnary(OpEnum op, String x) {
     return switch (op) {
       case NEG -> "(-" + x + ")";
       case EXP -> "exp(" + x + ")";
@@ -546,9 +546,9 @@ public final class VulkanBackend implements ComputeBackend {
   // ---- helpers -----------------------------------------------------------
 
   private VulkanBuffer alloc(Shape shape) {
-    long bytes = Math.max(4L, Math.multiplyExact(shape.size(), (long) DType.F32.byteSize()));
+    long bytes = Math.max(4L, Math.multiplyExact(shape.size(), (long) DTypeEnum.F32.byteSize()));
     long[] handles = VulkanRuntime.alloc(bytes);
-    return new VulkanBuffer(handles[0], handles[1], shape, DType.F32, Device.vulkan());
+    return new VulkanBuffer(handles[0], handles[1], shape, DTypeEnum.F32, Device.vulkan());
   }
 
   private static int grid(int n) {
@@ -566,7 +566,7 @@ public final class VulkanBackend implements ComputeBackend {
       throw new IllegalArgumentException("matmul operands must use the same device and dtype");
     }
     requireVulkanDevice(left.device());
-    if (left.dtype() != DType.F32) {
+    if (left.dtype() != DTypeEnum.F32) {
       throw new UnsupportedOperationException("Vulkan matmul supports F32 only, got " + left.dtype());
     }
   }

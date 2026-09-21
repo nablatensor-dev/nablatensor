@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A Kou (2002) double-exponential jump-diffusion market: like {@link MertonJumpMarket}
  * but the log jump size is asymmetric two-sided exponential — up-jumps are
@@ -34,8 +36,74 @@ package com.nablatensor.quant;
  * @param etaUp         rate of the upward exponential ({@code > 1})
  * @param etaDown       rate of the downward exponential
  */
-public record KouMarket(double spot, double strike, double vol, double rate, double maturity,
-                        double jumpIntensity, double probUp, double etaUp, double etaDown) {
+@Of
+public final class KouMarket {
+
+  private KouMarket(double spot, double strike, double vol, double rate, double maturity, double jumpIntensity, double probUp, double etaUp, double etaDown) {
+    this.spot = spot;
+    this.strike = strike;
+    this.vol = vol;
+    this.rate = rate;
+    this.maturity = maturity;
+    this.jumpIntensity = jumpIntensity;
+    this.probUp = probUp;
+    this.etaUp = etaUp;
+    this.etaDown = etaDown;
+  }
+
+  private final double spot;
+  private final double strike;
+  private final double vol;
+  private final double rate;
+  private final double maturity;
+  private final double jumpIntensity;
+  private final double probUp;
+  private final double etaUp;
+  private final double etaDown;
+  static KouMarket create(double spot, double strike, double vol, double rate, double maturity, double jumpIntensity, double probUp, double etaUp, double etaDown) {
+    return new KouMarket(spot, strike, vol, rate, maturity, jumpIntensity, probUp, etaUp, etaDown);
+  }
+
+  public static KouMarketBuilder of() {
+    return new KouMarketBuilder();
+  }
+
+  public double spot() {
+    return spot;
+  }
+
+  public double strike() {
+    return strike;
+  }
+
+  public double vol() {
+    return vol;
+  }
+
+  public double rate() {
+    return rate;
+  }
+
+  public double maturity() {
+    return maturity;
+  }
+
+  public double jumpIntensity() {
+    return jumpIntensity;
+  }
+
+  public double probUp() {
+    return probUp;
+  }
+
+  public double etaUp() {
+    return etaUp;
+  }
+
+  public double etaDown() {
+    return etaDown;
+  }
+
 
   public KouMarket validated() {
     if (!(spot > 0 && strike > 0 && vol >= 0 && maturity >= 0 && jumpIntensity >= 0
@@ -46,6 +114,6 @@ public record KouMarket(double spot, double strike, double vol, double rate, dou
   }
 
   public static KouMarket base() {
-    return new KouMarket(100.0, 100.0, 0.16, 0.03, 1.0, 1.0, 0.4, 10.0, 5.0);
+    return KouMarket.of().spot(100.0).strike(100.0).vol(0.16).rate(0.03).maturity(1.0).jumpIntensity(1.0).probUp(0.4).etaUp(10.0).etaDown(5.0).build();
   }
 }

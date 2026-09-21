@@ -46,7 +46,11 @@ public class SabrModel {
   private final double dt;
   private final double sqrtDt;
 
-  public SabrModel(Nabla.Inputs<SabrMarket> in, double maturity, int steps) {
+  public static SabrModel of(Nabla.Inputs<SabrMarket> in, double maturity, int steps) {
+    return new SabrModel(in, maturity, steps);
+  }
+
+  protected SabrModel(Nabla.Inputs<SabrMarket> in, double maturity, int steps) {
     this.beta = in.of(SabrMarket::beta);
     this.nu = in.of(SabrMarket::nu);
     this.rho = in.of(SabrMarket::rho);
@@ -75,15 +79,15 @@ public class SabrModel {
 
   /** European call/put on the terminal forward, discounted at the flat rate. */
   public static BiConsumer<AadRecorder, Nabla.Inputs<SabrMarket>> european(
-      OptionType type, double maturity, int steps) {
+      OptionTypeEnum type, double maturity, int steps) {
     return (rec, in) -> {
-      SabrModel m = new SabrModel(in, maturity, steps);
+      SabrModel m = SabrModel.of(in, maturity, steps);
       State s = m.start(in);
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn(), rec.randn());
       }
       ADouble k = in.of(SabrMarket::strike);
-      ADouble intrinsic = type == OptionType.CALL
+      ADouble intrinsic = type == OptionTypeEnum.CALL
           ? s.forward().sub(k).max(0.0)
           : k.sub(s.forward()).max(0.0);
       ADouble discount = in.of(SabrMarket::rate).neg().mul(maturity).exp();

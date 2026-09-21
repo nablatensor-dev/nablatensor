@@ -15,8 +15,10 @@
  */
 package com.nablatensor.lattice;
 
+import com.nablatensor.codegen.Of;
+
 import com.nablatensor.lattice.LatticePayoff.ExerciseSchedule;
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 
 /**
  * Greeks from a binomial tree. {@link #delta} and {@link #gamma} are read
@@ -28,8 +30,57 @@ import com.nablatensor.quant.OptionType;
  * <p>This is the tree engine's answer to the adjoint sweep: there is no tape, so
  * the sensitivities come from the lattice geometry and small rebuilds instead.
  */
-public record LatticeGreeks(double price, double delta, double gamma,
-                            double vega, double rho, double theta) {
+@Of
+public final class LatticeGreeks {
+
+  private final double price;
+  private final double delta;
+  private final double gamma;
+  private final double vega;
+  private final double rho;
+  private final double theta;
+
+  private LatticeGreeks(double price, double delta, double gamma, double vega, double rho, double theta) {
+    this.price = price;
+    this.delta = delta;
+    this.gamma = gamma;
+    this.vega = vega;
+    this.rho = rho;
+    this.theta = theta;
+  }
+
+  static LatticeGreeks create(double price, double delta, double gamma, double vega, double rho, double theta) {
+    return new LatticeGreeks(price, delta, gamma, vega, rho, theta);
+  }
+
+  public static LatticeGreeksBuilder of() {
+    return new LatticeGreeksBuilder();
+  }
+
+  public double price() {
+    return price;
+  }
+
+  public double delta() {
+    return delta;
+  }
+
+  public double gamma() {
+    return gamma;
+  }
+
+  public double vega() {
+    return vega;
+  }
+
+  public double rho() {
+    return rho;
+  }
+
+  public double theta() {
+    return theta;
+  }
+
 
   /**
    * @param spot     spot
@@ -44,9 +95,9 @@ public record LatticeGreeks(double price, double delta, double gamma,
    * @param schedule European / American / Bermudan exercise
    */
   public static LatticeGreeks vanilla(double spot, double rate, double dividend, double vol,
-                                      double maturity, int steps, BinomialTree.Method method,
-                                      OptionType type, double strike, ExerciseSchedule schedule) {
-    BinomialTree tree = BinomialTree.of(spot, rate, dividend, vol, maturity, steps, method);
+                                      double maturity, int steps, BinomialTree.MethodEnum method,
+                                      OptionTypeEnum type, double strike, ExerciseSchedule schedule) {
+    BinomialTree tree = BinomialTree.of().spot(spot).rate(rate).dividendYield(dividend).vol(vol).maturity(maturity).steps(steps).method(method).build();
     double price = tree.priceVanilla(type, strike, schedule);
 
     double[] v1 = tree.slice1();
@@ -76,13 +127,13 @@ public record LatticeGreeks(double price, double delta, double gamma,
     double thetaDn = price(spot, rate, dividend, vol, maturity - ht, steps, method, type, strike, schedule);
     double theta = (thetaUp - thetaDn) / (2 * ht);
 
-    return new LatticeGreeks(price, delta, gamma, vega, rho, theta);
+    return LatticeGreeks.of().price(price).delta(delta).gamma(gamma).vega(vega).rho(rho).theta(theta).build();
   }
 
   private static double price(double spot, double rate, double dividend, double vol, double maturity,
-                              int steps, BinomialTree.Method method, OptionType type, double strike,
+                              int steps, BinomialTree.MethodEnum method, OptionTypeEnum type, double strike,
                               ExerciseSchedule schedule) {
-    return BinomialTree.of(spot, rate, dividend, vol, maturity, steps, method)
+    return BinomialTree.of().spot(spot).rate(rate).dividendYield(dividend).vol(vol).maturity(maturity).steps(steps).method(method).build()
         .priceVanilla(type, strike, schedule);
   }
 }

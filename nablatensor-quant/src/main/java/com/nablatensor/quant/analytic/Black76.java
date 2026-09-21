@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant.analytic;
 
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 
 /**
  * Black's model (1976) — a European option on a forward or futures price
@@ -36,11 +36,6 @@ public final class Black76 {
   private Black76() {
   }
 
-  /** Undiscounted-forward price: {@code r = 0}, so the discount factor is 1. */
-  public static AnalyticGreeks of(OptionType type, double forward, double strike, double maturity, double vol) {
-    return of(type, forward, strike, maturity, 0.0, vol);
-  }
-
   /**
    * @param forward  forward / futures price {@code F}
    * @param strike   strike {@code K}
@@ -48,13 +43,30 @@ public final class Black76 {
    * @param rate     continuously-compounded discount rate {@code r}
    * @param vol      lognormal volatility of the forward {@code sigma}
    */
-  public static AnalyticGreeks of(OptionType type, double forward, double strike, double maturity,
+  private static AnalyticGreeks calculate(OptionTypeEnum type, double forward, double strike, double maturity,
                                   double rate, double vol) {
     return CostOfCarry.greeksCarryFixed(type, forward, strike, maturity, rate, 0.0, vol);
   }
 
+
+  /** Starts a Black-76 calculation; the discount rate defaults to zero. */
+  public static Builder of() { return new Builder(); }
+  public static final class Builder {
+    private OptionTypeEnum type; private Double forward, strike, maturity, vol; private double rate;
+    private Builder() {}
+    public Builder type(OptionTypeEnum v) { type=v; return this; }
+    public Builder forward(double v) { forward=v; return this; }
+    public Builder strike(double v) { strike=v; return this; }
+    public Builder maturity(double v) { maturity=v; return this; }
+    public Builder rate(double v) { rate=v; return this; }
+    public Builder vol(double v) { vol=v; return this; }
+    public AnalyticGreeks build() { return calculate(req(type,"type"),req(forward,"forward"),req(strike,"strike"),
+        req(maturity,"maturity"),rate,req(vol,"vol")); }
+  }
+  private static <T> T req(T v,String n) { if(v==null) throw new IllegalStateException("Required field "+n+" is not set"); return v; }
+
   /** Bare price without the {@link AnalyticGreeks} wrapper. */
-  public static double price(OptionType type, double forward, double strike, double maturity,
+  public static double price(OptionTypeEnum type, double forward, double strike, double maturity,
                              double rate, double vol) {
     return CostOfCarry.price(type, forward, strike, maturity, rate, 0.0, vol);
   }

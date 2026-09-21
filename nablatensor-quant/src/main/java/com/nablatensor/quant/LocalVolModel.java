@@ -43,7 +43,11 @@ public class LocalVolModel {
   private final double dt;
   private final double sqrtDt;
 
-  public LocalVolModel(Nabla.Inputs<LocalVolMarket> in, double refSpot, double maturity, int steps) {
+  public static LocalVolModel of(Nabla.Inputs<LocalVolMarket> in, double refSpot, double maturity, int steps) {
+    return new LocalVolModel(in, refSpot, maturity, steps);
+  }
+
+  protected LocalVolModel(Nabla.Inputs<LocalVolMarket> in, double refSpot, double maturity, int steps) {
     this.rate = in.of(LocalVolMarket::rate);
     this.sigma0 = in.of(LocalVolMarket::sigma0);
     this.skew = in.of(LocalVolMarket::skew);
@@ -64,15 +68,15 @@ public class LocalVolModel {
   }
 
   public static BiConsumer<AadRecorder, Nabla.Inputs<LocalVolMarket>> european(
-      OptionType type, double maturity, int steps) {
+      OptionTypeEnum type, double maturity, int steps) {
     return (rec, in) -> {
-      LocalVolModel m = new LocalVolModel(in, LocalVolMarket.REF_SPOT, maturity, steps);
+      LocalVolModel m = LocalVolModel.of(in, LocalVolMarket.REF_SPOT, maturity, steps);
       ADouble s = in.of(LocalVolMarket::spot);
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn());
       }
       ADouble k = in.of(LocalVolMarket::strike);
-      ADouble intrinsic = type == OptionType.CALL ? s.sub(k).max(0.0) : k.sub(s).max(0.0);
+      ADouble intrinsic = type == OptionTypeEnum.CALL ? s.sub(k).max(0.0) : k.sub(s).max(0.0);
       rec.output(intrinsic.mul(in.of(LocalVolMarket::rate).neg().mul(maturity).exp()));
     };
   }

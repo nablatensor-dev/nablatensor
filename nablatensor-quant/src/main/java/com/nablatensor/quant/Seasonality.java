@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A deterministic annual seasonality function for a commodity log-forward curve:
  * a sum of harmonics of the yearly cycle,
@@ -27,14 +29,36 @@ package com.nablatensor.quant;
  * coefficients are fitted once to the observed forward curve on the host and
  * then held fixed (not differentiated).
  */
-public record Seasonality(double[] aCos, double[] aSin) {
+@Of
+public final class Seasonality {
 
-  public Seasonality {
+  private final double[] aCos;
+  private final double[] aSin;
+  static Seasonality create(double[] aCos, double[] aSin) {
+    return new Seasonality(aCos, aSin);
+  }
+
+  public static SeasonalityBuilder of() {
+    return new SeasonalityBuilder();
+  }
+
+  public double[] aCos() {
+    return aCos.clone();
+  }
+
+  public double[] aSin() {
+    return aSin.clone();
+  }
+
+
+  private Seasonality(double[] aCos, double[] aSin) {
     if (aCos.length != aSin.length) {
       throw new IllegalArgumentException("aCos and aSin must have the same length");
     }
     aCos = aCos.clone();
     aSin = aSin.clone();
+    this.aCos = aCos;
+    this.aSin = aSin;
   }
 
   public int harmonics() {
@@ -83,7 +107,7 @@ public record Seasonality(double[] aCos, double[] aSin) {
       c[k] = coef[2 * k];
       s[k] = coef[2 * k + 1];
     }
-    return new Seasonality(c, s);
+    return Seasonality.of().aCos(c).aSin(s).build();
   }
 
   private static double[] solveSpd(double[][] a, double[] b) {

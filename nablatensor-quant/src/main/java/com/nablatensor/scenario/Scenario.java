@@ -35,7 +35,7 @@ public record Scenario(String name, List<Shock> shocks) {
     Map<String, Double> out = new LinkedHashMap<>(base);
     for (Shock s : shocks) {
       double b = out.getOrDefault(s.input(), Double.NaN);
-      if (Double.isNaN(b) && s.kind() != Shock.Kind.ABSOLUTE) {
+      if (Double.isNaN(b) && s.kind() != Shock.KindEnum.ABSOLUTE) {
         throw new IllegalArgumentException(
             "scenario '" + name + "' shocks unknown input '" + s.input() + "' relatively/additively");
       }

@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nablatensor.lattice.LatticePayoff.ExerciseSchedule;
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import com.nablatensor.quant.analytic.AnalyticGreeks;
 import com.nablatensor.quant.analytic.GeneralizedBsm;
 import org.junit.jupiter.api.Test;
@@ -33,32 +33,32 @@ class BinomialTreeTest {
 
   private static final double S = 100, K = 100, R = 0.05, Q = 0.0, VOL = 0.20, T = 1.0;
 
-  private static double bs(OptionType type, double q) {
-    return GeneralizedBsm.of(type, S, K, T, R, q, VOL).price();
+  private static double bs(OptionTypeEnum type, double q) {
+    return GeneralizedBsm.of().type(type).spot(S).strike(K).maturity(T).rate(R).dividend(q).vol(VOL).build().price();
   }
 
   @Test
   void crrEuropeanConvergesToBlackScholes() {
-    double closed = bs(OptionType.CALL, Q);
-    double coarse = BinomialTree.of(S, R, Q, VOL, T, 25, BinomialTree.Method.CRR)
-        .priceVanilla(OptionType.CALL, K, ExerciseSchedule.EUROPEAN);
-    double fine = BinomialTree.of(S, R, Q, VOL, T, 2000, BinomialTree.Method.CRR)
-        .priceVanilla(OptionType.CALL, K, ExerciseSchedule.EUROPEAN);
+    double closed = bs(OptionTypeEnum.CALL, Q);
+    double coarse = BinomialTree.of().spot(S).rate(R).dividendYield(Q).vol(VOL).maturity(T).steps(25).method(BinomialTree.MethodEnum.CRR).build()
+        .priceVanilla(OptionTypeEnum.CALL, K, ExerciseSchedule.EUROPEAN);
+    double fine = BinomialTree.of().spot(S).rate(R).dividendYield(Q).vol(VOL).maturity(T).steps(2000).method(BinomialTree.MethodEnum.CRR).build()
+        .priceVanilla(OptionTypeEnum.CALL, K, ExerciseSchedule.EUROPEAN);
     assertTrue(Math.abs(fine - closed) < 5e-3, "CRR@2000 close to BSM, err " + Math.abs(fine - closed));
     assertTrue(Math.abs(fine - closed) < Math.abs(coarse - closed), "finer tree is closer");
 
-    ConvergenceTable ct = ConvergenceTable.crrVanilla(S, R, Q, VOL, T, OptionType.CALL, K,
+    ConvergenceTable ct = ConvergenceTable.crrVanilla(S, R, Q, VOL, T, OptionTypeEnum.CALL, K,
         ExerciseSchedule.EUROPEAN, new int[] {50, 100, 200, 400, 800});
     assertEquals(closed, ct.richardsonExtrapolated(), 2e-2, "Richardson extrapolation tightens the estimate");
   }
 
   @Test
   void leisenReimerConvergesSmoothlyAndFast() {
-    double closed = bs(OptionType.PUT, Q);
+    double closed = bs(OptionTypeEnum.PUT, Q);
     double prev = Double.NaN;
     for (int n : new int[] {21, 41, 81, 161}) {
-      double px = BinomialTree.of(S, R, Q, VOL, T, n, BinomialTree.Method.LEISEN_REIMER)
-          .priceVanilla(OptionType.PUT, K, ExerciseSchedule.EUROPEAN);
+      double px = BinomialTree.of().spot(S).rate(R).dividendYield(Q).vol(VOL).maturity(T).steps(n).method(BinomialTree.MethodEnum.LEISEN_REIMER).build()
+          .priceVanilla(OptionTypeEnum.PUT, K, ExerciseSchedule.EUROPEAN);
       if (!Double.isNaN(prev)) {
         assertTrue(Math.abs(px - closed) <= Math.abs(prev - closed) + 1e-9, "monotone (non-oscillating) convergence");
       }
@@ -70,9 +70,9 @@ class BinomialTreeTest {
   @Test
   void europeanPutCallParityHoldsOnTheTree() {
     double q = 0.03;
-    BinomialTree tree = BinomialTree.of(S, R, q, VOL, T, 600, BinomialTree.Method.CRR);
-    double call = tree.priceVanilla(OptionType.CALL, K, ExerciseSchedule.EUROPEAN);
-    double put = tree.priceVanilla(OptionType.PUT, K, ExerciseSchedule.EUROPEAN);
+    BinomialTree tree = BinomialTree.of().spot(S).rate(R).dividendYield(q).vol(VOL).maturity(T).steps(600).method(BinomialTree.MethodEnum.CRR).build();
+    double call = tree.priceVanilla(OptionTypeEnum.CALL, K, ExerciseSchedule.EUROPEAN);
+    double put = tree.priceVanilla(OptionTypeEnum.PUT, K, ExerciseSchedule.EUROPEAN);
     assertEquals(S * Math.exp(-q * T) - K * Math.exp(-R * T), call - put, 5e-3, "tree put-call parity");
   }
 
@@ -81,43 +81,43 @@ class BinomialTreeTest {
     // S=K=40, sigma=0.20, T=1, r=0.06. High-accuracy benchmark ~ 2.3196
     // (Broadie-Detemple); the Longstaff-Schwartz (2001) FD figure of 2.314 is
     // the coarser-grid approximation.
-    double px1000 = BinomialTree.of(40, 0.06, 0.0, 0.20, 1.0, 1000, BinomialTree.Method.CRR)
-        .priceVanilla(OptionType.PUT, 40, ExerciseSchedule.AMERICAN);
-    double px4000 = BinomialTree.of(40, 0.06, 0.0, 0.20, 1.0, 4000, BinomialTree.Method.CRR)
-        .priceVanilla(OptionType.PUT, 40, ExerciseSchedule.AMERICAN);
+    double px1000 = BinomialTree.of().spot(40).rate(0.06).dividendYield(0.0).vol(0.20).maturity(1.0).steps(1000).method(BinomialTree.MethodEnum.CRR).build()
+        .priceVanilla(OptionTypeEnum.PUT, 40, ExerciseSchedule.AMERICAN);
+    double px4000 = BinomialTree.of().spot(40).rate(0.06).dividendYield(0.0).vol(0.20).maturity(1.0).steps(4000).method(BinomialTree.MethodEnum.CRR).build()
+        .priceVanilla(OptionTypeEnum.PUT, 40, ExerciseSchedule.AMERICAN);
     assertEquals(2.3196, px4000, 3e-3, "American put on a fine CRR tree");
     assertTrue(Math.abs(px4000 - 2.3196) < Math.abs(px1000 - 2.3196) + 1e-3, "converging with steps");
   }
 
   @Test
   void americanCallEqualsEuropeanWithoutDividendButNotWithOne() {
-    BinomialTree noDiv = BinomialTree.of(S, R, 0.0, VOL, T, 800, BinomialTree.Method.CRR);
+    BinomialTree noDiv = BinomialTree.of().spot(S).rate(R).dividendYield(0.0).vol(VOL).maturity(T).steps(800).method(BinomialTree.MethodEnum.CRR).build();
     assertEquals(
-        noDiv.priceVanilla(OptionType.CALL, K, ExerciseSchedule.EUROPEAN),
-        noDiv.priceVanilla(OptionType.CALL, K, ExerciseSchedule.AMERICAN),
+        noDiv.priceVanilla(OptionTypeEnum.CALL, K, ExerciseSchedule.EUROPEAN),
+        noDiv.priceVanilla(OptionTypeEnum.CALL, K, ExerciseSchedule.AMERICAN),
         1e-9, "no-dividend American call == European call");
 
-    BinomialTree div = BinomialTree.of(S, R, 0.06, VOL, T, 800, BinomialTree.Method.CRR);
-    double eur = div.priceVanilla(OptionType.CALL, K, ExerciseSchedule.EUROPEAN);
-    double amer = div.priceVanilla(OptionType.CALL, K, ExerciseSchedule.AMERICAN);
+    BinomialTree div = BinomialTree.of().spot(S).rate(R).dividendYield(0.06).vol(VOL).maturity(T).steps(800).method(BinomialTree.MethodEnum.CRR).build();
+    double eur = div.priceVanilla(OptionTypeEnum.CALL, K, ExerciseSchedule.EUROPEAN);
+    double amer = div.priceVanilla(OptionTypeEnum.CALL, K, ExerciseSchedule.AMERICAN);
     assertTrue(amer > eur + 1e-4, "with a dividend, early exercise of a call has value");
   }
 
   @Test
   void bermudanSitsBetweenEuropeanAndAmerican() {
-    BinomialTree tree = BinomialTree.of(40, 0.06, 0.0, 0.20, 1.0, 600, BinomialTree.Method.CRR);
-    double eur = tree.priceVanilla(OptionType.PUT, 40, ExerciseSchedule.EUROPEAN);
-    double amer = tree.priceVanilla(OptionType.PUT, 40, ExerciseSchedule.AMERICAN);
-    double berm = tree.priceVanilla(OptionType.PUT, 40, ExerciseSchedule.everyNthStep(50));
+    BinomialTree tree = BinomialTree.of().spot(40).rate(0.06).dividendYield(0.0).vol(0.20).maturity(1.0).steps(600).method(BinomialTree.MethodEnum.CRR).build();
+    double eur = tree.priceVanilla(OptionTypeEnum.PUT, 40, ExerciseSchedule.EUROPEAN);
+    double amer = tree.priceVanilla(OptionTypeEnum.PUT, 40, ExerciseSchedule.AMERICAN);
+    double berm = tree.priceVanilla(OptionTypeEnum.PUT, 40, ExerciseSchedule.everyNthStep(50));
     assertTrue(eur <= berm + 1e-9 && berm <= amer + 1e-9, "European <= Bermudan <= American");
     assertTrue(berm > eur + 1e-3, "the exercise windows add value");
   }
 
   @Test
   void treeGreeksMatchTheClosedForm() {
-    AnalyticGreeks ref = GeneralizedBsm.of(OptionType.CALL, S, K, T, R, Q, VOL).greeks();
-    LatticeGreeks g = LatticeGreeks.vanilla(S, R, Q, VOL, T, 600, BinomialTree.Method.CRR,
-        OptionType.CALL, K, ExerciseSchedule.EUROPEAN);
+    AnalyticGreeks ref = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(S).strike(K).maturity(T).rate(R).dividend(Q).vol(VOL).build().greeks();
+    LatticeGreeks g = LatticeGreeks.vanilla(S, R, Q, VOL, T, 600, BinomialTree.MethodEnum.CRR,
+        OptionTypeEnum.CALL, K, ExerciseSchedule.EUROPEAN);
     assertEquals(ref.price(), g.price(), 5e-3, "price");
     assertEquals(ref.delta(), g.delta(), 5e-3, "delta");
     assertEquals(ref.gamma(), g.gamma(), 2e-3, "gamma");

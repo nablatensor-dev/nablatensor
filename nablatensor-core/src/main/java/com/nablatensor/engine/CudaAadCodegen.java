@@ -40,7 +40,7 @@ public final class CudaAadCodegen {
   }
 
   public static String generate(AadTape tape, AadOptions options) {
-    boolean f32 = options.precision() == AadOptions.Precision.FLOAT32;
+    boolean f32 = options.precision() == AadOptions.PrecisionEnum.FLOAT32;
     String real = f32 ? "float" : "double";
     StringBuilder src = new StringBuilder(1 << 16);
 
@@ -127,7 +127,7 @@ public final class CudaAadCodegen {
     if (minBlocks < 0 || minBlocks > 8) {
       throw new IllegalArgumentException("CUDA checkpoint minBlocks must be between 0 and 8");
     }
-    boolean f32 = options.precision() == AadOptions.Precision.FLOAT32;
+    boolean f32 = options.precision() == AadOptions.PrecisionEnum.FLOAT32;
     String real = f32 ? "float" : "double";
     String zero = f32 ? "0.0f" : "0.0";
     String one = f32 ? "1.0f" : "1.0";

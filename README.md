@@ -168,7 +168,7 @@ checked against the scalar oracle).
 | `nablatensor-tensor` | internal: the tensor-op SPI (`ComputeBackend`, `DeviceBuffer`, `Shape`) the GPU modules implement |
 | `nablatensor-ops` | smoothed `STEP`/`GT`/band indicators, `N(x)` / `erf` / `pow`, a macro-form custom-op registry — all in primitive nodes, exact adjoint, every backend |
 | `nablatensor-quant` | `EquityMarket` + `GbmPath` + `Products` (European / Asian / lookback) + `MonteCarlo` + `BlackScholes`; `ExoticProducts` (barrier / digital / cliquet / autocallable), `HestonModel` · `SabrModel` · `LocalVolModel` · `HullWhite1F` · `LmmModel`, `BasketOption`, `Hooks` (antithetic / control-variate), `CurveBootstrap` + analytic Jacobian, `Calibrator` (adjoint-gradient L-BFGS), `MultiMetric`; the `Shock` / `Scenario` / `Ladder` / `ScenarioRunner` ladder runner (`setInput` + replay, no recompile); the `BinomialTree` lattice convergence check; the one-factor Gaussian-copula credit / `CdoTranche` pricers |
-| `nablatensor-risk` | `RiskFactor`, `Sensitivities`, `Portfolio` / netting-set composition, `NestedAggregation` (the FRTB/SIMM `√(ΣK² + ΣγSS)` engine), `CorrelationScenario`, `TimeProfile` |
+| `nablatensor-risk` | `RiskFactor`, `Sensitivities`, `Portfolio` / netting-set composition, `NestedAggregation` (the FRTB/SIMM `√(ΣK² + ΣγSS)` engine), `CorrelationScenarioEnum`, `TimeProfile` |
 | `nablatensor-examples` | worked demos (each also a test and a docs page); the `com.nablatensor.bench` comparison harness above; the `com.nablatensor.validate` evidence pack (replay on every backend at equal seed, diff vs the oracle, bump cross-check → text report) |
 
 Every GPU backend compiles with or without its toolchain present and gates at
@@ -181,7 +181,7 @@ dependency of the `cpu-jit` path.
 2. **`setInput`** — market data and model params are re-settable on a compiled kernel (`mc.run(shockedMarket, …)`).
    `.timeGrid(TimeGrid.of(t1, t2, …))` swaps the schedule (non-uniform sampling) without touching the payoff.
 3. **custom ops** — `CustomOp.registerUnary(name, macro)`; the code generators pick it up on every backend.
-4. **hooks** — `Hooks.antithetic(...)` / `Hooks.controlVariate(...)` wrap a payoff with a transformed draw stream.
+4. **hooks** — `Hooks.antithetic(...)` / `Hooks.ControlVariate.of()...build()` wrap a payoff with a transformed draw stream.
 5. **model blocks** — subclass a `*Model` step block; override `drift()` / `diffusion()`.
 6. **scenario DSL** — `ScenarioRunner.run(kernel, base, ScenarioSet.grid(...), …)`; shocks are data.
 7. **aggregation** — record per-trade; `Portfolio.aggregate()` / `byNettingSet()`; compose buckets and correlations outside the tape.

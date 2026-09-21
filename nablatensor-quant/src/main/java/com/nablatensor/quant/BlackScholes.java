@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * Closed-form Black-Scholes price and Greeks for a European option, used as the
  * analytic reference the Monte-Carlo adjoint result is checked against.
@@ -23,10 +25,53 @@ package com.nablatensor.quant;
  * {@link #vega} is dV/dsigma (per unit vol, not per 1%), {@link #rho} is dV/dr,
  * {@link #strikeSensitivity} is dV/dK.
  */
-public record BlackScholes(double price, double delta, double vega, double rho,
-                           double strikeSensitivity) {
+@Of
+public final class BlackScholes {
 
-  public static BlackScholes of(OptionType type, EquityMarket m) {
+  private final double price;
+  private final double delta;
+  private final double vega;
+  private final double rho;
+  private final double strikeSensitivity;
+
+  private BlackScholes(double price, double delta, double vega, double rho, double strikeSensitivity) {
+    this.price = price;
+    this.delta = delta;
+    this.vega = vega;
+    this.rho = rho;
+    this.strikeSensitivity = strikeSensitivity;
+  }
+
+  static BlackScholes create(double price, double delta, double vega, double rho, double strikeSensitivity) {
+    return new BlackScholes(price, delta, vega, rho, strikeSensitivity);
+  }
+
+  public static BlackScholesBuilder of() {
+    return new BlackScholesBuilder();
+  }
+
+  public double price() {
+    return price;
+  }
+
+  public double delta() {
+    return delta;
+  }
+
+  public double vega() {
+    return vega;
+  }
+
+  public double rho() {
+    return rho;
+  }
+
+  public double strikeSensitivity() {
+    return strikeSensitivity;
+  }
+
+
+  public static BlackScholes of(OptionTypeEnum type, EquityMarket m) {
     double s = m.spot();
     double k = m.strike();
     double t = m.maturity();
@@ -36,7 +81,7 @@ public record BlackScholes(double price, double delta, double vega, double rho,
 
     if (t == 0.0 || sigma == 0.0) {
       double intrinsic = Math.max(type.sign() * (s - k * disc), 0.0);
-      return new BlackScholes(intrinsic, 0.0, 0.0, 0.0, 0.0);
+      return BlackScholes.of().price(intrinsic).delta(0.0).vega(0.0).rho(0.0).strikeSensitivity(0.0).build();
     }
 
     double sqrtT = Math.sqrt(t);
@@ -44,24 +89,14 @@ public record BlackScholes(double price, double delta, double vega, double rho,
     double d2 = d1 - sigma * sqrtT;
     double pdf = phi(d1);
 
-    if (type == OptionType.CALL) {
+    if (type == OptionTypeEnum.CALL) {
       double nd1 = N(d1);
       double nd2 = N(d2);
-      return new BlackScholes(
-          s * nd1 - k * disc * nd2,
-          nd1,
-          s * pdf * sqrtT,
-          k * t * disc * nd2,
-          -disc * nd2);
+      return BlackScholes.of().price(s * nd1 - k * disc * nd2).delta(nd1).vega(s * pdf * sqrtT).rho(k * t * disc * nd2).strikeSensitivity(-disc * nd2).build();
     } else {
       double nnd1 = N(-d1);
       double nnd2 = N(-d2);
-      return new BlackScholes(
-          k * disc * nnd2 - s * nnd1,
-          -nnd1,
-          s * pdf * sqrtT,
-          -k * t * disc * nnd2,
-          disc * nnd2);
+      return BlackScholes.of().price(k * disc * nnd2 - s * nnd1).delta(-nnd1).vega(s * pdf * sqrtT).rho(-k * t * disc * nnd2).strikeSensitivity(disc * nnd2).build();
     }
   }
 

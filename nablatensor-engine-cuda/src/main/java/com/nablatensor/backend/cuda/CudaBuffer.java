@@ -15,7 +15,7 @@
  */
 package com.nablatensor.backend.cuda;
 
-import com.nablatensor.tensor.DType;
+import com.nablatensor.tensor.DTypeEnum;
 import com.nablatensor.tensor.Device;
 import com.nablatensor.tensor.Shape;
 import com.nablatensor.tensor.spi.DeviceBuffer;
@@ -50,13 +50,13 @@ final class CudaBuffer implements DeviceBuffer {
 
   final long pointer;
   private final Shape shape;
-  private final DType dtype;
+  private final DTypeEnum dtype;
   private final Device device;
   @SuppressWarnings("unused")
   private final CudaBuffer storage;
   private final Cleaner.Cleanable cleanable;
 
-  CudaBuffer(long pointer, Shape shape, DType dtype, Device device) {
+  CudaBuffer(long pointer, Shape shape, DTypeEnum dtype, Device device) {
     this.pointer = pointer;
     this.shape = shape;
     this.dtype = dtype;
@@ -96,7 +96,7 @@ final class CudaBuffer implements DeviceBuffer {
   }
 
   @Override
-  public DType dtype() {
+  public DTypeEnum dtype() {
     return dtype;
   }
 

@@ -15,7 +15,7 @@
  */
 package com.nablatensor.examples;
 
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import com.nablatensor.quant.QuantoMarket;
 import com.nablatensor.quant.adjust.Adjustment;
 import com.nablatensor.quant.adjust.ConvexityAdjustment;
@@ -63,15 +63,15 @@ public final class ConvexityQuantoShowcase {
         cms.adjustmentBp(), 100 * cms.adjustedRate());
 
     // Quanto: foreign equity option settled in domestic currency at a fixed FX.
-    QuantoMarket m = new QuantoMarket(100.0, 100.0, 0.22, 0.09, -0.35, 0.03, 0.012);
+    QuantoMarket m = QuantoMarket.of().assetSpot(100.0).strike(100.0).volAsset(0.22).volFx(0.09).corr(-0.35).rateDom(0.03).rateForeign(0.012).build();
     double fwdNoQuanto = m.assetSpot() * Math.exp(m.rateForeign() * 1.0);
     double fwdQuanto = QuantoAdjustment.quantoForward(m, 1.0);
     System.out.printf(Locale.ROOT, "%n  quanto drift adjustment = %+.5f  (-rho volS volX)%n",
         QuantoAdjustment.driftAdjustment(m.corr(), m.volAsset(), m.volFx()));
     System.out.printf(Locale.ROOT, "  1y forward: no-quanto %.4f  ->  quanto %.4f%n", fwdNoQuanto, fwdQuanto);
     System.out.printf(Locale.ROOT, "  1y ATM quanto call (fixedFx=1.25):  %.5f  (delta %.4f, vega %.4f)%n",
-        QuantoAdjustment.quantoOption(OptionType.CALL, m, 1.0, 1.25).price(),
-        QuantoAdjustment.quantoOption(OptionType.CALL, m, 1.0, 1.25).delta(),
-        QuantoAdjustment.quantoOption(OptionType.CALL, m, 1.0, 1.25).vega());
+        QuantoAdjustment.quantoOption(OptionTypeEnum.CALL, m, 1.0, 1.25).price(),
+        QuantoAdjustment.quantoOption(OptionTypeEnum.CALL, m, 1.0, 1.25).delta(),
+        QuantoAdjustment.quantoOption(OptionTypeEnum.CALL, m, 1.0, 1.25).vega());
   }
 }

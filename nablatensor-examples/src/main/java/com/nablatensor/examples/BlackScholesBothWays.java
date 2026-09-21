@@ -19,7 +19,7 @@ import com.nablatensor.engine.Nabla;
 import com.nablatensor.quant.BlackScholes;
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.MonteCarlo;
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import com.nablatensor.quant.Products;
 import com.nablatensor.quant.analytic.GeneralizedBsm;
 import java.util.ArrayList;
@@ -64,7 +64,7 @@ public final class BlackScholesBothWays {
     long seed = Long.getLong("seed", 42L);
     String engine = System.getProperty("engine", "");
 
-    BlackScholes bs = BlackScholes.of(OptionType.CALL, market);
+    BlackScholes bs = BlackScholes.of(OptionTypeEnum.CALL, market);
     System.out.printf(Locale.ROOT, "1 . Black-Scholes-Merton closed form (S0=K=100, sigma=20%%, r=3%%, T=1y)%n");
     System.out.printf(Locale.ROOT,
         "    price %.5f   delta %.5f   vega %.4f   rho %.4f   dV/dK %.5f%n%n",
@@ -119,7 +119,7 @@ public final class BlackScholesBothWays {
           bumpMs / adjMs);
 
       // 5 . implied volatility, vega from the sweep ----------------
-      double quote = BlackScholes.of(OptionType.CALL, market.withVol(0.28)).price();
+      double quote = BlackScholes.of(OptionTypeEnum.CALL, market.withVol(0.28)).price();
       long ivN = Math.min(n, gpu ? 20_000_000L : 2_000_000L);
       double sigma = 0.15;
       int newton = 0;
@@ -149,10 +149,10 @@ public final class BlackScholesBothWays {
           newton, sigma, bisect, 0.5 * (lo + hi));
 
       // 6 . identities off the closed form ------------------------
-      BlackScholes put = BlackScholes.of(OptionType.PUT, market);
+      BlackScholes put = BlackScholes.of(OptionTypeEnum.PUT, market);
       double fwd = market.strike() * Math.exp(-market.rate() * market.maturity());
       double parity = bs.price() - put.price() - (market.spot() - fwd);
-      double q2 = GeneralizedBsm.of(OptionType.CALL, 100.0, 100.0, 1.0, 0.03, 0.02, 0.20).price();
+      double q2 = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(100.0).strike(100.0).maturity(1.0).rate(0.03).dividend(0.02).vol(0.20).build().price();
       System.out.printf(Locale.ROOT, "6 . Checks%n");
       System.out.printf(Locale.ROOT,
           "    put-call parity residual %.2e     dividend yield q=2%%: price %.5f  (q=0: %.5f)%n",

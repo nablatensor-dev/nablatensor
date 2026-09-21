@@ -47,7 +47,7 @@ public final class Tensor implements AutoCloseable {
     return buffer.shape();
   }
 
-  public DType dtype() {
+  public DTypeEnum dtype() {
     return buffer.dtype();
   }
 
@@ -79,8 +79,8 @@ public final class Tensor implements AutoCloseable {
     return this; // single supported floating dtype in phase 0
   }
 
-  public Tensor dtype(DType dtype) {
-    if (dtype != DType.F32) {
+  public Tensor dtype(DTypeEnum dtype) {
+    if (dtype != DTypeEnum.F32) {
       throw new UnsupportedOperationException("phase 0 supports F32 only; requested " + dtype);
     }
     return this;
@@ -89,27 +89,27 @@ public final class Tensor implements AutoCloseable {
   // ---- binary elementwise -------------------------------------------------
 
   public Tensor add(Tensor other) {
-    return binaryBroadcast(Op.ADD, other);
+    return binaryBroadcast(OpEnum.ADD, other);
   }
 
   public Tensor sub(Tensor other) {
-    return binaryBroadcast(Op.SUB, other);
+    return binaryBroadcast(OpEnum.SUB, other);
   }
 
   public Tensor mul(Tensor other) {
-    return binaryBroadcast(Op.MUL, other);
+    return binaryBroadcast(OpEnum.MUL, other);
   }
 
   public Tensor div(Tensor other) {
-    return binaryBroadcast(Op.DIV, other);
+    return binaryBroadcast(OpEnum.DIV, other);
   }
 
   public Tensor maximum(Tensor other) {
-    return binaryBroadcast(Op.MAX, other);
+    return binaryBroadcast(OpEnum.MAX, other);
   }
 
   public Tensor minimum(Tensor other) {
-    return binaryBroadcast(Op.MIN, other);
+    return binaryBroadcast(OpEnum.MIN, other);
   }
 
   /**
@@ -118,7 +118,7 @@ public final class Tensor implements AutoCloseable {
    * shape first. Any tensor materialized just for this broadcast is closed
    * immediately after the op runs, so no extra buffers linger.
    */
-  private Tensor binaryBroadcast(Op op, Tensor other) {
+  private Tensor binaryBroadcast(OpEnum op, Tensor other) {
     Shape ls = shape();
     Shape rs = other.shape();
     if (ls.equals(rs)) {
@@ -144,69 +144,69 @@ public final class Tensor implements AutoCloseable {
   // ---- scalar elementwise -------------------------------------------------
 
   public Tensor add(double value) {
-    return wrap(backend.scalar(Op.ADD, buffer, value));
+    return wrap(backend.scalar(OpEnum.ADD, buffer, value));
   }
 
   public Tensor sub(double value) {
-    return wrap(backend.scalar(Op.SUB, buffer, value));
+    return wrap(backend.scalar(OpEnum.SUB, buffer, value));
   }
 
   public Tensor mul(double value) {
-    return wrap(backend.scalar(Op.MUL, buffer, value));
+    return wrap(backend.scalar(OpEnum.MUL, buffer, value));
   }
 
   public Tensor div(double value) {
-    return wrap(backend.scalar(Op.DIV, buffer, value));
+    return wrap(backend.scalar(OpEnum.DIV, buffer, value));
   }
 
   public Tensor maximum(double value) {
-    return wrap(backend.scalar(Op.MAX, buffer, value));
+    return wrap(backend.scalar(OpEnum.MAX, buffer, value));
   }
 
   public Tensor minimum(double value) {
-    return wrap(backend.scalar(Op.MIN, buffer, value));
+    return wrap(backend.scalar(OpEnum.MIN, buffer, value));
   }
 
   // ---- unary elementwise --------------------------------------------------
 
   public Tensor neg() {
-    return wrap(backend.unary(Op.NEG, buffer));
+    return wrap(backend.unary(OpEnum.NEG, buffer));
   }
 
   public Tensor exp() {
-    return wrap(backend.unary(Op.EXP, buffer));
+    return wrap(backend.unary(OpEnum.EXP, buffer));
   }
 
   public Tensor log() {
-    return wrap(backend.unary(Op.LOG, buffer));
+    return wrap(backend.unary(OpEnum.LOG, buffer));
   }
 
   public Tensor sqrt() {
-    return wrap(backend.unary(Op.SQRT, buffer));
+    return wrap(backend.unary(OpEnum.SQRT, buffer));
   }
 
   public Tensor rsqrt() {
-    return wrap(backend.unary(Op.RSQRT, buffer));
+    return wrap(backend.unary(OpEnum.RSQRT, buffer));
   }
 
   public Tensor tanh() {
-    return wrap(backend.unary(Op.TANH, buffer));
+    return wrap(backend.unary(OpEnum.TANH, buffer));
   }
 
   public Tensor sigmoid() {
-    return wrap(backend.unary(Op.SIGMOID, buffer));
+    return wrap(backend.unary(OpEnum.SIGMOID, buffer));
   }
 
   public Tensor relu() {
-    return wrap(backend.unary(Op.RELU, buffer));
+    return wrap(backend.unary(OpEnum.RELU, buffer));
   }
 
   public Tensor abs() {
-    return wrap(backend.unary(Op.ABS, buffer));
+    return wrap(backend.unary(OpEnum.ABS, buffer));
   }
 
   public Tensor sign() {
-    return wrap(backend.unary(Op.SIGN, buffer));
+    return wrap(backend.unary(OpEnum.SIGN, buffer));
   }
 
   // ---- movement / contraction --------------------------------------------

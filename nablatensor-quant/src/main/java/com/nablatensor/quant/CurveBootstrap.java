@@ -73,7 +73,7 @@ public final class CurveBootstrap {
   }
 
   public YieldCurve curve() {
-    return new YieldCurve(pillars.clone(), zeroRates.clone());
+    return YieldCurve.of().pillars(pillars.clone()).zeroRates(zeroRates.clone()).build();
   }
 
   /** {@code J[i][j] = d zeroRate_i / d quote_j}; lower triangular in instrument order. */

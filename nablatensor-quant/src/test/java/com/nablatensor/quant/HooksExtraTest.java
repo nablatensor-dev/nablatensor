@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 @Tag("mc")
 class HooksExtraTest {
 
-  private static final EquityMarket M = new EquityMarket(100, 130, 0.20, 0.03, 1.0);  // deep OTM call
+  private static final EquityMarket M = EquityMarket.of().spot(100).strike(130).vol(0.20).rate(0.03).maturity(1.0).build();  // deep OTM call
   private static final int STEPS = 40;
   private static final long N = 400_000L;
   private static final long SEED = 555L;
@@ -35,7 +35,7 @@ class HooksExtraTest {
   private static final Hooks.PathPayoff CALL = (rec, in, draws, grid) -> {
     ADouble rate = in.of(EquityMarket::rate);
     ADouble mat = in.of(EquityMarket::maturity);
-    GbmPath model = new GbmPath(rec, rate, in.of(EquityMarket::vol), grid, mat);
+    GbmPath model = GbmPath.of(rec, rate, in.of(EquityMarket::vol), grid, mat);
     ADouble s = in.of(EquityMarket::spot);
     for (int t = 0; t < grid.steps(); t++) {
       s = model.step(s, draws.next(), t);
@@ -47,7 +47,7 @@ class HooksExtraTest {
   private static final Hooks.PathPayoff FINISHES_ITM = (rec, in, draws, grid) -> {
     ADouble rate = in.of(EquityMarket::rate);
     ADouble mat = in.of(EquityMarket::maturity);
-    GbmPath model = new GbmPath(rec, rate, in.of(EquityMarket::vol), grid, mat);
+    GbmPath model = GbmPath.of(rec, rate, in.of(EquityMarket::vol), grid, mat);
     ADouble s = in.of(EquityMarket::spot);
     for (int t = 0; t < grid.steps(); t++) {
       s = model.step(s, draws.next(), t);
@@ -68,7 +68,7 @@ class HooksExtraTest {
   @Test
   void importanceSamplingIsUnbiasedForTheOtmCall() {
     double plain = price(raw(CALL));
-    double is = price(Hooks.importanceSampling(CALL, 0.10));   // shift paths toward the strike
+    double is = price(Hooks.ImportanceSampling.of().payoff(CALL).muPerStep(0.10).build());   // shift paths toward the strike
     assertTrue(plain > 0.0, "plain OTM call price positive");
     assertEquals(plain, is, 0.10 * (1 + plain), "importance-sampled price ~ plain price");
   }
@@ -77,13 +77,13 @@ class HooksExtraTest {
   void pathFilterWithAnAlwaysTrueConditionIsThePlainPayoff() {
     double plain = price(raw(CALL));
     // condition >> 0 everywhere -> smoothed indicator ~ 1
-    double filtered = price(Hooks.pathFilter(CALL, (rec, in, d, grid) -> {
+    double filtered = price(Hooks.PathFilter.of().payoff(CALL).condition((rec, in, d, grid) -> {
       // consume the same number of draws, then return a large constant
       for (int t = 0; t < grid.steps(); t++) {
         d.next();
       }
       return rec.constant(1e6);
-    }, 1.0));
+    }).width(1.0).build());
     assertEquals(plain, filtered, 1e-6 * (1 + plain), "filter(always-true) == plain payoff");
   }
 
@@ -91,7 +91,7 @@ class HooksExtraTest {
   void pathFilterOnFinishesItmLeavesTheCallUnchanged() {
     // a call already pays 0 off the ITM set, so multiplying by 1{S_T > K} changes nothing
     double plain = price(raw(CALL));
-    double filtered = price(Hooks.pathFilter(CALL, FINISHES_ITM, 0.5));
+    double filtered = price(Hooks.PathFilter.of().payoff(CALL).condition(FINISHES_ITM).width(0.5).build());
     assertEquals(plain, filtered, 0.03 * (1 + plain), "filter(finishes-ITM) leaves an OTM call unchanged");
   }
 }

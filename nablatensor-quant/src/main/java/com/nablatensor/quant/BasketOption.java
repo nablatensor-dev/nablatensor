@@ -46,7 +46,7 @@ public final class BasketOption {
    * @param steps     GBM sub-steps
    */
   public static BiConsumer<AadRecorder, Nabla.Inputs<BasketMarket>> option(
-      OptionType type, double[] weights, double strike, double[][] corr, double maturity, int steps) {
+      OptionTypeEnum type, double[] weights, double strike, double[][] corr, double maturity, int steps) {
     if (weights.length != ASSETS || corr.length != ASSETS) {
       throw new IllegalArgumentException("basket is fixed at " + ASSETS + " assets");
     }
@@ -72,7 +72,7 @@ public final class BasketOption {
       for (int i = 0; i < ASSETS; i++) {
         level = level.add(s[i].mul(weights[i]));
       }
-      ADouble intrinsic = type == OptionType.CALL
+      ADouble intrinsic = type == OptionTypeEnum.CALL
           ? level.sub(strike).max(0.0)
           : rec.constant(strike).sub(level).max(0.0);
       rec.output(intrinsic.mul(rate.neg().mul(maturity).exp()));

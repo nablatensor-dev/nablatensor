@@ -57,7 +57,7 @@ class CdoTrancheTest {
     assertEquals(pd * lgd, dist.expectedLoss(), 1e-3, "large-pool expected loss = PD * LGD");
 
     // A tranche's expected loss from the recursion vs the Vasicek CDF.
-    CdoTranche mezz = new CdoTranche(0.03, 0.07);
+    CdoTranche mezz = CdoTranche.of().attach(0.03).detach(0.07).build();
     double recursionEl = dist.expectedTrancheLoss(0.03, 0.07);
     double vasicekEl = vasicekTrancheLoss(0.03, 0.07, pd, rho, lgd);
     assertEquals(vasicekEl, recursionEl, 0.1 * vasicekEl + 1e-4, "mezz EL: recursion vs Vasicek");
@@ -96,7 +96,7 @@ class CdoTrancheTest {
   @Test
   void parSpreadGivesAZeroValueContract() {
     PortfolioLossDistribution dist = PortfolioLossDistribution.homogeneous(0.04, 125, 0.28, 0.6, 96);
-    CdoTranche mezz = new CdoTranche(0.03, 0.06);
+    CdoTranche mezz = CdoTranche.of().attach(0.03).detach(0.06).build();
 
     double[] times = {0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0};
     // With a single terminal loss distribution, approximate the loss path by
@@ -122,7 +122,7 @@ class CdoTrancheTest {
     int n = 60;
     double t = 1.0;
     double r = 0.02;
-    CopulaMarket m = new CopulaMarket(rho, pd);
+    CopulaMarket m = CopulaMarket.of().rho(rho).pd(pd).build();
 
     var equity = CopulaMonteCarlo.trancheLoss(0.0, 0.04, n, lgd, t, r, 5e-3);
 
@@ -138,8 +138,8 @@ class CdoTrancheTest {
       double adjointDRho = v.greek(CopulaMarket::rho);
       // central bump on the price-only kernel, same seed
       double h = 1e-3;
-      double up = price(new CopulaMarket(rho + h, pd), equity);
-      double dn = price(new CopulaMarket(rho - h, pd), equity);
+      double up = price(CopulaMarket.of().rho(rho + h).pd(pd).build(), equity);
+      double dn = price(CopulaMarket.of().rho(rho - h).pd(pd).build(), equity);
       double bump = (up - dn) / (2 * h);
       assertEquals(bump, adjointDRho, 0.05 * Math.abs(bump) + 1e-4, "correlation delta: adjoint vs bump");
       assertTrue(adjointDRho < 0, "equity tranche loss falls with correlation");

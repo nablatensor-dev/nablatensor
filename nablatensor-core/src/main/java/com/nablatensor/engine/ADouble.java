@@ -30,31 +30,31 @@ public final class ADouble {
     this.node = node;
   }
 
-  private ADouble binary(AadOp op, ADouble other) {
+  private ADouble binary(AadOpEnum op, ADouble other) {
     if (other.recorder != recorder) {
       throw new IllegalArgumentException("operands come from different recordings");
     }
     return recorder.node(op, node, other.node);
   }
 
-  private ADouble unary(AadOp op) {
+  private ADouble unary(AadOpEnum op) {
     return recorder.node(op, node, -1);
   }
 
   public ADouble add(ADouble other) {
-    return binary(AadOp.ADD, other);
+    return binary(AadOpEnum.ADD, other);
   }
 
   public ADouble sub(ADouble other) {
-    return binary(AadOp.SUB, other);
+    return binary(AadOpEnum.SUB, other);
   }
 
   public ADouble mul(ADouble other) {
-    return binary(AadOp.MUL, other);
+    return binary(AadOpEnum.MUL, other);
   }
 
   public ADouble div(ADouble other) {
-    return binary(AadOp.DIV, other);
+    return binary(AadOpEnum.DIV, other);
   }
 
   public ADouble add(double value) {
@@ -74,31 +74,31 @@ public final class ADouble {
   }
 
   public ADouble neg() {
-    return unary(AadOp.NEG);
+    return unary(AadOpEnum.NEG);
   }
 
   public ADouble exp() {
-    return unary(AadOp.EXP);
+    return unary(AadOpEnum.EXP);
   }
 
   public ADouble log() {
-    return unary(AadOp.LOG);
+    return unary(AadOpEnum.LOG);
   }
 
   public ADouble sqrt() {
-    return unary(AadOp.SQRT);
+    return unary(AadOpEnum.SQRT);
   }
 
   public ADouble abs() {
-    return unary(AadOp.ABS);
+    return unary(AadOpEnum.ABS);
   }
 
   public ADouble max(ADouble other) {
-    return binary(AadOp.MAX, other);
+    return binary(AadOpEnum.MAX, other);
   }
 
   public ADouble min(ADouble other) {
-    return binary(AadOp.MIN, other);
+    return binary(AadOpEnum.MIN, other);
   }
 
   public ADouble max(double value) {

@@ -16,7 +16,7 @@
 package com.nablatensor.lattice;
 
 import com.nablatensor.lattice.LatticePayoff.ExerciseSchedule;
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import java.util.function.IntToDoubleFunction;
 
 /**
@@ -46,9 +46,9 @@ public record ConvergenceTable(int[] steps, double[] prices, double richardsonEx
 
   /** Convenience for a vanilla option on a CRR tree. */
   public static ConvergenceTable crrVanilla(double spot, double rate, double dividend, double vol,
-                                            double maturity, OptionType type, double strike,
+                                            double maturity, OptionTypeEnum type, double strike,
                                             ExerciseSchedule schedule, int[] steps) {
-    return of(n -> BinomialTree.of(spot, rate, dividend, vol, maturity, n, BinomialTree.Method.CRR)
+    return of(n -> BinomialTree.of().spot(spot).rate(rate).dividendYield(dividend).vol(vol).maturity(maturity).steps(n).method(BinomialTree.MethodEnum.CRR).build()
         .priceVanilla(type, strike, schedule), steps);
   }
 }

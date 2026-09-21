@@ -15,7 +15,7 @@
  */
 package com.nablatensor.tensor.spi;
 
-import com.nablatensor.tensor.DType;
+import com.nablatensor.tensor.DTypeEnum;
 import com.nablatensor.tensor.Device;
 import com.nablatensor.tensor.Shape;
 
@@ -27,7 +27,7 @@ public interface DeviceBuffer {
 
   Shape shape();
 
-  DType dtype();
+  DTypeEnum dtype();
 
   Device device();
 }

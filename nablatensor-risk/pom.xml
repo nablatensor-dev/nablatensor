@@ -13,7 +13,15 @@
     aggregation shared by FRTB SA-SBM and ISDA SIMM, the three FRTB correlation scenarios,
     and a time-profile structure for XVA.</description>
   <dependencies>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-codegen</artifactId><scope>provided</scope></dependency>
+
     <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-quant</artifactId></dependency>
     <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId></dependency>
   </dependencies>
+  <build><plugins><plugin>
+    <groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
+    <configuration><annotationProcessorPaths><path>
+      <groupId>com.nablatensor</groupId><artifactId>nablatensor-codegen</artifactId><version>${project.version}</version>
+    </path></annotationProcessorPaths></configuration>
+  </plugin></plugins></build>
 </project>

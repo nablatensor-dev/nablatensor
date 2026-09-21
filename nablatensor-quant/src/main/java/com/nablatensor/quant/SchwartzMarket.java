@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A Schwartz (1997) one-factor commodity market: the log spot mean-reverts,
  *
@@ -32,7 +34,50 @@ package com.nablatensor.quant;
  * @param sigma    volatility of the log spot
  * @param rate     flat discount rate
  */
-public record SchwartzMarket(double spot, double kappa, double level, double sigma, double rate) {
+@Of
+public final class SchwartzMarket {
+
+  private SchwartzMarket(double spot, double kappa, double level, double sigma, double rate) {
+    this.spot = spot;
+    this.kappa = kappa;
+    this.level = level;
+    this.sigma = sigma;
+    this.rate = rate;
+  }
+
+  private final double spot;
+  private final double kappa;
+  private final double level;
+  private final double sigma;
+  private final double rate;
+  static SchwartzMarket create(double spot, double kappa, double level, double sigma, double rate) {
+    return new SchwartzMarket(spot, kappa, level, sigma, rate);
+  }
+
+  public static SchwartzMarketBuilder of() {
+    return new SchwartzMarketBuilder();
+  }
+
+  public double spot() {
+    return spot;
+  }
+
+  public double kappa() {
+    return kappa;
+  }
+
+  public double level() {
+    return level;
+  }
+
+  public double sigma() {
+    return sigma;
+  }
+
+  public double rate() {
+    return rate;
+  }
+
 
   public SchwartzMarket validated() {
     if (!(spot > 0 && kappa > 0 && sigma >= 0)) {
@@ -42,6 +87,6 @@ public record SchwartzMarket(double spot, double kappa, double level, double sig
   }
 
   public static SchwartzMarket base() {
-    return new SchwartzMarket(50.0, 1.2, Math.log(55.0), 0.30, 0.03);
+    return SchwartzMarket.of().spot(50.0).kappa(1.2).level(Math.log(55.0)).sigma(0.30).rate(0.03).build();
   }
 }

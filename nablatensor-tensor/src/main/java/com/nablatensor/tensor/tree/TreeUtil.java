@@ -305,7 +305,7 @@ public final class TreeUtil {
 
   private static TreeDef flattenInto(Object tree, Predicate<Object> isLeaf, List<Object> leaves) {
     if (tree == null) {
-      return TreeDef.node(TreeDef.Kind.NULL, null, null, List.of());
+      return TreeDef.node(TreeDef.KindEnum.NULL, null, null, List.of());
     }
     if (isLeaf.test(tree)) {
       leaves.add(tree);
@@ -316,11 +316,11 @@ public final class TreeUtil {
     if (registration != null) {
       Node node = Objects.requireNonNull(registration.flattener().flatten(tree),
           "registered flattener result");
-      return TreeDef.node(TreeDef.Kind.CUSTOM, tree.getClass(), node.metadata(),
+      return TreeDef.node(TreeDef.KindEnum.CUSTOM, tree.getClass(), node.metadata(),
           flattenChildren(node.children(), isLeaf, leaves));
     }
     if (tree instanceof List<?> list) {
-      return TreeDef.node(TreeDef.Kind.LIST, null, null, flattenChildren(list, isLeaf, leaves));
+      return TreeDef.node(TreeDef.KindEnum.LIST, null, null, flattenChildren(list, isLeaf, leaves));
     }
     if (tree instanceof Map<?, ?> map) {
       List<Object> keys = sortedKeys(map);
@@ -328,7 +328,7 @@ public final class TreeUtil {
       for (Object key : keys) {
         children.add(flattenInto(map.get(key), isLeaf, leaves));
       }
-      return TreeDef.node(TreeDef.Kind.MAP, null, List.copyOf(keys), children);
+      return TreeDef.node(TreeDef.KindEnum.MAP, null, List.copyOf(keys), children);
     }
     Class<?> type = tree.getClass();
     if (type.isArray()) {
@@ -337,7 +337,7 @@ public final class TreeUtil {
       for (int i = 0; i < length; i++) {
         children.add(flattenInto(Array.get(tree, i), isLeaf, leaves));
       }
-      return TreeDef.node(TreeDef.Kind.ARRAY, type.getComponentType(), null, children);
+      return TreeDef.node(TreeDef.KindEnum.ARRAY, type.getComponentType(), null, children);
     }
     if (type.isRecord()) {
       RecordComponent[] components = type.getRecordComponents();
@@ -345,7 +345,7 @@ public final class TreeUtil {
       for (RecordComponent component : components) {
         children.add(flattenInto(readComponent(tree, component), isLeaf, leaves));
       }
-      return TreeDef.node(TreeDef.Kind.RECORD, type, null, children);
+      return TreeDef.node(TreeDef.KindEnum.RECORD, type, null, children);
     }
 
     leaves.add(tree);

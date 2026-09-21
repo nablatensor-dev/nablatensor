@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test;
 @Tag("mc")
 class JumpModelsTest {
 
-  private static <M extends Record> double price(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> v,
+  private static <M> double price(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> v,
                                                  long scenarios, long seed) {
     try (Nabla.TypedPricer<M> p = Nabla.model(market, v).fp64().priceOnly().on("cpu-jit").build()) {
       return p.value().with(market).scenarios(scenarios).seed(seed).run().price();
@@ -45,26 +45,26 @@ class JumpModelsTest {
 
   @Test
   void mertonMonteCarloConvergesToThePoissonSeries() {
-    MertonJumpMarket m = new MertonJumpMarket(100, 100, 0.18, 0.03, 1.0, 0.75, -0.05, 0.15);
-    double mc = price(m, MertonJumpModel.european(OptionType.CALL, 1.0, 128), 1_500_000L, 42L);
-    double exact = MertonJumpDiffusion.price(OptionType.CALL, m.spot(), m.strike(), m.maturity(),
+    MertonJumpMarket m = MertonJumpMarket.of().spot(100).strike(100).vol(0.18).rate(0.03).maturity(1.0).jumpIntensity(0.75).jumpMean(-0.05).jumpVol(0.15).build();
+    double mc = price(m, MertonJumpModel.european(OptionTypeEnum.CALL, 1.0, 128), 1_500_000L, 42L);
+    double exact = MertonJumpDiffusion.price(OptionTypeEnum.CALL, m.spot(), m.strike(), m.maturity(),
         m.rate(), m.vol(), m.jumpIntensity(), m.jumpMean(), m.jumpVol());
     assertEquals(exact, mc, 0.015 * exact, "Merton MC vs exact series");
   }
 
   @Test
   void mertonCollapsesToBlackScholesWhenIntensityIsZero() {
-    MertonJumpMarket m = new MertonJumpMarket(100, 100, 0.2, 0.03, 1.0, 0.0, -0.1, 0.2);
-    double mc = price(m, MertonJumpModel.european(OptionType.CALL, 1.0, 64), 800_000L, 7L);
-    double bs = GeneralizedBsm.of(OptionType.CALL, 100, 100, 1.0, 0.03, 0.0, 0.2).price();
+    MertonJumpMarket m = MertonJumpMarket.of().spot(100).strike(100).vol(0.2).rate(0.03).maturity(1.0).jumpIntensity(0.0).jumpMean(-0.1).jumpVol(0.2).build();
+    double mc = price(m, MertonJumpModel.european(OptionTypeEnum.CALL, 1.0, 64), 800_000L, 7L);
+    double bs = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(100).strike(100).maturity(1.0).rate(0.03).dividend(0.0).vol(0.2).build().price();
     assertEquals(bs, mc, 0.02 * bs, "lambda = 0 recovers Black-Scholes");
   }
 
   @Test
   void mertonPutCallParityHolds() {
-    MertonJumpMarket m = new MertonJumpMarket(100, 95, 0.18, 0.03, 1.0, 1.0, -0.08, 0.2);
-    var call = MertonJumpModel.european(OptionType.CALL, 1.0, 128, 5e-5);
-    var put = MertonJumpModel.european(OptionType.PUT, 1.0, 128, 5e-5);
+    MertonJumpMarket m = MertonJumpMarket.of().spot(100).strike(95).vol(0.18).rate(0.03).maturity(1.0).jumpIntensity(1.0).jumpMean(-0.08).jumpVol(0.2).build();
+    var call = MertonJumpModel.european(OptionTypeEnum.CALL, 1.0, 128, 5e-5);
+    var put = MertonJumpModel.european(OptionTypeEnum.PUT, 1.0, 128, 5e-5);
     double c = price(m, call, 2_000_000L, 11L);
     double p = price(m, put, 2_000_000L, 11L);
     // CRN: c - p = e^{-rT}(mean(S_T) - K), so this checks E[S_T] = S0 e^{rT}.
@@ -76,17 +76,17 @@ class JumpModelsTest {
 
   @Test
   void mertonJumpsAddValueToAnAtmCall() {
-    MertonJumpMarket withJumps = new MertonJumpMarket(100, 100, 0.16, 0.03, 1.0, 1.2, -0.02, 0.22);
-    double jumpPrice = price(withJumps, MertonJumpModel.european(OptionType.CALL, 1.0, 96), 1_200_000L, 5L);
-    double bs = GeneralizedBsm.of(OptionType.CALL, 100, 100, 1.0, 0.03, 0.0, 0.16).price();
+    MertonJumpMarket withJumps = MertonJumpMarket.of().spot(100).strike(100).vol(0.16).rate(0.03).maturity(1.0).jumpIntensity(1.2).jumpMean(-0.02).jumpVol(0.22).build();
+    double jumpPrice = price(withJumps, MertonJumpModel.european(OptionTypeEnum.CALL, 1.0, 96), 1_200_000L, 5L);
+    double bs = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(100).strike(100).maturity(1.0).rate(0.03).dividend(0.0).vol(0.16).build().price();
     assertTrue(jumpPrice > bs, "jumps add total variance, so the ATM call is worth more: "
         + jumpPrice + " vs " + bs);
   }
 
   @Test
   void mertonAdjointSpotDeltaMatchesBump() {
-    MertonJumpMarket m = new MertonJumpMarket(100, 100, 0.18, 0.03, 1.0, 0.8, -0.05, 0.15);
-    var v = MertonJumpModel.european(OptionType.CALL, 1.0, 64);
+    MertonJumpMarket m = MertonJumpMarket.of().spot(100).strike(100).vol(0.18).rate(0.03).maturity(1.0).jumpIntensity(0.8).jumpMean(-0.05).jumpVol(0.15).build();
+    var v = MertonJumpModel.european(OptionTypeEnum.CALL, 1.0, 64);
     String[] names = Phase1Support.names(MertonJumpMarket.class);
     double[] adj = Phase1Support.adjoint(m, v);
     int spot = Arrays.asList(names).indexOf("spot");
@@ -101,22 +101,22 @@ class JumpModelsTest {
 
   @Test
   void kouCollapsesToBlackScholesAndSatisfiesParity() {
-    KouMarket zero = new KouMarket(100, 100, 0.2, 0.03, 1.0, 0.0, 0.4, 10.0, 5.0);
-    double mc = price(zero, KouJumpModel.european(OptionType.CALL, 1.0, 64), 800_000L, 3L);
-    double bs = GeneralizedBsm.of(OptionType.CALL, 100, 100, 1.0, 0.03, 0.0, 0.2).price();
+    KouMarket zero = KouMarket.of().spot(100).strike(100).vol(0.2).rate(0.03).maturity(1.0).jumpIntensity(0.0).probUp(0.4).etaUp(10.0).etaDown(5.0).build();
+    double mc = price(zero, KouJumpModel.european(OptionTypeEnum.CALL, 1.0, 64), 800_000L, 3L);
+    double bs = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(100).strike(100).maturity(1.0).rate(0.03).dividend(0.0).vol(0.2).build().price();
     assertEquals(bs, mc, 0.02 * bs, "Kou lambda = 0 recovers Black-Scholes");
 
-    KouMarket m = new KouMarket(100, 98, 0.16, 0.03, 1.0, 1.0, 0.35, 12.0, 6.0);
-    double call = price(m, KouJumpModel.european(OptionType.CALL, 1.0, 96), 1_000_000L, 9L);
-    double put = price(m, KouJumpModel.european(OptionType.PUT, 1.0, 96), 1_000_000L, 9L);
+    KouMarket m = KouMarket.of().spot(100).strike(98).vol(0.16).rate(0.03).maturity(1.0).jumpIntensity(1.0).probUp(0.35).etaUp(12.0).etaDown(6.0).build();
+    double call = price(m, KouJumpModel.european(OptionTypeEnum.CALL, 1.0, 96), 1_000_000L, 9L);
+    double put = price(m, KouJumpModel.european(OptionTypeEnum.PUT, 1.0, 96), 1_000_000L, 9L);
     assertEquals(m.spot() - m.strike() * Math.exp(-m.rate() * m.maturity()), call - put,
         0.03, "Kou put-call parity");
   }
 
   @Test
   void kouAdjointSpotDeltaMatchesBump() {
-    KouMarket m = new KouMarket(100, 100, 0.16, 0.03, 1.0, 0.8, 0.4, 10.0, 5.0);
-    var v = KouJumpModel.european(OptionType.CALL, 1.0, 64);
+    KouMarket m = KouMarket.of().spot(100).strike(100).vol(0.16).rate(0.03).maturity(1.0).jumpIntensity(0.8).probUp(0.4).etaUp(10.0).etaDown(5.0).build();
+    var v = KouJumpModel.european(OptionTypeEnum.CALL, 1.0, 64);
     String[] names = Phase1Support.names(KouMarket.class);
     double[] adj = Phase1Support.adjoint(m, v);
     int spot = Arrays.asList(names).indexOf("spot");

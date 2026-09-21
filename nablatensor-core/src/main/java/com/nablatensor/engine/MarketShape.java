@@ -17,7 +17,8 @@ package com.nablatensor.engine;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.lang.reflect.RecordComponent;
+import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -29,7 +30,7 @@ import java.util.function.ToDoubleFunction;
  * applying it to a probe instance whose components hold their own index —
  * which needs no bytecode inspection and no proxy.
  */
-final class MarketShape<M extends Record> {
+final class MarketShape<M> {
 
   // The probe holds index + PROBE_OFFSET rather than index, so that arithmetic on
   // an accessor (m -> m.spot() * 2) cannot land on a valid index and be mistaken
@@ -51,10 +52,12 @@ final class MarketShape<M extends Record> {
     this.probe = probe;
   }
 
-  static <M extends Record> MarketShape<M> of(M sample) {
+  static <M> MarketShape<M> of(M sample) {
     Class<?> type = sample.getClass();
-    RecordComponent[] components = type.getRecordComponents();
-    if (components == null || components.length == 0) {
+    Field[] components = Arrays.stream(type.getDeclaredFields())
+        .filter(field -> !java.lang.reflect.Modifier.isStatic(field.getModifiers()))
+        .toArray(Field[]::new);
+    if (components.length == 0) {
       throw new IllegalArgumentException(type.getSimpleName() + " has no components");
     }
     String[] names = new String[components.length];
@@ -64,10 +67,15 @@ final class MarketShape<M extends Record> {
       if (components[i].getType() != double.class) {
         throw new IllegalArgumentException(type.getSimpleName() + "." + components[i].getName()
             + " is " + components[i].getType().getSimpleName()
-            + "; every component of a market record must be a double");
+            + "; every component of a market class must be a double");
       }
       names[i] = components[i].getName();
-      accessors[i] = components[i].getAccessor();
+      try {
+        accessors[i] = type.getMethod(components[i].getName());
+      } catch (NoSuchMethodException e) {
+        throw new IllegalArgumentException(
+            "cannot access " + type.getSimpleName() + "." + components[i].getName(), e);
+      }
       accessors[i].setAccessible(true);
       paramTypes[i] = double.class;
     }
@@ -83,7 +91,7 @@ final class MarketShape<M extends Record> {
       return new MarketShape<>(type, names, accessors, canonical, probe);
     } catch (ReflectiveOperationException e) {
       throw new IllegalArgumentException("cannot use " + type.getSimpleName()
-          + " as a market record", e);
+          + " as a market class", e);
     }
   }
 

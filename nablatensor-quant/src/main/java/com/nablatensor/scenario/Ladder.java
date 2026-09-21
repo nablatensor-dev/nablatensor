@@ -29,10 +29,10 @@ import java.util.List;
 public final class Ladder {
 
   private final String input;
-  private final Shock.Kind kind;
+  private final Shock.KindEnum kind;
   private final double[] values;
 
-  private Ladder(String input, Shock.Kind kind, double[] values) {
+  private Ladder(String input, Shock.KindEnum kind, double[] values) {
     this.input = input;
     this.kind = kind;
     this.values = values;
@@ -58,7 +58,7 @@ public final class Ladder {
   public List<Scenario> scenarios() {
     List<Scenario> out = new ArrayList<>(values.length);
     for (double v : values) {
-      out.add(Scenario.of(input + "=" + trim(v), new Shock(input, kind, v)));
+      out.add(Scenario.of(input + "=" + trim(v), Shock.of().input(input).kind(kind).amount(v).transform(null).build()));
     }
     return out;
   }
@@ -70,7 +70,7 @@ public final class Ladder {
   /** Fluent construction of a {@link Ladder}. */
   public static final class Builder {
     private final String input;
-    private Shock.Kind kind = Shock.Kind.ABSOLUTE;
+    private Shock.KindEnum kind = Shock.KindEnum.ABSOLUTE;
     private double from;
     private double to;
 
@@ -79,17 +79,17 @@ public final class Ladder {
     }
 
     public Builder absolute() {
-      this.kind = Shock.Kind.ABSOLUTE;
+      this.kind = Shock.KindEnum.ABSOLUTE;
       return this;
     }
 
     public Builder relative() {
-      this.kind = Shock.Kind.RELATIVE;
+      this.kind = Shock.KindEnum.RELATIVE;
       return this;
     }
 
     public Builder additive() {
-      this.kind = Shock.Kind.ADDITIVE;
+      this.kind = Shock.KindEnum.ADDITIVE;
       return this;
     }
 

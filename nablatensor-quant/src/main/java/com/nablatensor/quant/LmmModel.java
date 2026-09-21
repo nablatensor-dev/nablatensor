@@ -47,7 +47,11 @@ public final class LmmModel {
   private final ADouble vol;
   private final ADouble corr;
 
-  public LmmModel(Nabla.Inputs<LmmMarket> in, double expiry, int steps) {
+  public static LmmModel of(Nabla.Inputs<LmmMarket> in, double expiry, int steps) {
+    return new LmmModel(in, expiry, steps);
+  }
+
+  private LmmModel(Nabla.Inputs<LmmMarket> in, double expiry, int steps) {
     this.tenor = LmmMarket.TENOR;
     this.dt = expiry / steps;
     this.sqrtDt = Math.sqrt(dt);
@@ -96,7 +100,7 @@ public final class LmmModel {
   public static BiConsumer<AadRecorder, Nabla.Inputs<LmmMarket>> payerSwaption(
       double expiry, int steps, double strike) {
     return (rec, in) -> {
-      LmmModel m = new LmmModel(in, expiry, steps);
+      LmmModel m = LmmModel.of(in, expiry, steps);
       ADouble[] l = m.start(in);
       for (int t = 0; t < steps; t++) {
         l = m.step(rec, l, m.draw(rec));
@@ -119,7 +123,7 @@ public final class LmmModel {
   public static BiConsumer<AadRecorder, Nabla.Inputs<LmmMarket>> receiverSwaption(
       double expiry, int steps, double strike) {
     return (rec, in) -> {
-      LmmModel m = new LmmModel(in, expiry, steps);
+      LmmModel m = LmmModel.of(in, expiry, steps);
       ADouble[] l = m.start(in);
       for (int t = 0; t < steps; t++) {
         l = m.step(rec, l, m.draw(rec));
@@ -145,10 +149,10 @@ public final class LmmModel {
    * discounted with the model's own reconstructed factors.
    */
   public static BiConsumer<AadRecorder, Nabla.Inputs<LmmMarket>> capFloor(
-      OptionType type, int stepsPerPeriod, double strike, double notional) {
+      OptionTypeEnum type, int stepsPerPeriod, double strike, double notional) {
     return (rec, in) -> {
       double sign = type.sign();
-      LmmModel stepper = new LmmModel(in, LmmMarket.TENOR, Math.max(1, stepsPerPeriod));
+      LmmModel stepper = LmmModel.of(in, LmmMarket.TENOR, Math.max(1, stepsPerPeriod));
       ADouble[] l = stepper.start(in);
       ADouble discount = rec.constant(1.0);
       ADouble value = rec.constant(0.0);

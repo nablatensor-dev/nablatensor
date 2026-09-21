@@ -248,7 +248,7 @@ delta -----> [ BASE REPRICE ] [ +30% REPRICE ] [ -30% REPRICE ] ---> CVR ---> ag
 
 The measured one-million-path comparison on this machine was:
 
-| Backend | Three price replays | Relative to scalar CPU |
+| BackendEnum | Three price replays | Relative to scalar CPU |
 |---|---:|---:|
 | Scalar CPU | 20.9039 s | 1.00x |
 | JIT CPU | 13.0496 s | 1.60x |

@@ -42,7 +42,7 @@ class HullWhiteAnalyticTest {
       pillars[i] = i + 1.0;
       zeros[i] = 0.025 + 0.009 * (i / (n - 1.0));
     }
-    return new YieldCurve(pillars, zeros);
+    return YieldCurve.of().pillars(pillars).zeroRates(zeros).build();
   }
 
   @Test

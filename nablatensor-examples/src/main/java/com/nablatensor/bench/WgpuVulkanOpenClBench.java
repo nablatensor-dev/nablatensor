@@ -82,7 +82,7 @@ public final class WgpuVulkanOpenClBench {
   }
 
   private static void row(String engine, boolean fp32, EquityMarket market, int steps, long scenarios, long seed) {
-    AadOptions probe = new AadOptions(fp32 ? AadOptions.Precision.FLOAT32 : AadOptions.Precision.FLOAT64, true);
+    AadOptions probe = AadOptions.of().precision(fp32 ? AadOptions.PrecisionEnum.FLOAT32 : AadOptions.PrecisionEnum.FLOAT64).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build();
     List<AadEngine> found = AadEngines.available(probe).stream().filter(e -> e.name().equals(engine)).toList();
     if (found.isEmpty()) {
       System.out.printf(Locale.ROOT, "| %s | %s | — | — | — | — | — | not available |%n",

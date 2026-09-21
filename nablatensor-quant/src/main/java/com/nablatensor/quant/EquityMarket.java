@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * One equity underlying and the flat-rate world it lives in.
  *
@@ -30,7 +32,50 @@ package com.nablatensor.quant;
  * @param rate     continuously-compounded risk-free rate, {@code r}
  * @param maturity time to expiry in years, {@code T}
  */
-public record EquityMarket(double spot, double strike, double vol, double rate, double maturity) {
+@Of
+public final class EquityMarket {
+
+  private EquityMarket(double spot, double strike, double vol, double rate, double maturity) {
+    this.spot = spot;
+    this.strike = strike;
+    this.vol = vol;
+    this.rate = rate;
+    this.maturity = maturity;
+  }
+
+  private final double spot;
+  private final double strike;
+  private final double vol;
+  private final double rate;
+  private final double maturity;
+  static EquityMarket create(double spot, double strike, double vol, double rate, double maturity) {
+    return new EquityMarket(spot, strike, vol, rate, maturity);
+  }
+
+  public static EquityMarketBuilder of() {
+    return new EquityMarketBuilder();
+  }
+
+  public double spot() {
+    return spot;
+  }
+
+  public double strike() {
+    return strike;
+  }
+
+  public double vol() {
+    return vol;
+  }
+
+  public double rate() {
+    return rate;
+  }
+
+  public double maturity() {
+    return maturity;
+  }
+
 
   /**
    * Rejects a market that a payoff cannot be simulated against. Not enforced in
@@ -48,26 +93,26 @@ public record EquityMarket(double spot, double strike, double vol, double rate, 
 
   /** A textbook at-the-money one-year call market: S0=K=100, sigma=20%, r=3%. */
   public static EquityMarket atmOneYear() {
-    return new EquityMarket(100.0, 100.0, 0.20, 0.03, 1.0);
+    return EquityMarket.of().spot(100.0).strike(100.0).vol(0.20).rate(0.03).maturity(1.0).build();
   }
 
   public EquityMarket withSpot(double spot) {
-    return new EquityMarket(spot, strike, vol, rate, maturity);
+    return EquityMarket.of().spot(spot).strike(strike).vol(vol).rate(rate).maturity(maturity).build();
   }
 
   public EquityMarket withStrike(double strike) {
-    return new EquityMarket(spot, strike, vol, rate, maturity);
+    return EquityMarket.of().spot(spot).strike(strike).vol(vol).rate(rate).maturity(maturity).build();
   }
 
   public EquityMarket withVol(double vol) {
-    return new EquityMarket(spot, strike, vol, rate, maturity);
+    return EquityMarket.of().spot(spot).strike(strike).vol(vol).rate(rate).maturity(maturity).build();
   }
 
   public EquityMarket withRate(double rate) {
-    return new EquityMarket(spot, strike, vol, rate, maturity);
+    return EquityMarket.of().spot(spot).strike(strike).vol(vol).rate(rate).maturity(maturity).build();
   }
 
   public EquityMarket withMaturity(double maturity) {
-    return new EquityMarket(spot, strike, vol, rate, maturity);
+    return EquityMarket.of().spot(spot).strike(strike).vol(vol).rate(rate).maturity(maturity).build();
   }
 }

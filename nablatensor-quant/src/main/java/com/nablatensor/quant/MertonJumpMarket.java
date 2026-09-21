@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A Merton (1976) jump-diffusion market: geometric Brownian motion of volatility
  * {@code vol} plus a compound-Poisson jump component of intensity
@@ -35,8 +37,68 @@ package com.nablatensor.quant;
  * @param jumpMean      mean of the log jump size {@code muJ}
  * @param jumpVol       standard deviation of the log jump size {@code deltaJ}
  */
-public record MertonJumpMarket(double spot, double strike, double vol, double rate, double maturity,
-                               double jumpIntensity, double jumpMean, double jumpVol) {
+@Of
+public final class MertonJumpMarket {
+
+  private MertonJumpMarket(double spot, double strike, double vol, double rate, double maturity, double jumpIntensity, double jumpMean, double jumpVol) {
+    this.spot = spot;
+    this.strike = strike;
+    this.vol = vol;
+    this.rate = rate;
+    this.maturity = maturity;
+    this.jumpIntensity = jumpIntensity;
+    this.jumpMean = jumpMean;
+    this.jumpVol = jumpVol;
+  }
+
+  private final double spot;
+  private final double strike;
+  private final double vol;
+  private final double rate;
+  private final double maturity;
+  private final double jumpIntensity;
+  private final double jumpMean;
+  private final double jumpVol;
+  static MertonJumpMarket create(double spot, double strike, double vol, double rate, double maturity, double jumpIntensity, double jumpMean, double jumpVol) {
+    return new MertonJumpMarket(spot, strike, vol, rate, maturity, jumpIntensity, jumpMean, jumpVol);
+  }
+
+  public static MertonJumpMarketBuilder of() {
+    return new MertonJumpMarketBuilder();
+  }
+
+  public double spot() {
+    return spot;
+  }
+
+  public double strike() {
+    return strike;
+  }
+
+  public double vol() {
+    return vol;
+  }
+
+  public double rate() {
+    return rate;
+  }
+
+  public double maturity() {
+    return maturity;
+  }
+
+  public double jumpIntensity() {
+    return jumpIntensity;
+  }
+
+  public double jumpMean() {
+    return jumpMean;
+  }
+
+  public double jumpVol() {
+    return jumpVol;
+  }
+
 
   public MertonJumpMarket validated() {
     if (!(spot > 0 && strike > 0 && vol >= 0 && maturity >= 0 && jumpIntensity >= 0 && jumpVol >= 0)) {
@@ -46,6 +108,6 @@ public record MertonJumpMarket(double spot, double strike, double vol, double ra
   }
 
   public static MertonJumpMarket base() {
-    return new MertonJumpMarket(100.0, 100.0, 0.18, 0.03, 1.0, 0.75, -0.05, 0.15);
+    return MertonJumpMarket.of().spot(100.0).strike(100.0).vol(0.18).rate(0.03).maturity(1.0).jumpIntensity(0.75).jumpMean(-0.05).jumpVol(0.15).build();
   }
 }

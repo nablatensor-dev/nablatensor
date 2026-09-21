@@ -23,7 +23,7 @@ final class ElementwiseKernels {
   private ElementwiseKernels() {
   }
 
-  /** Two same-shape operands; {@code op} indexes the case labels, not {@link com.nablatensor.tensor.Op}. */
+  /** Two same-shape operands; {@code op} indexes the case labels, not {@link com.nablatensor.tensor.OpEnum}. */
   static final GpuKernel EW_BINARY = GpuKernel.of("""
       extern "C" __global__ void ew_binary(float* out, const float* a, const float* b, int n, int op) {
         int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -59,7 +59,7 @@ final class ElementwiseKernels {
       }
       """);
 
-  /** Op codes must stay in step with the unary cases {@code GpuKernels.unaryExpr} emits. */
+  /** OpEnum codes must stay in step with the unary cases {@code GpuKernels.unaryExpr} emits. */
   static final GpuKernel EW_UNARY = GpuKernel.of("""
       extern "C" __global__ void ew_unary(float* out, const float* a, int n, int op) {
         int i = blockIdx.x * blockDim.x + threadIdx.x;

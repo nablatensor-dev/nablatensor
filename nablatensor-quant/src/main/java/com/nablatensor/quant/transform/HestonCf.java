@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant.transform;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * Heston characteristic function of the log-return, in the branch-stable
  * "little Heston trap" form (Albrecher et al. 2007) so a principal-branch
@@ -25,8 +27,56 @@ package com.nablatensor.quant.transform;
  * dv   = kappa (theta - v) dt + xi sqrt(v) dW2,   corr(dW1, dW2) = rho
  * }</pre>
  */
-public record HestonCf(double rate, double v0, double kappa, double theta, double xi, double rho)
-    implements CharacteristicFunction {
+@Of
+public final class HestonCf implements CharacteristicFunction {
+
+  private HestonCf(double rate, double v0, double kappa, double theta, double xi, double rho) {
+    this.rate = rate;
+    this.v0 = v0;
+    this.kappa = kappa;
+    this.theta = theta;
+    this.xi = xi;
+    this.rho = rho;
+  }
+
+  private final double rate;
+  private final double v0;
+  private final double kappa;
+  private final double theta;
+  private final double xi;
+  private final double rho;
+  static HestonCf create(double rate, double v0, double kappa, double theta, double xi, double rho) {
+    return new HestonCf(rate, v0, kappa, theta, xi, rho);
+  }
+
+  public static HestonCfBuilder of() {
+    return new HestonCfBuilder();
+  }
+
+  public double rate() {
+    return rate;
+  }
+
+  public double v0() {
+    return v0;
+  }
+
+  public double kappa() {
+    return kappa;
+  }
+
+  public double theta() {
+    return theta;
+  }
+
+  public double xi() {
+    return xi;
+  }
+
+  public double rho() {
+    return rho;
+  }
+
 
   @Override
   public Complex phi(double u, double t) {

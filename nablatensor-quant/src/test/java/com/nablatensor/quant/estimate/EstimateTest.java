@@ -74,7 +74,7 @@ class EstimateTest {
 
   @Test
   void garchLongRunVarianceMatchesClosedForm() {
-    Garch11 g = new Garch11(3.0e-6, 0.06, 0.90);
+    Garch11 g = Garch11.of().omega(3.0e-6).alpha(0.06).beta(0.90).build();
     assertEquals(3.0e-6 / (1.0 - 0.06 - 0.90), g.longRunVariance(), 1e-18);
     double[] v = g.conditionalVariance(new double[] {0.01, -0.02, 0.005, 0.0, 0.03});
     assertEquals(g.longRunVariance(), v[0], 1e-18, "seeded at the long-run variance");

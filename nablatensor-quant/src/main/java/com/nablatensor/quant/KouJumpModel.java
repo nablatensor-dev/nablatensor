@@ -48,7 +48,11 @@ public class KouJumpModel {
   private final double sqrtDt;
   private final double indicatorWidth;
 
-  public KouJumpModel(Nabla.Inputs<KouMarket> in, double maturity, int steps, double indicatorWidth) {
+  public static KouJumpModel of(Nabla.Inputs<KouMarket> in, double maturity, int steps, double indicatorWidth) {
+    return new KouJumpModel(in, maturity, steps, indicatorWidth);
+  }
+
+  protected KouJumpModel(Nabla.Inputs<KouMarket> in, double maturity, int steps, double indicatorWidth) {
     this.rate = in.of(KouMarket::rate);
     this.vol = in.of(KouMarket::vol);
     this.intensity = in.of(KouMarket::jumpIntensity);
@@ -98,20 +102,20 @@ public class KouJumpModel {
   }
 
   public static BiConsumer<AadRecorder, Nabla.Inputs<KouMarket>> european(
-      OptionType type, double maturity, int steps) {
+      OptionTypeEnum type, double maturity, int steps) {
     return european(type, maturity, steps, 2.0e-4);
   }
 
   public static BiConsumer<AadRecorder, Nabla.Inputs<KouMarket>> european(
-      OptionType type, double maturity, int steps, double indicatorWidth) {
+      OptionTypeEnum type, double maturity, int steps, double indicatorWidth) {
     return (rec, in) -> {
-      KouJumpModel m = new KouJumpModel(in, maturity, steps, indicatorWidth);
+      KouJumpModel m = KouJumpModel.of(in, maturity, steps, indicatorWidth);
       ADouble s = m.start(in);
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn(), rec.randu(), rec.randu(), rec.randu());
       }
       ADouble strike = in.of(KouMarket::strike);
-      ADouble intrinsic = type == OptionType.CALL ? s.sub(strike).max(0.0) : strike.sub(s).max(0.0);
+      ADouble intrinsic = type == OptionTypeEnum.CALL ? s.sub(strike).max(0.0) : strike.sub(s).max(0.0);
       ADouble discount = in.of(KouMarket::rate).neg().mul(maturity).exp();
       rec.output(intrinsic.mul(discount));
     };

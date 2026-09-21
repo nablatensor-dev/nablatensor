@@ -37,7 +37,7 @@ class MvpPricingTest {
   @Test
   void europeanCallAdjointGreeksMatchBlackScholes() {
     EquityMarket m = EquityMarket.atmOneYear();
-    BlackScholes ref = BlackScholes.of(OptionType.CALL, m);
+    BlackScholes ref = BlackScholes.of(OptionTypeEnum.CALL, m);
 
     try (MonteCarlo<EquityMarket> mc = MonteCarlo.of(Products.europeanCall())
         .market(m).steps(1).fp64().greeks().on("cpu-jit").build()) {

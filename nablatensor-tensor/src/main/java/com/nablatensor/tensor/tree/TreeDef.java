@@ -23,7 +23,7 @@ import java.util.function.UnaryOperator;
 public final class TreeDef {
 
   /** The kind of node described by this definition. */
-  public enum Kind {
+  public enum KindEnum {
     /** A leaf value carried through unflattened. */
     LEAF,
     /** A {@code null} slot in the tree. */
@@ -40,32 +40,32 @@ public final class TreeDef {
     CUSTOM
   }
 
-  private final Kind kind;
+  private final KindEnum kind;
   private final Class<?> type;
   private final Object metadata;
   private final List<TreeDef> children;
   private final int leafCount;
 
-  TreeDef(Kind kind, Class<?> type, Object metadata, List<TreeDef> children) {
+  TreeDef(KindEnum kind, Class<?> type, Object metadata, List<TreeDef> children) {
     this.kind = Objects.requireNonNull(kind, "kind");
     this.type = type;
     this.metadata = metadata;
     this.children = List.copyOf(children);
-    this.leafCount = kind == Kind.LEAF
+    this.leafCount = kind == KindEnum.LEAF
         ? 1
         : this.children.stream().mapToInt(TreeDef::leafCount).sum();
   }
 
   static TreeDef leaf() {
-    return new TreeDef(Kind.LEAF, null, null, List.of());
+    return new TreeDef(KindEnum.LEAF, null, null, List.of());
   }
 
-  static TreeDef node(Kind kind, Class<?> type, Object metadata, List<TreeDef> children) {
+  static TreeDef node(KindEnum kind, Class<?> type, Object metadata, List<TreeDef> children) {
     return new TreeDef(kind, type, metadata, children);
   }
 
   /** Node category. */
-  public Kind kind() {
+  public KindEnum kind() {
     return kind;
   }
 
@@ -93,7 +93,7 @@ public final class TreeDef {
   }
 
   TreeDef replaceLeaves(TreeDef replacement) {
-    if (kind == Kind.LEAF) {
+    if (kind == KindEnum.LEAF) {
       return replacement;
     }
 
@@ -107,7 +107,7 @@ public final class TreeDef {
   /** Returns this structure with every array component type transformed by {@code mapper}. */
   public TreeDef mapArrayTypes(UnaryOperator<Class<?>> mapper) {
     Objects.requireNonNull(mapper, "mapper");
-    Class<?> mappedType = kind == Kind.ARRAY ? mapper.apply(type) : type;
+    Class<?> mappedType = kind == KindEnum.ARRAY ? mapper.apply(type) : type;
     return new TreeDef(kind, mappedType, metadata,
         children.stream().map(child -> child.mapArrayTypes(mapper)).toList());
   }

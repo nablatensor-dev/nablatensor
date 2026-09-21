@@ -82,7 +82,7 @@ class TimeGridTest {
     // front-loaded schedule: the terminal marginal is unchanged, so a European still matches BS
     TimeGrid skewed = TimeGrid.of(0.1, 0.15, 0.25, 0.45, 0.7, 1.0);
     assertTrue(!skewed.isUniform());
-    BlackScholes ref = BlackScholes.of(OptionType.CALL, M);
+    BlackScholes ref = BlackScholes.of(OptionTypeEnum.CALL, M);
     try (MonteCarlo<EquityMarket> mc = MonteCarlo.of(Products.europeanCall())
         .market(M).timeGrid(skewed).fp64().greeks().on("cpu-jit").build()) {
       Nabla.TypedValuation<EquityMarket> p = mc.run(1_000_000L, SEED);

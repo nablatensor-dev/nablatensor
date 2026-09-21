@@ -28,7 +28,7 @@ a backtracking gradient ascent drives `beta`.
 
 ```java
 BermudanLsm.Result r = BermudanLsm.price(
-    market, OptionType.PUT, /*exerciseDates*/ 25, /*stepsPerDate*/ 6,
+    market, OptionTypeEnum.PUT, /*exerciseDates*/ 25, /*stepsPerDate*/ 6,
     /*polyDegree*/ 3, /*decisionWidth*/ 0.6, /*scenarios*/ 150_000L, /*seed*/ 42L);
 
 r.price();                 // LSM lower bound

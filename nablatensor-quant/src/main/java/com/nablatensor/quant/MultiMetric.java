@@ -32,9 +32,11 @@ import java.util.Map;
  * <pre>{@code
  * try (MultiMetric mm = MultiMetric.market(EquityMarket.atmOneYear()).steps(128)
  *         .metric("call",    Products.europeanCall())
- *         .metric("digital",  ExoticProducts.digitalCash(OptionType.CALL, 1.0, 1.0))
- *         .metric("barrierUO", ExoticProducts.barrier(OptionType.CALL,
- *                     ExoticProducts.Barrier.UP_OUT, 130.0, 1.0))
+ *         .metric("digital", ExoticProducts.DigitalCash.of()
+ *             .type(OptionTypeEnum.CALL).cash(1.0).width(1.0).build())
+ *         .metric("barrierUO", ExoticProducts.BarrierOption.of()
+ *             .type(OptionTypeEnum.CALL).kind(ExoticProducts.BarrierEnum.UP_OUT)
+ *             .barrier(130.0).width(1.0).build())
  *         .on("cpu-jit").build()) {
  *
  *   Map<String, Nabla.TypedValuation<EquityMarket>> r = mm.run(1_000_000, 42L);

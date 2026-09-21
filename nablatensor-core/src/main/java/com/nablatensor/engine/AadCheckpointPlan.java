@@ -71,14 +71,14 @@ public final class AadCheckpointPlan {
     this.slotsPerPath = slotsPerPath;
   }
 
-  public static boolean nodeArgA(AadOp op) {
+  public static boolean nodeArgA(AadOpEnum op) {
     return switch (op) {
       case ADD, SUB, MUL, DIV, NEG, EXP, LOG, SQRT, ABS, MAX, MIN -> true;
       case CONST, INPUT, RANDN, RANDU -> false;
     };
   }
 
-  public static boolean nodeArgB(AadOp op) {
+  public static boolean nodeArgB(AadOpEnum op) {
     return switch (op) {
       case ADD, SUB, MUL, DIV, MAX, MIN -> true;
       default -> false;
@@ -125,7 +125,7 @@ public final class AadCheckpointPlan {
     int[] lastUse = new int[n];
     java.util.Arrays.fill(lastUse, -1);
     for (int j = 0; j < n; j++) {
-      AadOp op = tape.op(j);
+      AadOpEnum op = tape.op(j);
       if (nodeArgA(op)) {
         lastUse[tape.argA(j)] = j;
       }

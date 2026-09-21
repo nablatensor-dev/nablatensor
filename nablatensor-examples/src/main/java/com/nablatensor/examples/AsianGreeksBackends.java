@@ -67,14 +67,14 @@ public final class AsianGreeksBackends {
 
   private static List<String> availableEngines() {
     List<String> names = new ArrayList<>();
-    for (AadEngine e : AadEngines.available(new AadOptions(AadOptions.Precision.FLOAT64, true))) {
+    for (AadEngine e : AadEngines.available(AadOptions.of().precision(AadOptions.PrecisionEnum.FLOAT64).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build())) {
       names.add(e.name());
     }
     return names;
   }
 
   private static String describe(String engine) {
-    return AadEngines.available(new AadOptions(AadOptions.Precision.FLOAT64, true)).stream()
+    return AadEngines.available(AadOptions.of().precision(AadOptions.PrecisionEnum.FLOAT64).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build()).stream()
         .filter(e -> e.name().equals(engine))
         .map(AadEngine::describe)
         .findFirst()

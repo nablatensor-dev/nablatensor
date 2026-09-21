@@ -30,14 +30,14 @@ import com.nablatensor.ops.Smooth;
 public final class ExoticProducts {
 
   /** Up/down and knock-in/out. */
-  public enum Barrier {
-    /** Barrier above spot; the option dies if the barrier is touched. */
+  public enum BarrierEnum {
+    /** BarrierEnum above spot; the option dies if the barrier is touched. */
     UP_OUT,
-    /** Barrier above spot; the option only activates if the barrier is touched. */
+    /** BarrierEnum above spot; the option only activates if the barrier is touched. */
     UP_IN,
-    /** Barrier below spot; the option dies if the barrier is touched. */
+    /** BarrierEnum below spot; the option dies if the barrier is touched. */
     DOWN_OUT,
-    /** Barrier below spot; the option only activates if the barrier is touched. */
+    /** BarrierEnum below spot; the option only activates if the barrier is touched. */
     DOWN_IN
   }
 
@@ -52,12 +52,12 @@ public final class ExoticProducts {
    * @param kind    up/down × in/out
    * @param width   smoothing width, in spot units (e.g. {@code 0.01 * S0})
    */
-  public static Product<EquityMarket> barrier(OptionType type, Barrier kind, double barrier, double width) {
-    return new Labelled("Barrier " + kind + " " + type, (rec, in, grid) -> {
+  private static Product<EquityMarket> createBarrier(OptionTypeEnum type, BarrierEnum kind, double barrier, double width) {
+    return new Labelled("BarrierEnum " + kind + " " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
       ADouble path = sim.spot;
       ADouble survival = rec.constant(1.0);      // prob(not knocked) so far, smoothed
-      boolean up = kind == Barrier.UP_OUT || kind == Barrier.UP_IN;
+      boolean up = kind == BarrierEnum.UP_OUT || kind == BarrierEnum.UP_IN;
       for (int t = 0; t < grid.steps(); t++) {
         path = sim.model.step(path, rec.randn(), t);
         ADouble notBreached = up
@@ -65,10 +65,10 @@ public final class ExoticProducts {
             : Smooth.gt(rec, path, barrier, width);  // still above a down-barrier
         survival = survival.mul(notBreached);
       }
-      ADouble vanilla = type == OptionType.CALL
+      ADouble vanilla = type == OptionTypeEnum.CALL
           ? path.sub(sim.strike).max(0.0)
           : sim.strike.sub(path).max(0.0);
-      boolean knockOut = kind == Barrier.UP_OUT || kind == Barrier.DOWN_OUT;
+      boolean knockOut = kind == BarrierEnum.UP_OUT || kind == BarrierEnum.DOWN_OUT;
       ADouble alive = knockOut ? survival : rec.constant(1.0).sub(survival);
       rec.output(sim.discount(vanilla.mul(alive)));
     });
@@ -78,14 +78,14 @@ public final class ExoticProducts {
    * Cash-or-nothing digital: pays {@code cash} if the terminal spot finishes in
    * the money, smoothed at the strike.
    */
-  public static Product<EquityMarket> digitalCash(OptionType type, double cash, double width) {
+  private static Product<EquityMarket> createDigitalCash(OptionTypeEnum type, double cash, double width) {
     return new Labelled("Digital cash " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
       ADouble s = sim.spot;
       for (int t = 0; t < grid.steps(); t++) {
         s = sim.model.step(s, rec.randn(), t);
       }
-      ADouble itm = type == OptionType.CALL
+      ADouble itm = type == OptionTypeEnum.CALL
           ? Smooth.gt(rec, s, sim.strike, width)
           : Smooth.lt(rec, s, sim.strike, width);
       rec.output(sim.discount(itm.mul(cash)));
@@ -93,14 +93,14 @@ public final class ExoticProducts {
   }
 
   /** Asset-or-nothing digital: pays the terminal spot if it finishes in the money. */
-  public static Product<EquityMarket> digitalAsset(OptionType type, double width) {
+  private static Product<EquityMarket> createDigitalAsset(OptionTypeEnum type, double width) {
     return new Labelled("Digital asset " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
       ADouble s = sim.spot;
       for (int t = 0; t < grid.steps(); t++) {
         s = sim.model.step(s, rec.randn(), t);
       }
-      ADouble itm = type == OptionType.CALL
+      ADouble itm = type == OptionTypeEnum.CALL
           ? Smooth.gt(rec, s, sim.strike, width)
           : Smooth.lt(rec, s, sim.strike, width);
       rec.output(sim.discount(itm.mul(s)));
@@ -112,7 +112,7 @@ public final class ExoticProducts {
    * {@code [localFloor, localCap]}, the sum is clamped to
    * {@code [globalFloor, globalCap]}, and the notional pays that.
    */
-  public static Product<EquityMarket> cliquet(double localFloor, double localCap,
+  private static Product<EquityMarket> createCliquet(double localFloor, double localCap,
                                 double globalFloor, double globalCap, double notional) {
     return new Labelled("Cliquet", (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
@@ -137,7 +137,7 @@ public final class ExoticProducts {
    * {@code min(1, S_T / S0)}. Early redemption is smoothed. Requires
    * {@code steps} to be a multiple of {@code observations}.
    */
-  public static Product<EquityMarket> autocallable(double autocallLevel, double couponPerPeriod, int observations,
+  private static Product<EquityMarket> createAutocallable(double autocallLevel, double couponPerPeriod, int observations,
                                      double width, double notional) {
     return new Labelled("Autocallable", (rec, in, grid) -> {
       int steps = grid.steps();
@@ -171,7 +171,114 @@ public final class ExoticProducts {
     });
   }
 
+
+  /** Named construction for a single-barrier option. */
+  public static final class BarrierOption {
+    private OptionTypeEnum type;
+    private BarrierEnum kind;
+    private Double barrier;
+    private Double width;
+
+    private BarrierOption() {}
+    public static BarrierOption of() { return new BarrierOption(); }
+    public BarrierOption type(OptionTypeEnum value) { type = value; return this; }
+    public BarrierOption kind(BarrierEnum value) { kind = value; return this; }
+    public BarrierOption barrier(double value) { barrier = value; return this; }
+    public BarrierOption width(double value) { width = value; return this; }
+
+    public Product<EquityMarket> build() {
+      return ExoticProducts.createBarrier(required(type, "type"), required(kind, "kind"),
+          required(barrier, "barrier"), required(width, "width"));
+    }
+  }
+
+  /** Named construction for a cash-or-nothing digital option. */
+  public static final class DigitalCash {
+    private OptionTypeEnum type;
+    private Double cash;
+    private Double width;
+
+    private DigitalCash() {}
+    public static DigitalCash of() { return new DigitalCash(); }
+    public DigitalCash type(OptionTypeEnum value) { type = value; return this; }
+    public DigitalCash cash(double value) { cash = value; return this; }
+    public DigitalCash width(double value) { width = value; return this; }
+
+    public Product<EquityMarket> build() {
+      return createDigitalCash(required(type, "type"), required(cash, "cash"), required(width, "width"));
+    }
+  }
+
+  /** Named construction for an asset-or-nothing digital option. */
+  public static final class DigitalAsset {
+    private OptionTypeEnum type;
+    private Double width;
+
+    private DigitalAsset() {}
+    public static DigitalAsset of() { return new DigitalAsset(); }
+    public DigitalAsset type(OptionTypeEnum value) { type = value; return this; }
+    public DigitalAsset width(double value) { width = value; return this; }
+
+    public Product<EquityMarket> build() {
+      return createDigitalAsset(required(type, "type"), required(width, "width"));
+    }
+  }
+
+  /** Named construction for a cliquet/ratchet payoff. */
+  public static final class Cliquet {
+    private Double localFloor;
+    private Double localCap;
+    private Double globalFloor;
+    private Double globalCap;
+    private Double notional;
+
+    private Cliquet() {}
+    public static Cliquet of() { return new Cliquet(); }
+    public Cliquet localFloor(double value) { localFloor = value; return this; }
+    public Cliquet localCap(double value) { localCap = value; return this; }
+    public Cliquet globalFloor(double value) { globalFloor = value; return this; }
+    public Cliquet globalCap(double value) { globalCap = value; return this; }
+    public Cliquet notional(double value) { notional = value; return this; }
+
+    public Product<EquityMarket> build() {
+      return createCliquet(required(localFloor, "localFloor"), required(localCap, "localCap"),
+          required(globalFloor, "globalFloor"), required(globalCap, "globalCap"),
+          required(notional, "notional"));
+    }
+  }
+
+  /** Named construction for an autocallable note. */
+  public static final class Autocallable {
+    private Double autocallLevel;
+    private Double couponPerPeriod;
+    private Integer observations;
+    private Double width;
+    private Double notional;
+
+    private Autocallable() {}
+    public static Autocallable of() { return new Autocallable(); }
+    public Autocallable autocallLevel(double value) { autocallLevel = value; return this; }
+    public Autocallable couponPerPeriod(double value) { couponPerPeriod = value; return this; }
+    public Autocallable observations(int value) { observations = value; return this; }
+    public Autocallable width(double value) { width = value; return this; }
+    public Autocallable notional(double value) { notional = value; return this; }
+
+    public Product<EquityMarket> build() {
+      return createAutocallable(required(autocallLevel, "autocallLevel"),
+          required(couponPerPeriod, "couponPerPeriod"), required(observations, "observations"),
+          required(width, "width"), required(notional, "notional"));
+    }
+  }
+
+  private static <T> T required(T value, String name) {
+    if (value == null) {
+      throw new IllegalStateException("Required field " + name + " is not set");
+    }
+    return value;
+  }
+
   /** Shared GBM setup, mirroring {@link Products}' internal helper. */
+
   private static final class Sim {
     final ADouble spot;
     final ADouble strike;
@@ -184,7 +291,7 @@ public final class ExoticProducts {
       this.strike = in.of(EquityMarket::strike);
       this.rate = in.of(EquityMarket::rate);
       this.maturity = in.of(EquityMarket::maturity);
-      this.model = new GbmPath(rec, rate, in.of(EquityMarket::vol), grid, maturity);
+      this.model = GbmPath.of(rec, rate, in.of(EquityMarket::vol), grid, maturity);
     }
 
     ADouble discount(ADouble payoff) {

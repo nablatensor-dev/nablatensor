@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant.analytic;
 
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 
 /**
  * Kirk's (1995) approximation for a European spread option — payoff
@@ -74,14 +74,14 @@ public final class KirkSpreadOption {
         - 2 * px
         + price(s1 - h1, s2, strike, vol1, vol2, rho, rate, yield1, yield2, maturity)) / (h1 * h1);
     // delta2 packed into strikeSensitivity, gamma is d^2/dS1^2; the rest left zero.
-    return new AnalyticGreeks(px, d1, g1, 0.0, 0.0, 0.0, d2);
+    return AnalyticGreeks.of().price(px).delta(d1).gamma(g1).vega(0.0).theta(0.0).rho(0.0).strikeSensitivity(d2).build();
   }
 
   /** Convenience alias for a put-style spread: {@code max(K - (S1 - S2), 0)} by parity. */
-  public static double price(OptionType type, double s1, double s2, double strike, double vol1, double vol2,
+  public static double price(OptionTypeEnum type, double s1, double s2, double strike, double vol1, double vol2,
                              double rho, double rate, double yield1, double yield2, double maturity) {
     double call = price(s1, s2, strike, vol1, vol2, rho, rate, yield1, yield2, maturity);
-    if (type == OptionType.CALL) {
+    if (type == OptionTypeEnum.CALL) {
       return call;
     }
     double f1 = s1 * Math.exp((rate - yield1) * maturity);

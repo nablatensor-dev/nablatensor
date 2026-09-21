@@ -13,7 +13,7 @@ Source: [`nablatensor-risk/.../ValueAtRisk.java`](../../nablatensor-risk/src/mai
 
 ## The three routes
 
-| Method | Call | Good for |
+| MethodEnum | Call | Good for |
 |---|---|---|
 | Historical / full revaluation | `ValueAtRisk.historical(PnlVector, alpha)` | an empirical quantile of a P&L sample — a bootstrapped-scenario revaluation, or a window of realised daily P&L |
 | Expected Shortfall | `ValueAtRisk.expectedShortfall(PnlVector, alpha)` | the mean loss in the `(1 - alpha)` tail |

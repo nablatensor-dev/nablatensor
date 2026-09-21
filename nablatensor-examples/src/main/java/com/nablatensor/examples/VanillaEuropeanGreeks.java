@@ -18,7 +18,7 @@ package com.nablatensor.examples;
 import com.nablatensor.quant.BlackScholes;
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.MonteCarlo;
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import com.nablatensor.quant.Products;
 import com.nablatensor.engine.Nabla;
 import java.util.Locale;
@@ -49,7 +49,7 @@ public final class VanillaEuropeanGreeks {
         .build()) {
 
       Nabla.TypedValuation<EquityMarket> p = mc.run(scenarios, seed);
-      BlackScholes bs = BlackScholes.of(OptionType.CALL, market);
+      BlackScholes bs = BlackScholes.of(OptionTypeEnum.CALL, market);
 
       System.out.printf(Locale.ROOT, "engine=%s  tape=%d nodes  record=%.1f ms  build=%.1f ms%n",
           mc.engine(), mc.nodes(), mc.recordSeconds() * 1e3, mc.buildSeconds() * 1e3);

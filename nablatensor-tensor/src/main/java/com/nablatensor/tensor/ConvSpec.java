@@ -15,6 +15,8 @@
  */
 package com.nablatensor.tensor;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * The geometry of a 2-D convolution over batched, channel-major images.
  *
@@ -30,10 +32,54 @@ package com.nablatensor.tensor;
  * <p>Square kernels only, and no bias: a bias is one broadcast add away and
  * does not need to be inside the convolution.
  */
-public record ConvSpec(int inChannels, int inHeight, int inWidth,
-                       int outChannels, int kernel, int stride, int pad) {
+@Of
+public final class ConvSpec {
 
-  public ConvSpec {
+  private final int inChannels;
+  private final int inHeight;
+  private final int inWidth;
+  private final int outChannels;
+  private final int kernel;
+  private final int stride;
+  private final int pad;
+  static ConvSpec create(int inChannels, int inHeight, int inWidth, int outChannels, int kernel, int stride, int pad) {
+    return new ConvSpec(inChannels, inHeight, inWidth, outChannels, kernel, stride, pad);
+  }
+
+  public static ConvSpecBuilder of() {
+    return new ConvSpecBuilder();
+  }
+
+  public int inChannels() {
+    return inChannels;
+  }
+
+  public int inHeight() {
+    return inHeight;
+  }
+
+  public int inWidth() {
+    return inWidth;
+  }
+
+  public int outChannels() {
+    return outChannels;
+  }
+
+  public int kernel() {
+    return kernel;
+  }
+
+  public int stride() {
+    return stride;
+  }
+
+  public int pad() {
+    return pad;
+  }
+
+
+  private ConvSpec(int inChannels, int inHeight, int inWidth, int outChannels, int kernel, int stride, int pad) {
     if (inChannels < 1 || inHeight < 1 || inWidth < 1 || outChannels < 1) {
       throw new IllegalArgumentException("channels and spatial dims must be positive");
     }
@@ -44,6 +90,13 @@ public record ConvSpec(int inChannels, int inHeight, int inWidth,
       throw new IllegalArgumentException("kernel " + kernel + " does not fit "
           + inHeight + "x" + inWidth + " with pad " + pad);
     }
+    this.inChannels = inChannels;
+    this.inHeight = inHeight;
+    this.inWidth = inWidth;
+    this.outChannels = outChannels;
+    this.kernel = kernel;
+    this.stride = stride;
+    this.pad = pad;
   }
 
   public int outHeight() {
@@ -83,8 +136,7 @@ public record ConvSpec(int inChannels, int inHeight, int inWidth,
 
   /** The spec of a layer that consumes this layer's output. */
   public ConvSpec next(int nextOutChannels, int nextKernel, int nextStride, int nextPad) {
-    return new ConvSpec(outChannels, outHeight(), outWidth(),
-        nextOutChannels, nextKernel, nextStride, nextPad);
+    return ConvSpec.of().inChannels(outChannels).inHeight(outHeight()).inWidth(outWidth()).outChannels(nextOutChannels).kernel(nextKernel).stride(nextStride).pad(nextPad).build();
   }
 
   int batchOf(Shape shape, String what) {

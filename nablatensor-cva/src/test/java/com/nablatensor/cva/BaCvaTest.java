@@ -25,16 +25,16 @@ class BaCvaTest {
 
   private static final BaCvaParameters PARAMETERS = BaCvaParameters.standard();
 
-  private static CreditName name(String id, CreditName.Rating rating, CreditName.Sector sector) {
-    return new CreditName(id, HazardCurve.fromFlatSpread(150.0, 0.4, 10.0), 0.4, rating, sector);
+  private static CreditName name(String id, CreditName.RatingEnum rating, CreditName.SectorEnum sector) {
+    return CreditName.of().id(id).curve(HazardCurve.fromFlatSpread(150.0, 0.4, 10.0)).recovery(0.4).rating(rating).sector(sector).build();
   }
 
   @Test
   void reducedMatchesTheClosedForm() {
     BaCva baCva = new BaCva(PARAMETERS);
     List<BaCva.Exposure> exposures = List.of(
-        new BaCva.Exposure(name("A", CreditName.Rating.A, CreditName.Sector.FINANCIAL), 4.0, 20_000_000.0),
-        new BaCva.Exposure(name("B", CreditName.Rating.BBB, CreditName.Sector.CORPORATE), 3.0, 15_000_000.0));
+        new BaCva.Exposure(name("A", CreditName.RatingEnum.A, CreditName.SectorEnum.FINANCIAL), 4.0, 20_000_000.0),
+        new BaCva.Exposure(name("B", CreditName.RatingEnum.BBB, CreditName.SectorEnum.CORPORATE), 3.0, 15_000_000.0));
 
     double[] scva = new double[2];
     for (int i = 0; i < exposures.size(); i++) {
@@ -57,11 +57,11 @@ class BaCvaTest {
   void aSingleNameHedgeCutsTheChargeAndFullSitsBetween() {
     BaCva baCva = new BaCva(PARAMETERS);
     List<BaCva.Exposure> exposures = List.of(
-        new BaCva.Exposure(name("A", CreditName.Rating.A, CreditName.Sector.FINANCIAL), 4.0, 30_000_000.0));
+        new BaCva.Exposure(name("A", CreditName.RatingEnum.A, CreditName.SectorEnum.FINANCIAL), 4.0, 30_000_000.0));
 
     BaCvaResult unhedged = baCva.charge(exposures, List.of());
     BaCvaResult hedged = baCva.charge(exposures,
-        List.of(CvaHedge.singleName("A", 20_000_000.0, 4.0, 0.05, 1.0)));
+        List.of(CvaHedge.of().kind(CvaHedge.KindEnum.SINGLE_NAME_CDS).referenceId("A").notional(20_000_000.0).maturityYears(4.0).riskWeight(0.05).correlation(1.0).build()));
 
     assertEquals(unhedged.reduced(), hedged.reduced(), 1.0e-9,
         "reduced ignores hedges");

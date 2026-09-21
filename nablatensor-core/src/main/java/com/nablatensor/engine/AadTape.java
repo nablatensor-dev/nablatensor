@@ -29,7 +29,7 @@ import java.util.List;
  */
 public final class AadTape {
 
-  private final AadOp[] op;
+  private final AadOpEnum[] op;
   private final int[] argA;
   private final int[] argB;
   private final double[] constant;
@@ -43,7 +43,7 @@ public final class AadTape {
   private final String[] outputName;
   private final boolean[] active;
 
-  AadTape(AadOp[] op, int[] argA, int[] argB, double[] constant,
+  AadTape(AadOpEnum[] op, int[] argA, int[] argB, double[] constant,
            int[] inputNode, String[] inputName, double[] recordedInput,
            String[] randStreamName, int[] randNormalCount, int[] randUniformCount,
            int[] outputNode, String[] outputName) {
@@ -84,7 +84,7 @@ public final class AadTape {
     return op.length;
   }
 
-  public AadOp op(int node) {
+  public AadOpEnum op(int node) {
     return op[node];
   }
 
@@ -184,7 +184,7 @@ public final class AadTape {
   public int randFlatIndex(int node) {
     int stream = argB[node];
     int base = randStreamOffset(stream);
-    return op[node] == AadOp.RANDU ? base + randNormalCount[stream] + argA[node] : base + argA[node];
+    return op[node] == AadOpEnum.RANDU ? base + randNormalCount[stream] + argA[node] : base + argA[node];
   }
 
   /** Whether the tape uses anything beyond a single stream of standard-normal draws. */
@@ -227,7 +227,7 @@ public final class AadTape {
 
   /** Growable builder used by {@link AadRecorder}. */
   static final class Builder {
-    private AadOp[] op = new AadOp[256];
+    private AadOpEnum[] op = new AadOpEnum[256];
     private int[] argA = new int[256];
     private int[] argB = new int[256];
     private double[] constant = new double[256];
@@ -240,7 +240,7 @@ public final class AadTape {
     private final List<Integer> outputNodes = new ArrayList<>();
     private final List<String> outputNames = new ArrayList<>();
 
-    int add(AadOp operation, int a, int b, double value) {
+    int add(AadOpEnum operation, int a, int b, double value) {
       if (size == op.length) {
         int grown = size * 2;
         op = Arrays.copyOf(op, grown);
@@ -256,7 +256,7 @@ public final class AadTape {
     }
 
     int addInput(String name, double value) {
-      int node = add(AadOp.INPUT, inputNodes.size(), -1, value);
+      int node = add(AadOpEnum.INPUT, inputNodes.size(), -1, value);
       inputNodes.add(node);
       inputNames.add(name);
       inputValues.add(value);
@@ -280,12 +280,12 @@ public final class AadTape {
 
     int addRandn(String stream) {
       int si = streamIndex(stream);
-      return add(AadOp.RANDN, randCounts.get(si)[0]++, si, 0.0);
+      return add(AadOpEnum.RANDN, randCounts.get(si)[0]++, si, 0.0);
     }
 
     int addRandu(String stream) {
       int si = streamIndex(stream);
-      return add(AadOp.RANDU, randCounts.get(si)[1]++, si, 0.0);
+      return add(AadOpEnum.RANDU, randCounts.get(si)[1]++, si, 0.0);
     }
 
     void setOutput(int node) {

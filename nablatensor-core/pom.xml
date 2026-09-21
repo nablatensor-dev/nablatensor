@@ -13,4 +13,13 @@
   <description>The engine: ADouble active scalars, Recorder, Tape, the AadEngine SPI and
     selection, AadOptions/AadResult, and the checkpoint plan shared by the accelerated
     backends. Record a valuation once; every backend replays the same tape.</description>
+  <dependencies>
+    <dependency><groupId>com.nablatensor</groupId><artifactId>nablatensor-codegen</artifactId><scope>provided</scope></dependency>
+  </dependencies>
+  <build><plugins><plugin>
+    <groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
+    <configuration><annotationProcessorPaths><path>
+      <groupId>com.nablatensor</groupId><artifactId>nablatensor-codegen</artifactId><version>${project.version}</version>
+    </path></annotationProcessorPaths></configuration>
+  </plugin></plugins></build>
 </project>

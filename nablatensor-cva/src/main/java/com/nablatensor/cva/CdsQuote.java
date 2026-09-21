@@ -15,6 +15,8 @@
  */
 package com.nablatensor.cva;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * One point on a counterparty CDS par-spread curve: a protection tenor and the
  * quoted par spread in basis points.
@@ -22,15 +24,37 @@ package com.nablatensor.cva;
  * @param tenorYears  protection maturity in years, ascending across a curve
  * @param parSpreadBp par CDS spread in basis points (e.g. {@code 120.0} = 120 bp)
  */
-public record CdsQuote(double tenorYears, double parSpreadBp) {
+@Of
+public final class CdsQuote {
 
-  public CdsQuote {
+  private final double tenorYears;
+  private final double parSpreadBp;
+  static CdsQuote create(double tenorYears, double parSpreadBp) {
+    return new CdsQuote(tenorYears, parSpreadBp);
+  }
+
+  public static CdsQuoteBuilder of() {
+    return new CdsQuoteBuilder();
+  }
+
+  public double tenorYears() {
+    return tenorYears;
+  }
+
+  public double parSpreadBp() {
+    return parSpreadBp;
+  }
+
+
+  private CdsQuote(double tenorYears, double parSpreadBp) {
     if (!(tenorYears > 0.0)) {
       throw new IllegalArgumentException("tenorYears must be > 0, got " + tenorYears);
     }
     if (!(parSpreadBp >= 0.0)) {
       throw new IllegalArgumentException("parSpreadBp must be >= 0, got " + parSpreadBp);
     }
+    this.tenorYears = tenorYears;
+    this.parSpreadBp = parSpreadBp;
   }
 
   public double parSpread() {

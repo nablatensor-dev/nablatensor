@@ -12,15 +12,19 @@ differentiable and **one adjoint sweep gives a genuine (mollified) delta**.
 
 | product | contract |
 |---|---|
-| `barrier(type, UP/DOWN × IN/OUT, level, width)` | single barrier, continuous smoothed monitoring |
-| `digitalCash(type, cash, width)` | cash-or-nothing |
-| `digitalAsset(type, width)` | asset-or-nothing |
-| `cliquet(localFloor, localCap, globalFloor, globalCap, notional)` | ratchet with a global collar |
-| `autocallable(level, couponRate, width, notional)` | early-redemption note, smoothed trigger |
+| `BarrierOption.of().type(...).kind(...).barrier(...).width(...).build()` | single barrier, continuous smoothed monitoring |
+| `DigitalCash.of().type(...).cash(...).width(...).build()` | cash-or-nothing |
+| `DigitalAsset.of().type(...).width(...).build()` | asset-or-nothing |
+| `Cliquet.of()...build()` | ratchet with a global collar |
+| `Autocallable.of()...build()` | early-redemption note, smoothed trigger |
 
 ```java
-Product uo = ExoticProducts.barrier(OptionType.CALL,
-        ExoticProducts.Barrier.UP_OUT, /*level*/ 125.0, /*width*/ 1.5);
+Product uo = ExoticProducts.BarrierOption.of()
+        .type(OptionTypeEnum.CALL)
+        .kind(ExoticProducts.BarrierEnum.UP_OUT)
+        .barrier(125.0)
+        .width(1.5)
+        .build();
 
 try (MonteCarlo mc = MonteCarlo.of(uo).market(EquityMarket.atmOneYear())
         .steps(64).greeks().on("cpu-jit").build()) {
@@ -53,9 +57,11 @@ Run: `mvn -o -q -pl nablatensor-quant test -Dtest=ExoticsTest`
 ```java
 try (MultiMetric mm = MultiMetric.market(EquityMarket.atmOneYear()).steps(64)
         .metric("call",      Products.europeanCall())
-        .metric("digital",   ExoticProducts.digitalCash(OptionType.CALL, 1.0, 1.0))
-        .metric("barrierUO", ExoticProducts.barrier(OptionType.CALL,
-                    ExoticProducts.Barrier.UP_OUT, 130.0, 1.0))
+        .metric("digital", ExoticProducts.DigitalCash.of()
+                .type(OptionTypeEnum.CALL).cash(1.0).width(1.0).build())
+        .metric("barrierUO", ExoticProducts.BarrierOption.of()
+                .type(OptionTypeEnum.CALL).kind(ExoticProducts.BarrierEnum.UP_OUT)
+                .barrier(130.0).width(1.0).build())
         .on("cpu-jit").build()) {
     Map<String, Pricing> r = mm.run(1_000_000, 42L);   // each with its own adjoint gradient
 }

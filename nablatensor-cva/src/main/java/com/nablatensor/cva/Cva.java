@@ -28,7 +28,7 @@ import java.util.List;
  * CvaCapital capital = Cva.of(market)
  *     .add(nettingSetA, riskFactorsA)
  *     .add(nettingSetB, riskFactorsB)
- *     .hedge(CvaHedge.singleName("CPTY-A", 25e6, 5.0, 0.05, 1.0))
+ *     .hedge(CvaHedge.of().kind(CvaHedge.KindEnum.SINGLE_NAME_CDS).referenceId("CPTY-A").notional(25e6).maturityYears(5.0).riskWeight(0.05).correlation(1.0).build())
  *     .paths(500_000).steps(24).on("vulkan")
  *     .compute();
  * }</pre>
@@ -115,7 +115,7 @@ public final class Cva {
     for (int i = 0; i < nettingSets.size(); i++) {
       NettingSet nettingSet = nettingSets.get(i);
       CvaRiskFactors keys = riskFactors.get(i);
-      ExposureSimulation simulation = new ExposureSimulation(nettingSet, steps).on(engine);
+      ExposureSimulation simulation = ExposureSimulation.of(nettingSet, steps).on(engine);
       CvaResult result = simulation.run(market, paths, seed + i);
       results.add(result);
       cvaValue += result.value();

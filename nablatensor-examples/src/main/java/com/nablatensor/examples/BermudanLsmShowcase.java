@@ -17,7 +17,7 @@ package com.nablatensor.examples;
 
 import com.nablatensor.quant.BermudanLsm;
 import com.nablatensor.quant.EquityMarket;
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import java.util.Locale;
 
 /**
@@ -42,10 +42,10 @@ public final class BermudanLsmShowcase {
 
     // Longstaff-Schwartz (2001) Table 1 row: S=K=40, sigma=0.20, T=1, r=0.06;
     // the finite-difference American put value there is 2.314.
-    EquityMarket m = new EquityMarket(40, 40, 0.20, 0.06, 1.0);
+    EquityMarket m = EquityMarket.of().spot(40).strike(40).vol(0.20).rate(0.06).maturity(1.0).build();
 
     long t0 = System.nanoTime();
-    BermudanLsm.Result r = BermudanLsm.price(m, OptionType.PUT, dates, 6, 3, 0.6, paths, 42L);
+    BermudanLsm.Result r = BermudanLsm.price(m, OptionTypeEnum.PUT, dates, 6, 3, 0.6, paths, 42L);
     double s = (System.nanoTime() - t0) / 1e9;
 
     System.out.printf(Locale.ROOT, "American put by policy-optimisation LSM  (%d exercise dates, %,d paths, %.1fs)%n%n",

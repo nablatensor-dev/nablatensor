@@ -29,7 +29,13 @@ package com.nablatensor.quant.analytic;
  * price = S1 e^{-q1 T} N(d1) - S2 e^{-q2 T} N(d2)
  * }</pre>
  */
-public record Margrabe(double price, double delta1, double delta2) {
+public final class Margrabe {
+
+  private final double price, delta1, delta2;
+  private Margrabe(double price, double delta1, double delta2) { this.price=price; this.delta1=delta1; this.delta2=delta2; }
+  public double price() { return price; }
+  public double delta1() { return delta1; }
+  public double delta2() { return delta2; }
 
   /**
    * @param s1        spot of the asset received
@@ -41,7 +47,7 @@ public record Margrabe(double price, double delta1, double delta2) {
    * @param yield2    carry / convenience yield on asset 2
    * @param maturity  time to expiry in years
    */
-  public static Margrabe of(double s1, double s2, double vol1, double vol2, double rho,
+  private static Margrabe calculate(double s1, double s2, double vol1, double vol2, double rho,
                             double yield1, double yield2, double maturity) {
     double sigma = Math.sqrt(Math.max(vol1 * vol1 + vol2 * vol2 - 2.0 * rho * vol1 * vol2, 0.0));
     if (maturity <= 0.0 || sigma <= 0.0) {
@@ -56,4 +62,23 @@ public record Margrabe(double price, double delta1, double delta2) {
     double price = s1 * disc1 * Normal.cdf(d1) - s2 * disc2 * Normal.cdf(d2);
     return new Margrabe(price, disc1 * Normal.cdf(d1), -disc2 * Normal.cdf(d2));
   }
+
+  public static Builder of() { return new Builder(); }
+
+  public static final class Builder {
+    private Double s1, s2, vol1, vol2, rho, yield1, yield2, maturity;
+    private Builder() {}
+    public Builder s1(double v) { s1=v; return this; }
+    public Builder s2(double v) { s2=v; return this; }
+    public Builder vol1(double v) { vol1=v; return this; }
+    public Builder vol2(double v) { vol2=v; return this; }
+    public Builder rho(double v) { rho=v; return this; }
+    public Builder yield1(double v) { yield1=v; return this; }
+    public Builder yield2(double v) { yield2=v; return this; }
+    public Builder maturity(double v) { maturity=v; return this; }
+    public Margrabe build() { return calculate(req(s1,"s1"),req(s2,"s2"),req(vol1,"vol1"),req(vol2,"vol2"),
+        req(rho,"rho"),req(yield1,"yield1"),req(yield2,"yield2"),req(maturity,"maturity")); }
+  }
+  private static <T> T req(T v, String n) { if (v == null) throw new IllegalStateException("Required field " + n + " is not set"); return v; }
+
 }

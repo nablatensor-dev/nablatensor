@@ -16,7 +16,7 @@
 package com.nablatensor.risk;
 
 /** The FRTB / SIMM risk classes. Phase-2 slice implements EQUITY end to end. */
-public enum RiskClass {
+public enum RiskClassEnum {
   /** General interest-rate risk: yield-curve, inflation and cross-currency-basis factors. */
   GIRR,
   /** Credit-spread risk on non-securitisation positions (bonds, single-name / index CDS). */

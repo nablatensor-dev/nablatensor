@@ -44,7 +44,7 @@ public final class HullWhiteCalibrationShowcase {
       pillars[i] = i + 1.0;
       zeros[i] = 0.026 + 0.009 * (i / (n - 1.0));
     }
-    YieldCurve curve = new YieldCurve(pillars, zeros);
+    YieldCurve curve = YieldCurve.of().pillars(pillars).zeroRates(zeros).build();
 
     // A co-terminal ~10y diagonal. The ATM normal vols come from a reference
     // Hull-White model (a=0.10, sigma=95bp) with a small idiosyncratic bump per

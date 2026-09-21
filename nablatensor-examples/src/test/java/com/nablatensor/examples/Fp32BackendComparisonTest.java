@@ -71,17 +71,255 @@ class Fp32BackendComparisonTest {
     rec.output(average.sub(K).max(0.0).mul(Math.exp(-RATE * T)));
   }
 
-  private record Row(String engine, boolean usable, String detail,
-                     double price, double delta, double vega,
-                     double compileMs, double firstCallMs, double warmupMeanMs, double warmupMinMs,
-                     double settledMs, double settledScenPerSec,
-                     boolean bitExact, double maxDriftRel, boolean burstOk, String note) {
+  private static final class Row {
+    private final String engine;
+    private final boolean usable;
+    private final String detail;
+    private final double price;
+    private final double delta;
+    private final double vega;
+    private final double compileMs;
+    private final double firstCallMs;
+    private final double warmupMeanMs;
+    private final double warmupMinMs;
+    private final double settledMs;
+    private final double settledScenPerSec;
+    private final boolean bitExact;
+    private final double maxDriftRel;
+    private final boolean burstOk;
+    private final String note;
+
+    private Row(String engine, boolean usable, String detail, double price, double delta, double vega, double compileMs, double firstCallMs, double warmupMeanMs, double warmupMinMs, double settledMs, double settledScenPerSec, boolean bitExact, double maxDriftRel, boolean burstOk, String note) {
+      this.engine = engine;
+      this.usable = usable;
+      this.detail = detail;
+      this.price = price;
+      this.delta = delta;
+      this.vega = vega;
+      this.compileMs = compileMs;
+      this.firstCallMs = firstCallMs;
+      this.warmupMeanMs = warmupMeanMs;
+      this.warmupMinMs = warmupMinMs;
+      this.settledMs = settledMs;
+      this.settledScenPerSec = settledScenPerSec;
+      this.bitExact = bitExact;
+      this.maxDriftRel = maxDriftRel;
+      this.burstOk = burstOk;
+      this.note = note;
+    }
+
+    private static Builder of() { return new Builder(); }
+
+    public String engine() { return engine; }
+
+    public boolean usable() { return usable; }
+
+    public String detail() { return detail; }
+
+    public double price() { return price; }
+
+    public double delta() { return delta; }
+
+    public double vega() { return vega; }
+
+    public double compileMs() { return compileMs; }
+
+    public double firstCallMs() { return firstCallMs; }
+
+    public double warmupMeanMs() { return warmupMeanMs; }
+
+    public double warmupMinMs() { return warmupMinMs; }
+
+    public double settledMs() { return settledMs; }
+
+    public double settledScenPerSec() { return settledScenPerSec; }
+
+    public boolean bitExact() { return bitExact; }
+
+    public double maxDriftRel() { return maxDriftRel; }
+
+    public boolean burstOk() { return burstOk; }
+
+    public String note() { return note; }
+
+
+    private static final class Builder {
+      private String engine;
+      private boolean engineSet;
+      private boolean usable;
+      private boolean usableSet;
+      private String detail;
+      private boolean detailSet;
+      private double price;
+      private boolean priceSet;
+      private double delta;
+      private boolean deltaSet;
+      private double vega;
+      private boolean vegaSet;
+      private double compileMs;
+      private boolean compileMsSet;
+      private double firstCallMs;
+      private boolean firstCallMsSet;
+      private double warmupMeanMs;
+      private boolean warmupMeanMsSet;
+      private double warmupMinMs;
+      private boolean warmupMinMsSet;
+      private double settledMs;
+      private boolean settledMsSet;
+      private double settledScenPerSec;
+      private boolean settledScenPerSecSet;
+      private boolean bitExact;
+      private boolean bitExactSet;
+      private double maxDriftRel;
+      private boolean maxDriftRelSet;
+      private boolean burstOk;
+      private boolean burstOkSet;
+      private String note;
+      private boolean noteSet;
+
+      public Builder engine(String value) {
+        this.engine = value;
+        this.engineSet = true;
+        return this;
+      }
+
+      public Builder usable(boolean value) {
+        this.usable = value;
+        this.usableSet = true;
+        return this;
+      }
+
+      public Builder detail(String value) {
+        this.detail = value;
+        this.detailSet = true;
+        return this;
+      }
+
+      public Builder price(double value) {
+        this.price = value;
+        this.priceSet = true;
+        return this;
+      }
+
+      public Builder delta(double value) {
+        this.delta = value;
+        this.deltaSet = true;
+        return this;
+      }
+
+      public Builder vega(double value) {
+        this.vega = value;
+        this.vegaSet = true;
+        return this;
+      }
+
+      public Builder compileMs(double value) {
+        this.compileMs = value;
+        this.compileMsSet = true;
+        return this;
+      }
+
+      public Builder firstCallMs(double value) {
+        this.firstCallMs = value;
+        this.firstCallMsSet = true;
+        return this;
+      }
+
+      public Builder warmupMeanMs(double value) {
+        this.warmupMeanMs = value;
+        this.warmupMeanMsSet = true;
+        return this;
+      }
+
+      public Builder warmupMinMs(double value) {
+        this.warmupMinMs = value;
+        this.warmupMinMsSet = true;
+        return this;
+      }
+
+      public Builder settledMs(double value) {
+        this.settledMs = value;
+        this.settledMsSet = true;
+        return this;
+      }
+
+      public Builder settledScenPerSec(double value) {
+        this.settledScenPerSec = value;
+        this.settledScenPerSecSet = true;
+        return this;
+      }
+
+      public Builder bitExact(boolean value) {
+        this.bitExact = value;
+        this.bitExactSet = true;
+        return this;
+      }
+
+      public Builder maxDriftRel(double value) {
+        this.maxDriftRel = value;
+        this.maxDriftRelSet = true;
+        return this;
+      }
+
+      public Builder burstOk(boolean value) {
+        this.burstOk = value;
+        this.burstOkSet = true;
+        return this;
+      }
+
+      public Builder note(String value) {
+        this.note = value;
+        this.noteSet = true;
+        return this;
+      }
+
+      public Builder from(Row value) {
+        if (value == null) throw new NullPointerException("value");
+        engine(value.engine());
+        usable(value.usable());
+        detail(value.detail());
+        price(value.price());
+        delta(value.delta());
+        vega(value.vega());
+        compileMs(value.compileMs());
+        firstCallMs(value.firstCallMs());
+        warmupMeanMs(value.warmupMeanMs());
+        warmupMinMs(value.warmupMinMs());
+        settledMs(value.settledMs());
+        settledScenPerSec(value.settledScenPerSec());
+        bitExact(value.bitExact());
+        maxDriftRel(value.maxDriftRel());
+        burstOk(value.burstOk());
+        note(value.note());
+        return this;
+      }
+
+      public Row build() {
+        if (!engineSet) throw new IllegalStateException("Missing required value: engine");
+        if (!usableSet) throw new IllegalStateException("Missing required value: usable");
+        if (!detailSet) throw new IllegalStateException("Missing required value: detail");
+        if (!priceSet) throw new IllegalStateException("Missing required value: price");
+        if (!deltaSet) throw new IllegalStateException("Missing required value: delta");
+        if (!vegaSet) throw new IllegalStateException("Missing required value: vega");
+        if (!compileMsSet) throw new IllegalStateException("Missing required value: compileMs");
+        if (!firstCallMsSet) throw new IllegalStateException("Missing required value: firstCallMs");
+        if (!warmupMeanMsSet) throw new IllegalStateException("Missing required value: warmupMeanMs");
+        if (!warmupMinMsSet) throw new IllegalStateException("Missing required value: warmupMinMs");
+        if (!settledMsSet) throw new IllegalStateException("Missing required value: settledMs");
+        if (!settledScenPerSecSet) throw new IllegalStateException("Missing required value: settledScenPerSec");
+        if (!bitExactSet) throw new IllegalStateException("Missing required value: bitExact");
+        if (!maxDriftRelSet) throw new IllegalStateException("Missing required value: maxDriftRel");
+        if (!burstOkSet) throw new IllegalStateException("Missing required value: burstOk");
+        if (!noteSet) throw new IllegalStateException("Missing required value: note");
+        return new Row(engine, usable, detail, price, delta, vega, compileMs, firstCallMs, warmupMeanMs, warmupMinMs, settledMs, settledScenPerSec, bitExact, maxDriftRel, burstOk, note);
+      }
+    }
   }
 
   @Test
   void compareFp32EnginesAndReportStability() {
-    AadOptions fp64 = new AadOptions(AadOptions.Precision.FLOAT64, true);
-    AadOptions fp32 = new AadOptions(AadOptions.Precision.FLOAT32, true);
+    AadOptions fp64 = AadOptions.of().precision(AadOptions.PrecisionEnum.FLOAT64).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build();
+    AadOptions fp32 = AadOptions.of().precision(AadOptions.PrecisionEnum.FLOAT32).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build();
     AadTape tape = AadRecorder.record(Fp32BackendComparisonTest::asianCall);
 
     AadEngine oracleEngine = AadEngines.find("cpu-jit", fp64)
@@ -120,8 +358,7 @@ class Fp32BackendComparisonTest {
   private static Row measure(String name, AadTape tape, AadOptions fp32) {
     AadEngine engine = AadEngines.find(name, fp32).orElse(null);
     if (engine == null) {
-      return new Row(name, false, "not usable here",
-          0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, false, "skipped");
+      return Row.of().engine(name).usable(false).detail("not usable here").price(0).delta(0).vega(0).compileMs(0).firstCallMs(0).warmupMeanMs(0).warmupMinMs(0).settledMs(0).settledScenPerSec(0).bitExact(false).maxDriftRel(0).burstOk(false).note("skipped").build();
     }
     String detail = engine.describe();
     try (var exe = engine.compile(tape, fp32)) {
@@ -177,12 +414,9 @@ class Fp32BackendComparisonTest {
 
       String note = String.format(Locale.ROOT, "settled %.2f ms/1M · %.0f%% faster than cold",
           settledMs, 100.0 * (firstCallMs - settledMs) / firstCallMs);
-      return new Row(name, true, detail, baseline.value(), baseline.gradient("spot"),
-          baseline.gradient("vol"), compileMs, firstCallMs, warmupMeanMs, warmupMin,
-          settledMs, settledScenPerSec, bitExact, maxDriftRel, burstOk, note);
+      return Row.of().engine(name).usable(true).detail(detail).price(baseline.value()).delta(baseline.gradient("spot")).vega(baseline.gradient("vol")).compileMs(compileMs).firstCallMs(firstCallMs).warmupMeanMs(warmupMeanMs).warmupMinMs(warmupMin).settledMs(settledMs).settledScenPerSec(settledScenPerSec).bitExact(bitExact).maxDriftRel(maxDriftRel).burstOk(burstOk).note(note).build();
     } catch (RuntimeException | LinkageError e) {
-      return new Row(name, false, "compile/replay failed", 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, false,
-          String.valueOf(e.getMessage()));
+      return Row.of().engine(name).usable(false).detail("compile/replay failed").price(0).delta(0).vega(0).compileMs(0).firstCallMs(0).warmupMeanMs(0).warmupMinMs(0).settledMs(0).settledScenPerSec(0).bitExact(false).maxDriftRel(0).burstOk(false).note(String.valueOf(e.getMessage())).build();
     }
   }
 

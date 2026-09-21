@@ -15,7 +15,7 @@
  */
 package com.nablatensor.backend.vulkan;
 
-import com.nablatensor.tensor.DType;
+import com.nablatensor.tensor.DTypeEnum;
 import com.nablatensor.tensor.Device;
 import com.nablatensor.tensor.Shape;
 import com.nablatensor.tensor.spi.DeviceBuffer;
@@ -44,11 +44,11 @@ final class VulkanBuffer implements DeviceBuffer {
   final long buffer;
   final long memory;
   private final Shape shape;
-  private final DType dtype;
+  private final DTypeEnum dtype;
   private final Device device;
   private final Cleaner.Cleanable cleanable;
 
-  VulkanBuffer(long buffer, long memory, Shape shape, DType dtype, Device device) {
+  VulkanBuffer(long buffer, long memory, Shape shape, DTypeEnum dtype, Device device) {
     this.buffer = buffer;
     this.memory = memory;
     this.shape = shape;
@@ -71,7 +71,7 @@ final class VulkanBuffer implements DeviceBuffer {
   }
 
   @Override
-  public DType dtype() {
+  public DTypeEnum dtype() {
     return dtype;
   }
 

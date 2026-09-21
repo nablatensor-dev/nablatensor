@@ -130,7 +130,7 @@ class OpenClAsianParityTest {
   @Test
   void openClMatchesCpuJitAndIsStable() {
     assertTrue(PATHS > 0 && REPEATS > 0, "test paths and repeats must be positive");
-    AadOptions fp64 = new AadOptions(AadOptions.Precision.FLOAT64, true);
+    AadOptions fp64 = AadOptions.of().precision(AadOptions.PrecisionEnum.FLOAT64).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build();
 
     AadEngine openCl = AadEngines.find("opencl", fp64).orElse(null);
     assumeTrue(openCl != null, "no usable OpenCL engine on this machine");

@@ -7,7 +7,7 @@ Bump-and-revalue gets a Greek by repricing under a shifted input:
 Monte-Carlo runs (one-sided: `1 + N`). Adjoint AD gets **all `N`** from one
 reverse sweep that costs a small constant on top of the price.
 
-## Method
+## MethodEnum
 
 - Arithmetic Asian call, 252 fixings, fp64, GBM, seed 42.
 - `N = 5` Greeks: delta, dV/dK, vega, rho, dV/dT.
@@ -58,7 +58,7 @@ mvn -o -q -pl nablatensor-examples exec:java \
 | Asian call | 0.29 s | 2.72 s | 9.3× |
 | Lookback call | 0.32 s | 2.87 s | 9.0× |
 | Floating lookback | 0.32 s | 3.03 s | 9.6× |
-| Barrier up-and-out | 0.50 s | 4.03 s | 8.1× |
+| BarrierEnum up-and-out | 0.50 s | 4.03 s | 8.1× |
 | Digital cash-or-nothing | 0.28 s | 2.79 s | 10.0× |
 | Cliquet | 0.44 s | 3.44 s | 7.8× |
 | Autocallable | 0.30 s | 2.78 s | 9.3× |

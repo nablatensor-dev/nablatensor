@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant.analytic;
 
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 
 /**
  * Merton's extension of Black-Scholes to a continuous dividend yield {@code q} —
@@ -26,7 +26,23 @@ import com.nablatensor.quant.OptionType;
  * {@code q} held fixed (so the carry moves one-for-one with {@code r}); the
  * separate {@link #dividendRho} slot below is {@code dV/dq}.
  */
-public record GeneralizedBsm(AnalyticGreeks greeks, double dividendRho) {
+public final class GeneralizedBsm {
+
+  private final AnalyticGreeks greeks;
+  private final double dividendRho;
+
+  private GeneralizedBsm(AnalyticGreeks greeks, double dividendRho) {
+    this.greeks = greeks;
+    this.dividendRho = dividendRho;
+  }
+
+  public AnalyticGreeks greeks() {
+    return greeks;
+  }
+
+  public double dividendRho() {
+    return dividendRho;
+  }
 
   /**
    * @param type     call or put
@@ -37,7 +53,7 @@ public record GeneralizedBsm(AnalyticGreeks greeks, double dividendRho) {
    * @param dividend continuous dividend yield {@code q}
    * @param vol      lognormal volatility {@code sigma}
    */
-  public static GeneralizedBsm of(OptionType type, double spot, double strike, double maturity,
+  private static GeneralizedBsm calculate(OptionTypeEnum type, double spot, double strike, double maturity,
                                   double rate, double dividend, double vol) {
     double b = rate - dividend;
     // Price closed form; Greeks by differencing it with b = r - q tracking r.
@@ -47,6 +63,47 @@ public record GeneralizedBsm(AnalyticGreeks greeks, double dividendRho) {
         : Greeking.central(f, spot, strike, maturity, rate, vol);
     double dividendRho = -CostOfCarry.carryRho(type, spot, strike, maturity, rate, b, vol);
     return new GeneralizedBsm(g, dividendRho);
+  }
+
+
+  /** Starts a calculation with named Black-Scholes-Merton inputs. */
+  public static Builder of() {
+    return new Builder();
+  }
+
+  /** Named input builder for the generalized Black-Scholes-Merton result. */
+  public static final class Builder {
+    private OptionTypeEnum type;
+    private Double spot;
+    private Double strike;
+    private Double maturity;
+    private Double rate;
+    private Double dividend;
+    private Double vol;
+
+    private Builder() {
+    }
+
+    public Builder type(OptionTypeEnum value) { type = value; return this; }
+    public Builder spot(double value) { spot = value; return this; }
+    public Builder strike(double value) { strike = value; return this; }
+    public Builder maturity(double value) { maturity = value; return this; }
+    public Builder rate(double value) { rate = value; return this; }
+    public Builder dividend(double value) { dividend = value; return this; }
+    public Builder vol(double value) { vol = value; return this; }
+
+    public GeneralizedBsm build() {
+      return calculate(required(type, "type"), required(spot, "spot"),
+          required(strike, "strike"), required(maturity, "maturity"),
+          required(rate, "rate"), required(dividend, "dividend"), required(vol, "vol"));
+    }
+  }
+
+  private static <T> T required(T value, String name) {
+    if (value == null) {
+      throw new IllegalStateException("Required field '" + name + "' is not set");
+    }
+    return value;
   }
 
   public double price() {

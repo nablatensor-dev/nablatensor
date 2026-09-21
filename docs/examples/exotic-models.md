@@ -21,7 +21,7 @@ consumes — next to the usual spot/rate Greeks.
 // Heston European call: price + dPrice/d{v0,kappa,theta,xi,rho, spot,strike,rate}
 var market = new HestonMarket(100, 100, 0.02, 0.04, 1.5, 0.04, 0.5, -0.7);
 try (var pricer = com.nablatensor.engine.Nabla
-        .model(market, HestonModel.european(OptionType.CALL, 1.0, 48))
+        .model(market, HestonModel.european(OptionTypeEnum.CALL, 1.0, 48))
         .fp64().greeks().on("cpu-jit").build()) {
     var v = pricer.value().with(market).scenarios(200_000).seed(1L).run();
     HestonMarket greeks = v.greeks();   // greeks.v0(), greeks.xi(), greeks.rho(), ...

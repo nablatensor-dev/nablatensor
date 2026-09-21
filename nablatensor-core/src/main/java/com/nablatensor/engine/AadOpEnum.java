@@ -16,7 +16,7 @@
 package com.nablatensor.engine;
 
 /** Scalar operations a recorded tape can hold. */
-public enum AadOp {
+public enum AadOpEnum {
   /** A compile-time constant baked into the tape. */
   CONST,
   /** A named input the caller binds a value to on each replay. */

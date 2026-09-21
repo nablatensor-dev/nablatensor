@@ -15,35 +15,35 @@
  */
 package com.nablatensor.tensor;
 
-/** A concrete compute device: a {@link DeviceType} plus an ordinal index. */
-public record Device(DeviceType type, int index) {
+/** A concrete compute device: a {@link DeviceTypeEnum} plus an ordinal index. */
+public record Device(DeviceTypeEnum type, int index) {
 
   public static Device cpu() {
-    return new Device(DeviceType.CPU, 0);
+    return new Device(DeviceTypeEnum.CPU, 0);
   }
 
   public static Device cuda() {
-    return new Device(DeviceType.CUDA, 0);
+    return new Device(DeviceTypeEnum.CUDA, 0);
   }
 
   public static Device cuda(int index) {
-    return new Device(DeviceType.CUDA, index);
+    return new Device(DeviceTypeEnum.CUDA, index);
   }
 
   public static Device rocm() {
-    return new Device(DeviceType.ROCM, 0);
+    return new Device(DeviceTypeEnum.ROCM, 0);
   }
 
   public static Device rocm(int index) {
-    return new Device(DeviceType.ROCM, index);
+    return new Device(DeviceTypeEnum.ROCM, index);
   }
 
   public static Device vulkan() {
-    return new Device(DeviceType.VULKAN, 0);
+    return new Device(DeviceTypeEnum.VULKAN, 0);
   }
 
   public static Device vulkan(int index) {
-    return new Device(DeviceType.VULKAN, index);
+    return new Device(DeviceTypeEnum.VULKAN, index);
   }
 
   @Override

@@ -37,7 +37,7 @@ import com.nablatensor.annotation.Internal;
 public final class FlatTape {
 
   /** Opcode per node. */
-  public final AadOp[] op;
+  public final AadOpEnum[] op;
   /** First argument per node: a node index, or an input index for {@code INPUT}. */
   public final int[] argA;
   /** Second argument per node: a node index, or a stream index for the draws. */
@@ -55,7 +55,7 @@ public final class FlatTape {
 
   public FlatTape(AadTape tape) {
     int n = tape.size();
-    this.op = new AadOp[n];
+    this.op = new AadOpEnum[n];
     this.argA = new int[n];
     this.argB = new int[n];
     this.constant = new double[n];

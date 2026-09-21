@@ -15,6 +15,8 @@
  */
 package com.nablatensor.engine;
 
+import com.nablatensor.codegen.Of;
+
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -37,53 +39,92 @@ import java.util.Map;
  *     keys. {@link JitOptimizations} stays the typed, canonical surface for
  *     {@code cpu-jit}; this is the generic mechanism for the rest.
  */
-public record AadOptions(Precision precision, boolean adjoints, int threads, JitOptimizations jit,
-                         Map<String, Map<String, String>> engineOptions) {
+@Of
+public final class AadOptions {
 
-  public enum Precision {
+  private final PrecisionEnum precision;
+  private final boolean adjoints;
+  private final int threads;
+  private final JitOptimizations jit;
+  private final Map<String, Map<String, String>> engineOptions;
+  static AadOptions create(PrecisionEnum precision, boolean adjoints, int threads, JitOptimizations jit, Map<String, Map<String, String>> engineOptions) {
+    return new AadOptions(precision, adjoints, threads, jit, engineOptions);
+  }
+
+  public static AadOptionsBuilder of() {
+    return new AadOptionsBuilder();
+  }
+
+  public PrecisionEnum precision() {
+    return precision;
+  }
+
+  public boolean adjoints() {
+    return adjoints;
+  }
+
+  public int threads() {
+    return threads;
+  }
+
+  public JitOptimizations jit() {
+    return jit;
+  }
+
+  public Map<String, Map<String, String>> engineOptions() {
+    return engineOptions;
+  }
+
+
+  public enum PrecisionEnum {
     /** Single precision — the GPU replay path (e.g. Vulkan) computes in fp32. */
     FLOAT32,
     /** Double precision — the CPU / SIMD default. */
     FLOAT64
   }
 
-  public AadOptions {
+  private AadOptions(PrecisionEnum precision, boolean adjoints, int threads, JitOptimizations jit, Map<String, Map<String, String>> engineOptions) {
     if (jit == null) {
       jit = JitOptimizations.NONE;
     }
     engineOptions = deepImmutable(engineOptions);
+    this.precision = precision;
+    this.adjoints = adjoints;
+    this.threads = threads;
+    this.jit = jit;
+    this.engineOptions = engineOptions;
   }
 
-  public AadOptions(Precision precision, boolean adjoints, int threads, JitOptimizations jit) {
+  private AadOptions(PrecisionEnum precision, boolean adjoints, int threads, JitOptimizations jit) {
     this(precision, adjoints, threads, jit, Map.of());
   }
 
-  public AadOptions(Precision precision, boolean adjoints, int threads) {
+  private AadOptions(PrecisionEnum precision, boolean adjoints, int threads) {
     this(precision, adjoints, threads, JitOptimizations.NONE, Map.of());
   }
 
-  public AadOptions(Precision precision, boolean adjoints) {
+  private AadOptions(PrecisionEnum precision, boolean adjoints) {
     this(precision, adjoints, 0, JitOptimizations.NONE, Map.of());
   }
 
   public static AadOptions defaults() {
-    return new AadOptions(Precision.FLOAT32, true, 0, JitOptimizations.NONE, Map.of());
+    return AadOptions.of().precision(PrecisionEnum.FLOAT32).adjoints(true).threads(0).jit(JitOptimizations.NONE).engineOptions(Map.of()).build();
   }
 
-  public AadOptions withPrecision(Precision value) {
-    return new AadOptions(value, adjoints, threads, jit, engineOptions);
+  public AadOptions withPrecision(PrecisionEnum value) {
+    return AadOptions.of().precision(value).adjoints(adjoints).threads(threads).jit(jit).engineOptions(engineOptions).build();
   }
 
   public AadOptions withAdjoints(boolean value) {
-    return new AadOptions(precision, value, threads, jit, engineOptions);
+    return AadOptions.of().precision(precision).adjoints(value).threads(threads).jit(jit).engineOptions(engineOptions).build();
   }
 
   public AadOptions withThreads(int value) {
-    return new AadOptions(precision, adjoints, value, jit, engineOptions);
+    return AadOptions.of().precision(precision).adjoints(adjoints).threads(value).jit(jit).engineOptions(engineOptions).build();
   }
 
   public AadOptions withJit(JitOptimizations value) {
-    return new AadOptions(precision, adjoints, threads, value, engineOptions);
+    return AadOptions.of().precision(precision).adjoints(adjoints).threads(threads).jit(value).engineOptions(engineOptions).build();
   }
 
   /** This, plus one tuning option for the named engine. */
@@ -91,7 +132,7 @@ public record AadOptions(Precision precision, boolean adjoints, int threads, Jit
     Map<String, Map<String, String>> copy = new LinkedHashMap<>();
     engineOptions.forEach((e, m) -> copy.put(e, new LinkedHashMap<>(m)));
     copy.computeIfAbsent(engine, e -> new LinkedHashMap<>()).put(key, value);
-    return new AadOptions(precision, adjoints, threads, jit, copy);
+    return AadOptions.of().precision(precision).adjoints(adjoints).threads(threads).jit(jit).engineOptions(copy).build();
   }
 
   /** The tuning options for one engine; never {@code null}. */

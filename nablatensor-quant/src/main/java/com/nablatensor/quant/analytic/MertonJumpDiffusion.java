@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant.analytic;
 
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 
 /**
  * Merton's (1976) jump-diffusion price for a European option: a diffusion with
@@ -61,7 +61,7 @@ public final class MertonJumpDiffusion {
    * @param jumpMean     mean of the log jump size {@code muJ}
    * @param jumpVol      standard deviation of the log jump size {@code deltaJ}
    */
-  public static AnalyticGreeks of(OptionType type, double spot, double strike, double maturity,
+  private static AnalyticGreeks calculate(OptionTypeEnum type, double spot, double strike, double maturity,
                                   double rate, double vol, double jumpIntensity,
                                   double jumpMean, double jumpVol) {
     if (maturity <= 0.0 || vol <= 0.0) {
@@ -73,8 +73,23 @@ public final class MertonJumpDiffusion {
     return Greeking.central(f, spot, strike, maturity, rate, vol);
   }
 
+
+  public static Builder of() { return new Builder(); }
+  public static final class Builder {
+    private OptionTypeEnum type; private Double spot,strike,maturity,rate,vol,jumpIntensity,jumpMean,jumpVol;
+    private Builder() {}
+    public Builder type(OptionTypeEnum v){type=v;return this;} public Builder spot(double v){spot=v;return this;}
+    public Builder strike(double v){strike=v;return this;} public Builder maturity(double v){maturity=v;return this;}
+    public Builder rate(double v){rate=v;return this;} public Builder vol(double v){vol=v;return this;}
+    public Builder jumpIntensity(double v){jumpIntensity=v;return this;} public Builder jumpMean(double v){jumpMean=v;return this;}
+    public Builder jumpVol(double v){jumpVol=v;return this;}
+    public AnalyticGreeks build(){return calculate(req(type,"type"),req(spot,"spot"),req(strike,"strike"),req(maturity,"maturity"),
+        req(rate,"rate"),req(vol,"vol"),req(jumpIntensity,"jumpIntensity"),req(jumpMean,"jumpMean"),req(jumpVol,"jumpVol"));}
+  }
+  private static <T>T req(T v,String n){if(v==null)throw new IllegalStateException("Required field "+n+" is not set");return v;}
+
   /** Bare price — the truncated Poisson series. */
-  public static double price(OptionType type, double spot, double strike, double maturity,
+  public static double price(OptionTypeEnum type, double spot, double strike, double maturity,
                              double rate, double vol, double jumpIntensity,
                              double jumpMean, double jumpVol) {
     if (maturity <= 0.0 || vol <= 0.0) {

@@ -15,14 +15,30 @@
  */
 package com.nablatensor.credit;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A single-name credit curve as a piecewise-constant forward hazard rate on
  * ascending tenor knots. Segment {@code i} covers {@code (knot[i-1], knot[i]]}
  * with {@code knot[-1] = 0}; {@link #survival}{@code (t) = exp(-integral hazard)}.
  */
-public record CreditCurve(double[] knotTimes, double[] forwardHazard) {
+@Of
+public final class CreditCurve {
 
-  public CreditCurve {
+  private final double[] knotTimes;
+  private final double[] forwardHazard;
+  static CreditCurve create(double[] knotTimes, double[] forwardHazard) {
+    return new CreditCurve(knotTimes, forwardHazard);
+  }
+
+  public static CreditCurveBuilder of() {
+    return new CreditCurveBuilder();
+  }
+
+
+
+
+  private CreditCurve(double[] knotTimes, double[] forwardHazard) {
     if (knotTimes.length != forwardHazard.length || knotTimes.length == 0) {
       throw new IllegalArgumentException("knot times and hazards must be non-empty and equal length");
     }
@@ -38,21 +54,21 @@ public record CreditCurve(double[] knotTimes, double[] forwardHazard) {
     }
     knotTimes = knotTimes.clone();
     forwardHazard = forwardHazard.clone();
+    this.knotTimes = knotTimes;
+    this.forwardHazard = forwardHazard;
   }
 
-  @Override
   public double[] knotTimes() {
     return knotTimes.clone();
   }
 
-  @Override
   public double[] forwardHazard() {
     return forwardHazard.clone();
   }
 
   /** A single flat forward hazard out to {@code lastTenor}. */
   public static CreditCurve flat(double hazard, double lastTenor) {
-    return new CreditCurve(new double[] {lastTenor}, new double[] {hazard});
+    return CreditCurve.of().knotTimes(new double[] {lastTenor}).forwardHazard(new double[] {hazard}).build();
   }
 
   /** The {@code lambda = s / (1 - R)} approximation from one par CDS spread. */
@@ -91,6 +107,6 @@ public record CreditCurve(double[] knotTimes, double[] forwardHazard) {
     for (int i = 0; i < h.length; i++) {
       h[i] = Math.max(0.0, h[i] + bump);
     }
-    return new CreditCurve(knotTimes.clone(), h);
+    return CreditCurve.of().knotTimes(knotTimes.clone()).forwardHazard(h).build();
   }
 }

@@ -29,16 +29,16 @@ class BasketAndCurveTest {
 
   @Test
   void singleNameBasketMatchesBlackScholes() {
-    BasketMarket m = new BasketMarket(100, 100, 100, 0.22, 0.30, 0.28, 0.03);
+    BasketMarket m = BasketMarket.of().s1(100).s2(100).s3(100).v1(0.22).v2(0.30).v3(0.28).rate(0.03).build();
     double[] w = {1.0, 0.0, 0.0};                         // all weight on asset 1
     double[][] corr = {{1, 0.3, 0.2}, {0.3, 1, 0.4}, {0.2, 0.4, 1}};
     double px;
     try (var pricer = com.nablatensor.engine.Nabla.model(m,
-        BasketOption.option(OptionType.CALL, w, 100.0, corr, 1.0, 32))
+        BasketOption.option(OptionTypeEnum.CALL, w, 100.0, corr, 1.0, 32))
         .fp64().priceOnly().on("cpu-jit").build()) {
       px = pricer.value().with(m).scenarios(600_000L).seed(7L).run().price();
     }
-    BlackScholes bs = BlackScholes.of(OptionType.CALL, new EquityMarket(100, 100, 0.22, 0.03, 1.0));
+    BlackScholes bs = BlackScholes.of(OptionTypeEnum.CALL, EquityMarket.of().spot(100).strike(100).vol(0.22).rate(0.03).maturity(1.0).build());
     assertEquals(bs.price(), px, 0.08, "weight-{1,0,0} basket == single-name Black-Scholes");
   }
 
@@ -49,15 +49,15 @@ class BasketAndCurveTest {
     double[][] lowCorr = {{1, 0.1, 0.1}, {0.1, 1, 0.1}, {0.1, 0.1, 1}};
     double[][] highCorr = {{1, 0.9, 0.9}, {0.9, 1, 0.9}, {0.9, 0.9, 1}};
 
-    double[] adj = Phase1Support.adjoint(m, BasketOption.option(OptionType.CALL, w, 100.0, lowCorr, 1.0, 24));
+    double[] adj = Phase1Support.adjoint(m, BasketOption.option(OptionTypeEnum.CALL, w, 100.0, lowCorr, 1.0, 24));
     assertTrue(adj[0] > 0, "basket price positive");
     for (int i = 0; i < 3; i++) {
-      double fd = Phase1Support.bump(m, BasketOption.option(OptionType.CALL, w, 100.0, lowCorr, 1.0, 24), i, 0.5);
+      double fd = Phase1Support.bump(m, BasketOption.option(OptionTypeEnum.CALL, w, 100.0, lowCorr, 1.0, 24), i, 0.5);
       assertEquals(fd, adj[i + 1], 3e-2 + 3e-2 * Math.abs(fd), "d(price)/d(s" + (i + 1) + ") adjoint vs bump");
     }
 
-    double lo = Phase1Support.priceAt(m, BasketOption.option(OptionType.CALL, w, 100.0, lowCorr, 1.0, 24));
-    double hi = Phase1Support.priceAt(m, BasketOption.option(OptionType.CALL, w, 100.0, highCorr, 1.0, 24));
+    double lo = Phase1Support.priceAt(m, BasketOption.option(OptionTypeEnum.CALL, w, 100.0, lowCorr, 1.0, 24));
+    double hi = Phase1Support.priceAt(m, BasketOption.option(OptionTypeEnum.CALL, w, 100.0, highCorr, 1.0, 24));
     assertTrue(hi > lo, "a call on the sum is worth more when the names are more correlated (" + hi + " vs " + lo + ")");
   }
 

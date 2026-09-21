@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 @Tag("mc")
 class CommoditySpreadTest {
 
-  private static <M extends Record> double price(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> v,
+  private static <M> double price(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> v,
                                                  long scenarios, long seed) {
     try (Nabla.TypedPricer<M> p = Nabla.model(market, v).fp64().priceOnly().on("cpu-jit").build()) {
       return p.value().with(market).scenarios(scenarios).seed(seed).run().price();
@@ -46,22 +46,22 @@ class CommoditySpreadTest {
   void kirkCollapsesToMargrabeAtZeroStrike() {
     double s1 = 62, s2 = 48, v1 = 0.34, v2 = 0.29, rho = 0.55, r = 0.03, q1 = 0.01, q2 = 0.02, t = 1.0;
     double kirk = KirkSpreadOption.price(s1, s2, 0.0, v1, v2, rho, r, q1, q2, t);
-    double margrabe = Margrabe.of(s1, s2, v1, v2, rho, q1, q2, t).price();
+    double margrabe = Margrabe.of().s1(s1).s2(s2).vol1(v1).vol2(v2).rho(rho).yield1(q1).yield2(q2).maturity(t).build().price();
     assertEquals(margrabe, kirk, 1e-9, "Kirk(K=0) == Margrabe");
   }
 
   @Test
   void margrabeAgreesWithCorrelatedGbmMonteCarlo() {
-    SpreadMarket m = new SpreadMarket(60, 45, 0.32, 0.28, 0.0, 0.0, 0.03);
+    SpreadMarket m = SpreadMarket.of().s1(60).s2(45).vol1(0.32).vol2(0.28).yield1(0.0).yield2(0.0).rate(0.03).build();
     double rho = 0.6;
     double mc = price(m, SpreadProducts.spreadOption(0.0, rho, 1.0, 64), 1_500_000L, 42L);
-    double margrabe = Margrabe.of(m.s1(), m.s2(), m.vol1(), m.vol2(), rho, 0.0, 0.0, 1.0).price();
+    double margrabe = Margrabe.of().s1(m.s1()).s2(m.s2()).vol1(m.vol1()).vol2(m.vol2()).rho(rho).yield1(0.0).yield2(0.0).maturity(1.0).build().price();
     assertEquals(margrabe, mc, 0.02 * margrabe, "exchange option: MC vs Margrabe");
   }
 
   @Test
   void kirkAgreesWithMonteCarloForANonZeroStrike() {
-    SpreadMarket m = new SpreadMarket(60, 45, 0.30, 0.26, 0.005, 0.010, 0.03);
+    SpreadMarket m = SpreadMarket.of().s1(60).s2(45).vol1(0.30).vol2(0.26).yield1(0.005).yield2(0.010).rate(0.03).build();
     double rho = 0.5;
     double k = 8.0;
     double mc = price(m, SpreadProducts.spreadOption(k, rho, 1.0, 64), 1_500_000L, 7L);
@@ -72,7 +72,7 @@ class CommoditySpreadTest {
 
   @Test
   void spreadMonteCarloAdjointDeltaMatchesBump() {
-    SpreadMarket m = new SpreadMarket(58, 46, 0.33, 0.27, 0.0, 0.0, 0.03);
+    SpreadMarket m = SpreadMarket.of().s1(58).s2(46).vol1(0.33).vol2(0.27).yield1(0.0).yield2(0.0).rate(0.03).build();
     var v = SpreadProducts.spreadOption(6.0, 0.5, 1.0, 48);
     String[] names = Phase1Support.names(SpreadMarket.class);
     double[] adj = Phase1Support.adjoint(m, v);
@@ -85,10 +85,10 @@ class CommoditySpreadTest {
 
   @Test
   void schwartzFuturesPriceMatchesSimulation() {
-    SchwartzMarket m = new SchwartzMarket(50.0, 1.5, Math.log(58.0), 0.28, 0.03);
+    SchwartzMarket m = SchwartzMarket.of().spot(50.0).kappa(1.5).level(Math.log(58.0)).sigma(0.28).rate(0.03).build();
     double t = 1.5;
     // E[S_T] = e^{rT} * price of a zero-strike call.
-    double eST = price(m, SchwartzOneFactor.european(OptionType.CALL, 0.0, t, 160), 1_000_000L, 11L)
+    double eST = price(m, SchwartzOneFactor.european(OptionTypeEnum.CALL, 0.0, t, 160), 1_000_000L, 11L)
         * Math.exp(m.rate() * t);
     double futures = SchwartzOneFactor.futuresPrice(m, t);
     assertEquals(futures, eST, 0.01 * futures, "Schwartz futures price vs MC E[S_T]");
@@ -101,8 +101,8 @@ class CommoditySpreadTest {
 
   @Test
   void schwartzAdjointMatchesBump() {
-    SchwartzMarket m = new SchwartzMarket(50.0, 1.3, Math.log(55.0), 0.30, 0.03);
-    var v = SchwartzOneFactor.european(OptionType.CALL, 52.0, 1.0, 120);
+    SchwartzMarket m = SchwartzMarket.of().spot(50.0).kappa(1.3).level(Math.log(55.0)).sigma(0.30).rate(0.03).build();
+    var v = SchwartzOneFactor.european(OptionTypeEnum.CALL, 52.0, 1.0, 120);
     String[] names = Phase1Support.names(SchwartzMarket.class);
     double[] adj = Phase1Support.adjoint(m, v);
     int spot = Arrays.asList(names).indexOf("spot");
@@ -115,7 +115,7 @@ class CommoditySpreadTest {
 
   @Test
   void seasonalityFitRecoversCoefficients() {
-    Seasonality truth = new Seasonality(new double[] {0.08, -0.03}, new double[] {0.05, 0.02});
+    Seasonality truth = Seasonality.of().aCos(new double[] {0.08, -0.03}).aSin(new double[] {0.05, 0.02}).build();
     int n = 96;
     double[] times = new double[n];
     double[] values = new double[n];

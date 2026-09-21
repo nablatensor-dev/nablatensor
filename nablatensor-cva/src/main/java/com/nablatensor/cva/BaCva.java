@@ -70,7 +70,7 @@ public final class BaCva {
     double indexHedge = 0.0;
     for (CvaHedge hedge : hedges) {
       double magnitude = hedge.discountedWeightedNotional();
-      if (hedge.kind() == CvaHedge.Kind.INDEX_CDS) {
+      if (hedge.kind() == CvaHedge.KindEnum.INDEX_CDS) {
         indexHedge += magnitude;
       } else {
         singleNameHedgeByCounterparty.merge(hedge.referenceId(),

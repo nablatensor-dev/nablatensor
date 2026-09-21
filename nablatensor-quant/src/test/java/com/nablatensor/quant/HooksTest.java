@@ -38,7 +38,7 @@ class HooksTest {
     ADouble rate = in.of(EquityMarket::rate);
     ADouble mat = in.of(EquityMarket::maturity);
     ADouble strike = in.of(EquityMarket::strike);
-    GbmPath model = new GbmPath(rec, rate, in.of(EquityMarket::vol), grid, mat);
+    GbmPath model = GbmPath.of(rec, rate, in.of(EquityMarket::vol), grid, mat);
     ADouble path = spot;
     ADouble sum = rec.constant(0.0);
     for (int t = 0; t < grid.steps(); t++) {
@@ -52,7 +52,7 @@ class HooksTest {
   private static final Hooks.PathPayoff DISCOUNTED_TERMINAL = (rec, in, draws, grid) -> {
     ADouble rate = in.of(EquityMarket::rate);
     ADouble mat = in.of(EquityMarket::maturity);
-    GbmPath model = new GbmPath(rec, rate, in.of(EquityMarket::vol), grid, mat);
+    GbmPath model = GbmPath.of(rec, rate, in.of(EquityMarket::vol), grid, mat);
     ADouble path = in.of(EquityMarket::spot);
     for (int t = 0; t < grid.steps(); t++) {
       path = model.step(path, draws.next(), t);
@@ -80,7 +80,8 @@ class HooksTest {
   void controlVariateWithZeroBetaIsExactlyThePlainPayoff() {
     double plain = price(Hooks.antithetic(ASIAN), "cpu-jit");   // any payoff; use ASIAN via a wrapper
     double raw = price(wrap(ASIAN), "cpu-jit");
-    double cv0 = price(Hooks.controlVariate(ASIAN, DISCOUNTED_TERMINAL, M.spot(), 0.0), "cpu-jit");
+    double cv0 = price(Hooks.ControlVariate.of().target(ASIAN).control(DISCOUNTED_TERMINAL)
+        .controlMean(M.spot()).beta(0.0).build(), "cpu-jit");
     assertEquals(raw, cv0, 1e-9 * (1 + raw), "beta=0 control variate == raw payoff, bit for bit");
     assertTrue(plain > 0);
   }
@@ -88,7 +89,8 @@ class HooksTest {
   @Test
   void controlVariateWithExactMeanStaysUnbiased() {
     double raw = price(wrap(ASIAN), "cpu-jit");
-    double cv1 = price(Hooks.controlVariate(ASIAN, DISCOUNTED_TERMINAL, M.spot(), 1.0), "cpu-jit");
+    double cv1 = price(Hooks.ControlVariate.of().target(ASIAN).control(DISCOUNTED_TERMINAL)
+        .controlMean(M.spot()).beta(1.0).build(), "cpu-jit");
     assertEquals(raw, cv1, 0.03 * (1 + raw), "beta=1 control variate leaves the price unbiased");
   }
 

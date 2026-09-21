@@ -16,7 +16,7 @@
 package com.nablatensor.lattice;
 
 import com.nablatensor.lattice.LatticePayoff.ExerciseSchedule;
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 
 /**
  * A recombining binomial tree with backward induction — the method the
@@ -26,17 +26,17 @@ import com.nablatensor.quant.OptionType;
  *
  * <p>Three lattice parameterisations:
  * <ul>
- *   <li>{@link Method#CRR} — Cox-Ross-Rubinstein, {@code u = e^{sigma sqrt(dt)}};
+ *   <li>{@link MethodEnum#CRR} — Cox-Ross-Rubinstein, {@code u = e^{sigma sqrt(dt)}};
  *       {@code O(1/n)} convergence with the familiar even/odd oscillation;</li>
- *   <li>{@link Method#JARROW_RUDD} — equal-probability;</li>
- *   <li>{@link Method#LEISEN_REIMER} — Peizer-Pratt inversion of the
+ *   <li>{@link MethodEnum#JARROW_RUDD} — equal-probability;</li>
+ *   <li>{@link MethodEnum#LEISEN_REIMER} — Peizer-Pratt inversion of the
  *       Black-Scholes {@code d1}, {@code d2}; smooth {@code O(1/n^2)}
  *       convergence, odd step count, vanilla only.</li>
  * </ul>
  */
 public final class BinomialTree {
 
-  public enum Method {
+  public enum MethodEnum {
     /** Cox-Ross-Rubinstein: {@code u = e^{sigma sqrt(dt)}}, {@code O(1/n)} with even/odd oscillation. */
     CRR,
     /** Jarrow-Rudd: equal up/down probabilities, drift carried in the step sizes. */
@@ -51,25 +51,68 @@ public final class BinomialTree {
   private final double vol;
   private final double maturity;
   private final int steps;
-  private final Method method;
+  private final MethodEnum method;
 
   private double[] slice1;    // values at time dt
   private double[] slice2;    // values at time 2 dt
 
   private BinomialTree(double spot, double rate, double dividendYield, double vol,
-                       double maturity, int steps, Method method) {
+                       double maturity, int steps, MethodEnum method) {
     this.spot = spot;
     this.rate = rate;
     this.dividendYield = dividendYield;
     this.vol = vol;
     this.maturity = maturity;
-    this.steps = method == Method.LEISEN_REIMER && steps % 2 == 0 ? steps + 1 : steps;
+    this.steps = method == MethodEnum.LEISEN_REIMER && steps % 2 == 0 ? steps + 1 : steps;
     this.method = method;
   }
 
-  public static BinomialTree of(double spot, double rate, double dividendYield, double vol,
-                                double maturity, int steps, Method method) {
-    return new BinomialTree(spot, rate, dividendYield, vol, maturity, steps, method);
+  public static Builder of() {
+    return new Builder();
+  }
+
+  public static final class Builder {
+    private double spot;
+    private double rate;
+    private double dividendYield;
+    private double vol;
+    private double maturity;
+    private int steps;
+    private MethodEnum method;
+    private boolean spotSet;
+    private boolean rateSet;
+    private boolean dividendYieldSet;
+    private boolean volSet;
+    private boolean maturitySet;
+    private boolean stepsSet;
+    private boolean methodSet;
+
+    private Builder() {}
+
+    public Builder spot(double value) { spot = value; spotSet = true; return this; }
+    public Builder rate(double value) { rate = value; rateSet = true; return this; }
+    public Builder dividendYield(double value) { dividendYield = value; dividendYieldSet = true; return this; }
+    public Builder vol(double value) { vol = value; volSet = true; return this; }
+    public Builder maturity(double value) { maturity = value; maturitySet = true; return this; }
+    public Builder steps(int value) { steps = value; stepsSet = true; return this; }
+    public Builder method(MethodEnum value) { method = value; methodSet = true; return this; }
+
+    public Builder from(BinomialTree value) {
+      if (value == null) throw new NullPointerException("value");
+      return spot(value.spot).rate(value.rate).dividendYield(value.dividendYield)
+          .vol(value.vol).maturity(value.maturity).steps(value.steps).method(value.method);
+    }
+
+    public BinomialTree build() {
+      if (!spotSet) throw new IllegalStateException("Missing required value: spot");
+      if (!rateSet) throw new IllegalStateException("Missing required value: rate");
+      if (!dividendYieldSet) throw new IllegalStateException("Missing required value: dividendYield");
+      if (!volSet) throw new IllegalStateException("Missing required value: vol");
+      if (!maturitySet) throw new IllegalStateException("Missing required value: maturity");
+      if (!stepsSet) throw new IllegalStateException("Missing required value: steps");
+      if (!methodSet) throw new IllegalStateException("Missing required value: method");
+      return new BinomialTree(spot, rate, dividendYield, vol, maturity, steps, method);
+    }
   }
 
   public int steps() {
@@ -77,12 +120,12 @@ public final class BinomialTree {
   }
 
   /**
-   * Price a general payoff under an exercise schedule ({@link Method#CRR} or
-   * {@link Method#JARROW_RUDD}); the terminal payoff also serves as the
+   * Price a general payoff under an exercise schedule ({@link MethodEnum#CRR} or
+   * {@link MethodEnum#JARROW_RUDD}); the terminal payoff also serves as the
    * early-exercise payoff.
    */
   public double price(LatticePayoff payoff, ExerciseSchedule schedule) {
-    if (method == Method.LEISEN_REIMER) {
+    if (method == MethodEnum.LEISEN_REIMER) {
       throw new IllegalStateException("Leisen-Reimer is vanilla-only; use priceVanilla");
     }
     Lattice l = lattice(0.0);
@@ -90,7 +133,7 @@ public final class BinomialTree {
   }
 
   /** Price a vanilla call/put; the only entry point that supports Leisen-Reimer. */
-  public double priceVanilla(OptionType type, double strike, ExerciseSchedule schedule) {
+  public double priceVanilla(OptionTypeEnum type, double strike, ExerciseSchedule schedule) {
     LatticePayoff payoff = LatticePayoff.vanilla(type, strike);
     Lattice l = lattice(strike);
     return induct(payoff, payoff, schedule, l);

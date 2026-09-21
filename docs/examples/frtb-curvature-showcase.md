@@ -92,13 +92,13 @@ The example has one market risk factor so its final aggregation is intentionally
 small. Increase `scenarios` and `steps` to make the pricing workload realistic;
 increase `bankFactors` only to change the reported projection.
 
-## Backend comparison
+## BackendEnum comparison
 
 The exact showcase workflow was measured on 2026-09-02 with one million paths,
 252 fixings, seed 42, warm-up, and best-of-three timings. The machine has a
 6-core/12-thread Intel Xeon E-2276M.
 
-| Backend | Precision | Adjoint delta | Three price replays | Replay speedup | Complete workflow |
+| BackendEnum | PrecisionEnum | Adjoint delta | Three price replays | Replay speedup | Complete workflow |
 |---|---:|---:|---:|---:|---:|
 | `cpu` | fp64 | 8.4087 s | 20.9039 s | 1.00x | 29.3125 s |
 | `cpu-jit` | fp64 | 5.3097 s | 13.0496 s | 1.60x | 18.3593 s |

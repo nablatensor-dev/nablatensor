@@ -52,7 +52,11 @@ public class HestonModel {
   private final double dt;
   private final double sqrtDt;
 
-  public HestonModel(Nabla.Inputs<HestonMarket> in, double maturity, int steps) {
+  public static HestonModel of(Nabla.Inputs<HestonMarket> in, double maturity, int steps) {
+    return new HestonModel(in, maturity, steps);
+  }
+
+  protected HestonModel(Nabla.Inputs<HestonMarket> in, double maturity, int steps) {
     this.rate = in.of(HestonMarket::rate);
     this.kappa = in.of(HestonMarket::kappa);
     this.theta = in.of(HestonMarket::theta);
@@ -98,15 +102,15 @@ public class HestonModel {
 
   /** A European call/put on the Heston terminal spot, discounted at the flat rate. */
   public static BiConsumer<AadRecorder, Nabla.Inputs<HestonMarket>> european(
-      OptionType type, double maturity, int steps) {
+      OptionTypeEnum type, double maturity, int steps) {
     return (rec, in) -> {
-      HestonModel m = new HestonModel(in, maturity, steps);
+      HestonModel m = HestonModel.of(in, maturity, steps);
       State s = m.start(in);
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn(), rec.randn());
       }
       ADouble strike = in.of(HestonMarket::strike);
-      ADouble intrinsic = type == OptionType.CALL
+      ADouble intrinsic = type == OptionTypeEnum.CALL
           ? s.spot().sub(strike).max(0.0)
           : strike.sub(s.spot()).max(0.0);
       ADouble discount = in.of(HestonMarket::rate).neg().mul(maturity).exp();

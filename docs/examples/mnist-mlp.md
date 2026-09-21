@@ -11,7 +11,7 @@ autograd, ~230 lines. Reaches **~98%** held-out accuracy in 30 epochs.
 
 Source: [`nablatensor-examples/.../MnistMlp.java`](../../nablatensor-examples/src/main/java/com/nablatensor/examples/MnistMlp.java)
 
-## Backend
+## BackendEnum
 
 The `Tensor` API runs only on a GPU `ComputeBackend` (Vulkan / ROCm / CUDA);
 there is no CPU tensor backend. The example picks

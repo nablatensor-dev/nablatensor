@@ -61,7 +61,7 @@ public final class BermudanLsm {
    * @param scenarios     Monte-Carlo paths
    * @param seed          RNG seed
    */
-  public static Result price(EquityMarket market, OptionType type, int exerciseDates, int stepsPerDate,
+  public static Result price(EquityMarket market, OptionTypeEnum type, int exerciseDates, int stepsPerDate,
                              int polyDegree, double decisionWidth, long scenarios, long seed) {
     int perDate = polyDegree + 1;
     int decisionDates = exerciseDates - 1;              // the last date is forced exercise
@@ -75,7 +75,7 @@ public final class BermudanLsm {
       ADouble vol = rec.input("sigma", market.vol());
       ADouble r = rec.input("r", market.rate());
       ADouble tt = rec.input("T", market.maturity());
-      GbmPath model = new GbmPath(rec, r, vol, totalSteps, tt);
+      GbmPath model = GbmPath.of(rec, r, vol, totalSteps, tt);
       ADouble stepDisc = r.neg().mul(tt).div(totalSteps).exp();
 
       ADouble discount = rec.constant(1.0);
@@ -89,7 +89,7 @@ public final class BermudanLsm {
           s = model.step(s, rec.randn(), stepIdx++);
           discount = discount.mul(stepDisc);
         }
-        ADouble exercise = (type == OptionType.CALL ? s.sub(k) : k.sub(s)).max(0.0);
+        ADouble exercise = (type == OptionTypeEnum.CALL ? s.sub(k) : k.sub(s)).max(0.0);
         boolean last = d == exerciseDates - 1;
         ADouble exerciseNow;
         if (last) {
@@ -167,9 +167,7 @@ public final class BermudanLsm {
 
       MultiOutput.Result fin = mo.run(betaMap(beta, decisionDates, perDate), scenarios, seed);
       Map<String, Double> g = fin.gradient("price");
-      EquityMarket greeks = new EquityMarket(
-          g.getOrDefault("S0", 0.0), g.getOrDefault("K", 0.0), g.getOrDefault("sigma", 0.0),
-          g.getOrDefault("r", 0.0), g.getOrDefault("T", 0.0));
+      EquityMarket greeks = EquityMarket.of().spot(g.getOrDefault("S0", 0.0)).strike(g.getOrDefault("K", 0.0)).vol(g.getOrDefault("sigma", 0.0)).rate(g.getOrDefault("r", 0.0)).maturity(g.getOrDefault("T", 0.0)).build();
 
       double[][] boundary = new double[decisionDates][perDate];
       int i = 0;

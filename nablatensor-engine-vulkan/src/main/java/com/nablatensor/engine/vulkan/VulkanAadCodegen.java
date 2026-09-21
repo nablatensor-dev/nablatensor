@@ -15,7 +15,7 @@
  */
 package com.nablatensor.engine.vulkan;
 
-import com.nablatensor.engine.AadOp;
+import com.nablatensor.engine.AadOpEnum;
 import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadTape;
 
@@ -199,8 +199,8 @@ final class VulkanAadCodegen {
     return markets == 1 ? "" : "_" + m;
   }
 
-  private static boolean marketFree(AadOp op) {
-    return op == AadOp.RANDN || op == AadOp.CONST;
+  private static boolean marketFree(AadOpEnum op) {
+    return op == AadOpEnum.RANDN || op == AadOpEnum.CONST;
   }
 
   /**
@@ -232,11 +232,11 @@ final class VulkanAadCodegen {
     int markets = cfg.markets();
     int a = tape.argA(i);
     int b = tape.argB(i);
-    AadOp op = tape.op(i);
+    AadOpEnum op = tape.op(i);
     String decl = declare ? "float " : "";
     if (marketFree(op)) {
       src.append("    ").append(decl).append("v").append(i).append(" = ")
-          .append(op == AadOp.RANDN ? "rng_normal(" + a + "u)" : literal(tape.constant(i)))
+          .append(op == AadOpEnum.RANDN ? "rng_normal(" + a + "u)" : literal(tape.constant(i)))
           .append(";\n");
       return;
     }
@@ -342,14 +342,14 @@ final class VulkanAadCodegen {
 
   // ---- checkpointed adjoint ------------------------------------------------
 
-  private static boolean refsA(AadOp op) {
+  private static boolean refsA(AadOpEnum op) {
     return switch (op) {
       case CONST, INPUT, RANDN -> false;
       default -> true;
     };
   }
 
-  private static boolean refsB(AadOp op) {
+  private static boolean refsB(AadOpEnum op) {
     return switch (op) {
       case ADD, SUB, MUL, DIV, MAX, MIN -> true;
       default -> false;
@@ -372,7 +372,7 @@ final class VulkanAadCodegen {
     int[] lastUse = new int[n];
     Arrays.fill(lastUse, -1);
     for (int i = 0; i < n; i++) {
-      AadOp op = tape.op(i);
+      AadOpEnum op = tape.op(i);
       if (refsA(op)) lastUse[tape.argA(i)] = i;
       if (refsB(op)) lastUse[tape.argB(i)] = i;
     }

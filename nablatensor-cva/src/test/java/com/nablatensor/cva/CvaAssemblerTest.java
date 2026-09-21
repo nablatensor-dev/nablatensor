@@ -28,18 +28,17 @@ class CvaAssemblerTest {
   private static final long PATHS = 40_000L;
 
   private static NettingSet swapNettingSet(String id, String counterpartyId,
-                                           CreditName.Sector sector) {
-    CreditName counterparty = new CreditName(counterpartyId,
-        HazardCurve.fromFlatSpread(150.0, 0.40, 10.0), 0.40, CreditName.Rating.BBB, sector);
-    return new NettingSet(id, counterparty, List.of(
-        InterestRateSwap.payer("SWAP-PAY", 120_000_000.0, 0.032, 5.0),
-        InterestRateSwap.receiver("SWAP-REC", 45_000_000.0, 0.028, 4.0)));
+                                           CreditName.SectorEnum sector) {
+    CreditName counterparty = CreditName.of().id(counterpartyId).curve(HazardCurve.fromFlatSpread(150.0, 0.40, 10.0)).recovery(0.40).rating(CreditName.RatingEnum.BBB).sector(sector).build();
+    return NettingSet.of().id(id).counterparty(counterparty).trades(List.of(
+        InterestRateSwap.of().id("SWAP-PAY").side(InterestRateSwap.SideEnum.PAY_FIXED).notional(120_000_000.0).fixedRate(0.032).startYears(0.0).maturityYears(5.0).accrualYears(0.5).build(),
+        InterestRateSwap.of().id("SWAP-REC").side(InterestRateSwap.SideEnum.RECEIVE_FIXED).notional(45_000_000.0).fixedRate(0.028).startYears(0.0).maturityYears(4.0).accrualYears(0.5).build())).collateral(CollateralAgreement.uncollateralised()).build();
   }
 
   @Test
   void portfolioRunProducesBothChargesAndNettedSensitivities() {
-    NettingSet nsA = swapNettingSet("NS-A", "CPTY-A", CreditName.Sector.FINANCIAL);
-    NettingSet nsB = swapNettingSet("NS-B", "CPTY-B", CreditName.Sector.CORPORATE);
+    NettingSet nsA = swapNettingSet("NS-A", "CPTY-A", CreditName.SectorEnum.FINANCIAL);
+    NettingSet nsB = swapNettingSet("NS-B", "CPTY-B", CreditName.SectorEnum.CORPORATE);
 
     CvaCapital capital = Cva.of(CvaMarket.demo())
         .add(nsA, new CvaRiskFactors("USD", nsA.counterparty(), "EURUSD"))
@@ -61,7 +60,7 @@ class CvaAssemblerTest {
 
   @Test
   void praThreeMethodsAreAllAvailableAndOrdered() {
-    NettingSet ns = swapNettingSet("NS-A", "CPTY-A", CreditName.Sector.FINANCIAL);
+    NettingSet ns = swapNettingSet("NS-A", "CPTY-A", CreditName.SectorEnum.FINANCIAL);
     CvaCapital capital = Cva.of(CvaMarket.demo())
         .add(ns, new CvaRiskFactors("USD", ns.counterparty(), "EURUSD"))
         .steps(20).paths(PATHS).on("cpu-jit")

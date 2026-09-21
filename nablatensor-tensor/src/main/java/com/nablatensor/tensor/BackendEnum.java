@@ -18,7 +18,7 @@ package com.nablatensor.tensor;
 import java.util.Locale;
 
 /** User-facing backend selector for {@code jit}/{@code function} builders. */
-public enum Backend {
+public enum BackendEnum {
   /** Let the registry pick the highest-priority available backend. */
   AUTO,
   /** Force the host CPU backend. */
@@ -30,7 +30,7 @@ public enum Backend {
   /** Force the Vulkan compute backend. */
   VULKAN;
 
-  public static Backend parse(String value) {
+  public static BackendEnum parse(String value) {
     try {
       return valueOf(value.toUpperCase(Locale.ROOT));
     } catch (IllegalArgumentException failure) {

@@ -15,6 +15,8 @@
  */
 package com.nablatensor.credit;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A homogeneous credit pool for the recorded copula Monte-Carlo: one systemic
  * correlation and one horizon default probability shared by every name. Both are
@@ -24,7 +26,32 @@ package com.nablatensor.credit;
  * @param rho correlation to the systemic factor, in {@code (0, 1)}
  * @param pd  default probability of a name to the horizon, in {@code (0, 1)}
  */
-public record CopulaMarket(double rho, double pd) {
+@Of
+public final class CopulaMarket {
+
+  private CopulaMarket(double rho, double pd) {
+    this.rho = rho;
+    this.pd = pd;
+  }
+
+  private final double rho;
+  private final double pd;
+  static CopulaMarket create(double rho, double pd) {
+    return new CopulaMarket(rho, pd);
+  }
+
+  public static CopulaMarketBuilder of() {
+    return new CopulaMarketBuilder();
+  }
+
+  public double rho() {
+    return rho;
+  }
+
+  public double pd() {
+    return pd;
+  }
+
 
   public CopulaMarket validated() {
     if (!(rho > 0 && rho < 1 && pd > 0 && pd < 1)) {
@@ -34,6 +61,6 @@ public record CopulaMarket(double rho, double pd) {
   }
 
   public static CopulaMarket base() {
-    return new CopulaMarket(0.30, 0.05);
+    return CopulaMarket.of().rho(0.30).pd(0.05).build();
   }
 }

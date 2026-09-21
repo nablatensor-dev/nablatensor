@@ -18,9 +18,10 @@ package com.nablatensor.cva;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.nablatensor.risk.CorrelationScenario;
-import com.nablatensor.risk.RiskClass;
+import com.nablatensor.risk.CorrelationScenarioEnum;
+import com.nablatensor.risk.RiskClassEnum;
 import com.nablatensor.risk.RiskFactor;
+import com.nablatensor.risk.RiskMeasureEnum;
 import com.nablatensor.risk.Sensitivities;
 import org.junit.jupiter.api.Test;
 
@@ -32,14 +33,16 @@ class SaCvaTest {
   void chargeIsNonNegativeCoversThreeScenariosAndPicksTheMax() {
     Sensitivities sensitivities = Sensitivities.builder()
         .add(RiskFactor.girrDelta("USD", 5.0), 40_000.0)
-        .add(RiskFactor.csrDelta("3", "CPTY-A", RiskFactor.CsrCurve.CDS, 1.0), 12_000.0)
-        .add(RiskFactor.csrDelta("3", "CPTY-A", RiskFactor.CsrCurve.CDS, 3.5), 9_000.0)
+        .add(RiskFactor.of().riskClass(RiskClassEnum.CSR_NON_SEC).measure(RiskMeasureEnum.DELTA)
+            .bucket("3").name("CPTY-A|CDS").tenor(1.0).tenor2(0.0).build(), 12_000.0)
+        .add(RiskFactor.of().riskClass(RiskClassEnum.CSR_NON_SEC).measure(RiskMeasureEnum.DELTA)
+            .bucket("3").name("CPTY-A|CDS").tenor(3.5).tenor2(0.0).build(), 9_000.0)
         .add(RiskFactor.fxDelta("EURUSD"), 5_000.0)
         .build();
 
     SaCvaResult result = new SaCva(PARAMETERS).charge(sensitivities);
 
-    assertEquals(CorrelationScenario.values().length, result.perScenario().size());
+    assertEquals(CorrelationScenarioEnum.values().length, result.perScenario().size());
     for (double charge : result.perScenario().values()) {
       assertTrue(charge >= 0.0, "each scenario charge is non-negative");
     }
@@ -58,7 +61,7 @@ class SaCvaTest {
     // one risk type, one bucket, one factor: K = m_CVA * |RW * s|
     double expected = PARAMETERS.mCva() * PARAMETERS.deltaRiskWeight(factor) * 25_000.0;
     assertEquals(expected, result.total(), 1.0e-6 * expected);
-    assertEquals(expected, result.byRiskType().get(RiskClass.GIRR), 1.0e-6 * expected);
+    assertEquals(expected, result.byRiskType().get(RiskClassEnum.GIRR), 1.0e-6 * expected);
   }
 
   @Test

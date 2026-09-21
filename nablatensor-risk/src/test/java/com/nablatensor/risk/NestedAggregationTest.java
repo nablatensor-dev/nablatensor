@@ -78,11 +78,11 @@ class NestedAggregationTest {
 
   @Test
   void correlationScenariosTransformAsSpecified() {
-    assertEquals(0.25, CorrelationScenario.MEDIUM.apply(0.25), 0);
-    assertEquals(0.3125, CorrelationScenario.HIGH.apply(0.25), 1e-12);      // min(1.25*rho, 1)
-    assertEquals(0.1875, CorrelationScenario.LOW.apply(0.25), 1e-12);       // max(2*rho-1, .75*rho)
-    assertEquals(1.0, CorrelationScenario.HIGH.apply(0.9), 1e-12);          // capped at 1
-    assertEquals(0.8, CorrelationScenario.LOW.apply(0.9), 1e-12);           // 2*.9-1
+    assertEquals(0.25, CorrelationScenarioEnum.MEDIUM.apply(0.25), 0);
+    assertEquals(0.3125, CorrelationScenarioEnum.HIGH.apply(0.25), 1e-12);      // min(1.25*rho, 1)
+    assertEquals(0.1875, CorrelationScenarioEnum.LOW.apply(0.25), 1e-12);       // max(2*rho-1, .75*rho)
+    assertEquals(1.0, CorrelationScenarioEnum.HIGH.apply(0.9), 1e-12);          // capped at 1
+    assertEquals(0.8, CorrelationScenarioEnum.LOW.apply(0.9), 1e-12);           // 2*.9-1
   }
 
   @Test

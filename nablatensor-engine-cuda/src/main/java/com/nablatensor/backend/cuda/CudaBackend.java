@@ -16,10 +16,10 @@
 package com.nablatensor.backend.cuda;
 
 import com.nablatensor.tensor.ConvSpec;
-import com.nablatensor.tensor.DType;
+import com.nablatensor.tensor.DTypeEnum;
 import com.nablatensor.tensor.Device;
-import com.nablatensor.tensor.DeviceType;
-import com.nablatensor.tensor.Op;
+import com.nablatensor.tensor.DeviceTypeEnum;
+import com.nablatensor.tensor.OpEnum;
 import com.nablatensor.tensor.Shape;
 import com.nablatensor.tensor.expr.Expr;
 import com.nablatensor.tensor.spi.AxisReduction;
@@ -60,8 +60,8 @@ public final class CudaBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceType deviceType() {
-    return DeviceType.CUDA;
+  public DeviceTypeEnum deviceType() {
+    return DeviceTypeEnum.CUDA;
   }
 
   @Override
@@ -96,10 +96,10 @@ public final class CudaBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceBuffer upload(float[] data, Shape shape, DType dtype, Device device) {
+  public DeviceBuffer upload(float[] data, Shape shape, DTypeEnum dtype, Device device) {
     ensureInitialized();
     requireCudaDevice(device);
-    if (dtype != DType.F32) {
+    if (dtype != DTypeEnum.F32) {
       throw new UnsupportedOperationException("CUDA float upload supports F32 only, got " + dtype);
     }
     // cuMemcpyHtoD is synchronous and is not ordered against the dedicated
@@ -140,7 +140,7 @@ public final class CudaBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceBuffer binary(Op op, DeviceBuffer a, DeviceBuffer b) {
+  public DeviceBuffer binary(OpEnum op, DeviceBuffer a, DeviceBuffer b) {
     ensureInitialized();
     CudaBuffer left = cuda(a);
     CudaBuffer right = cuda(b);
@@ -155,7 +155,7 @@ public final class CudaBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceBuffer scalar(Op op, DeviceBuffer a, double value) {
+  public DeviceBuffer scalar(OpEnum op, DeviceBuffer a, double value) {
     ensureInitialized();
     CudaBuffer left = cuda(a);
     int n = left.count();
@@ -166,7 +166,7 @@ public final class CudaBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceBuffer unary(Op op, DeviceBuffer a) {
+  public DeviceBuffer unary(OpEnum op, DeviceBuffer a) {
     ensureInitialized();
     CudaBuffer left = cuda(a);
     int n = left.count();
@@ -498,10 +498,10 @@ public final class CudaBackend implements ComputeBackend {
   }
 
   private CudaBuffer alloc(Shape shape) {
-    return alloc(shape, DType.F32, Device.cuda());
+    return alloc(shape, DTypeEnum.F32, Device.cuda());
   }
 
-  private CudaBuffer alloc(Shape shape, DType dtype, Device device) {
+  private CudaBuffer alloc(Shape shape, DTypeEnum dtype, Device device) {
     requireCudaDevice(device);
     long bytes = Math.multiplyExact(shape.size(), dtype.byteSize());
     return new CudaBuffer(CudaRuntime.malloc(bytes), shape, dtype, device);
@@ -530,7 +530,7 @@ public final class CudaBackend implements ComputeBackend {
       throw new IllegalArgumentException("matmul operands must use the same device and dtype");
     }
     requireCudaDevice(left.device());
-    if (left.dtype() != DType.F32) {
+    if (left.dtype() != DTypeEnum.F32) {
       throw new UnsupportedOperationException("CUDA matmul supports F32 only, got " + left.dtype());
     }
   }

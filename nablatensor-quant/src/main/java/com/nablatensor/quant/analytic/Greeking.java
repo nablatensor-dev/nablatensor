@@ -64,6 +64,6 @@ final class Greeking {
     double rho = (f.at(s, k, t, r + hr, sigma) - f.at(s, k, t, r - hr, sigma)) / (2.0 * hr);
     double dvdk = (f.at(s, k + hk, t, r, sigma) - f.at(s, k - hk, t, r, sigma)) / (2.0 * hk);
 
-    return new AnalyticGreeks(price, delta, gamma, vega, theta, rho, dvdk);
+    return AnalyticGreeks.of().price(price).delta(delta).gamma(gamma).vega(vega).theta(theta).rho(rho).strikeSensitivity(dvdk).build();
   }
 }

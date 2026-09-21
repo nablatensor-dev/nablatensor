@@ -34,8 +34,8 @@ class BermudanLsmTest {
   void americanPutNearTheLongstaffSchwartzReference() {
     // Longstaff-Schwartz (2001), Table 1: S=K=40, sigma=0.20, T=1, r=0.06
     // finite-difference American put value 2.314.
-    EquityMarket m = new EquityMarket(40, 40, 0.20, 0.06, 1.0);
-    BermudanLsm.Result r = BermudanLsm.price(m, OptionType.PUT, 20, 6, 3, 0.6, 120_000L, 42L);
+    EquityMarket m = EquityMarket.of().spot(40).strike(40).vol(0.20).rate(0.06).maturity(1.0).build();
+    BermudanLsm.Result r = BermudanLsm.price(m, OptionTypeEnum.PUT, 20, 6, 3, 0.6, 120_000L, 42L);
 
     assertTrue(r.price() > r.europeanFloor(), "Bermudan >= European");
     assertTrue(r.earlyExercisePremium() > 0.10, "meaningful early-exercise premium, got " + r.earlyExercisePremium());
@@ -49,8 +49,8 @@ class BermudanLsmTest {
 
   @Test
   void americanCallOnANonDividendStockDoesNotExerciseEarly() {
-    EquityMarket m = new EquityMarket(100, 100, 0.20, 0.05, 1.0);
-    BermudanLsm.Result r = BermudanLsm.price(m, OptionType.CALL, 16, 6, 2, 1.0, 100_000L, 7L);
+    EquityMarket m = EquityMarket.of().spot(100).strike(100).vol(0.20).rate(0.05).maturity(1.0).build();
+    BermudanLsm.Result r = BermudanLsm.price(m, OptionTypeEnum.CALL, 16, 6, 2, 1.0, 100_000L, 7L);
     // Early exercise is never optimal, so the optimiser drives the policy to
     // "hold to expiry" and the price collapses to the European.
     assertEquals(r.europeanFloor(), r.price(), 0.02 * r.europeanFloor(),
@@ -60,11 +60,11 @@ class BermudanLsmTest {
 
   @Test
   void higherVolatilityRaisesTheEarlyExercisePremium() {
-    EquityMarket lowVol = new EquityMarket(40, 40, 0.20, 0.06, 1.0);
-    EquityMarket highVol = new EquityMarket(40, 40, 0.40, 0.06, 1.0);
-    double eepLow = BermudanLsm.price(lowVol, OptionType.PUT, 16, 6, 2, 0.6, 100_000L, 3L)
+    EquityMarket lowVol = EquityMarket.of().spot(40).strike(40).vol(0.20).rate(0.06).maturity(1.0).build();
+    EquityMarket highVol = EquityMarket.of().spot(40).strike(40).vol(0.40).rate(0.06).maturity(1.0).build();
+    double eepLow = BermudanLsm.price(lowVol, OptionTypeEnum.PUT, 16, 6, 2, 0.6, 100_000L, 3L)
         .earlyExercisePremium();
-    double eepHigh = BermudanLsm.price(highVol, OptionType.PUT, 16, 6, 2, 1.0, 100_000L, 3L)
+    double eepHigh = BermudanLsm.price(highVol, OptionTypeEnum.PUT, 16, 6, 2, 1.0, 100_000L, 3L)
         .earlyExercisePremium();
     assertTrue(eepHigh > eepLow, "more vol => more early-exercise value: " + eepHigh + " vs " + eepLow);
   }

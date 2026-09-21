@@ -15,7 +15,7 @@ packages**:
 | `com.nablatensor.quant` | `MonteCarlo`, `Product`, `TimeGrid`, `EquityMarket` (and the other `*Market` records), `Products`, `ExoticProducts`, `Hooks`, `MultiOutput`, `MultiMetric`, `Calibrator`, `BlackScholes`, the `*Model` step blocks |
 | `com.nablatensor.scenario` | `Shock`, `Scenario`, `ScenarioSet`, `Ladder`, `ScenarioRunner` |
 | `com.nablatensor.risk` | the aggregation types |
-| `com.nablatensor.tensor` | `NablaTensors`, `Tensor`, `Shape`, `Device`, `DType`, `PrngKey`, and `com.nablatensor.tensor.spi.*` |
+| `com.nablatensor.tensor` | `NablaTensors`, `Tensor`, `Shape`, `Device`, `DTypeEnum`, `PrngKey`, and `com.nablatensor.tensor.spi.*` |
 
 ## What is not
 

@@ -80,33 +80,30 @@ public final class CvaShowcase {
   /** Counterparty A: a BBB financial, CDS curve quoted 90 / 130 / 150 / 170 bp. */
   public static CreditName counterpartyA() {
     HazardCurve curve = HazardCurve.bootstrap(List.of(
-        new CdsQuote(1.0, 90.0), new CdsQuote(3.0, 130.0),
-        new CdsQuote(5.0, 150.0), new CdsQuote(10.0, 170.0)),
+        CdsQuote.of().tenorYears(1.0).parSpreadBp(90.0).build(), CdsQuote.of().tenorYears(3.0).parSpreadBp(130.0).build(),
+        CdsQuote.of().tenorYears(5.0).parSpreadBp(150.0).build(), CdsQuote.of().tenorYears(10.0).parSpreadBp(170.0).build()),
         0.40, t -> Math.exp(-0.03 * t));
-    return new CreditName("CPTY-A", curve, 0.40, CreditName.Rating.BBB, CreditName.Sector.FINANCIAL);
+    return CreditName.of().id("CPTY-A").curve(curve).recovery(0.40).rating(CreditName.RatingEnum.BBB).sector(CreditName.SectorEnum.FINANCIAL).build();
   }
 
   /** Counterparty B: an A-rated corporate, flat 110 bp, under a daily-margined CSA. */
   public static CreditName counterpartyB() {
-    return new CreditName("CPTY-B", HazardCurve.fromFlatSpread(110.0, 0.40, 10.0),
-        0.40, CreditName.Rating.A, CreditName.Sector.CORPORATE);
+    return CreditName.of().id("CPTY-B").curve(HazardCurve.fromFlatSpread(110.0, 0.40, 10.0)).recovery(0.40).rating(CreditName.RatingEnum.A).sector(CreditName.SectorEnum.CORPORATE).build();
   }
 
   /** Uncollateralised netting set with A: an in-the-money payer, an offsetting
    *  receiver, and a bought EUR forward. The 7y payer keeps exposure alive in
    *  every credit-spread tenor bucket. */
   public static NettingSet nettingSetA() {
-    return new NettingSet("NS-CPTY-A", counterpartyA(), List.of(
-        InterestRateSwap.payer("A-SWAP-PAY", 100_000_000.0, 0.020, 7.0),
-        InterestRateSwap.receiver("A-SWAP-REC", 40_000_000.0, 0.036, 5.0),
-        new FxForward("A-FX-FWD", FxForward.Side.BUY_FOREIGN, 20_000_000.0, 1.05, 4.0)));
+    return NettingSet.of().id("NS-CPTY-A").counterparty(counterpartyA()).trades(List.of(
+        InterestRateSwap.of().id("A-SWAP-PAY").side(InterestRateSwap.SideEnum.PAY_FIXED).notional(100_000_000.0).fixedRate(0.020).startYears(0.0).maturityYears(7.0).accrualYears(0.5).build(),
+        InterestRateSwap.of().id("A-SWAP-REC").side(InterestRateSwap.SideEnum.RECEIVE_FIXED).notional(40_000_000.0).fixedRate(0.036).startYears(0.0).maturityYears(5.0).accrualYears(0.5).build(),
+        FxForward.of().id("A-FX-FWD").side(FxForward.SideEnum.BUY_FOREIGN).foreignNotional(20_000_000.0).strike(1.05).settlementYears(4.0).build())).collateral(CollateralAgreement.uncollateralised()).build();
   }
 
   /** Daily-margined netting set with B: one in-the-money payer swap. */
   public static NettingSet nettingSetB() {
-    return new NettingSet("NS-CPTY-B", counterpartyB(),
-        List.of(InterestRateSwap.payer("B-SWAP-PAY", 75_000_000.0, 0.022, 7.0)),
-        CollateralAgreement.dailyMargined(2_000_000.0));
+    return NettingSet.of().id("NS-CPTY-B").counterparty(counterpartyB()).trades(List.of(InterestRateSwap.of().id("B-SWAP-PAY").side(InterestRateSwap.SideEnum.PAY_FIXED).notional(75_000_000.0).fixedRate(0.022).startYears(0.0).maturityYears(7.0).accrualYears(0.5).build())).collateral(CollateralAgreement.dailyMargined(2_000_000.0)).build();
   }
 
   public static CvaRiskFactors riskFactorsFor(NettingSet nettingSet) {
@@ -115,7 +112,7 @@ public final class CvaShowcase {
 
   /** One single-name CDS on A, notional 8m, 7y, recognised at r_hc = 1. */
   public static CvaHedge hedgeOnA() {
-    return CvaHedge.singleName("CPTY-A", 8_000_000.0, 7.0, 0.05, 1.0);
+    return CvaHedge.of().kind(CvaHedge.KindEnum.SINGLE_NAME_CDS).referenceId("CPTY-A").notional(8_000_000.0).maturityYears(7.0).riskWeight(0.05).correlation(1.0).build();
   }
 
   // ---- non-narrated runner ----------------------------------------
@@ -145,7 +142,7 @@ public final class CvaShowcase {
     System.out.printf(Locale.ROOT, "      CPTY-A survival  1y %.4f   5y %.4f%n%n", survivalA[0], survivalA[1]);
 
     System.out.println("[2/8] EXPOSURE SIMULATION + ONE ADJOINT SWEEP (per netting set)");
-    ExposureSimulation simA = new ExposureSimulation(a, steps).on(engine);
+    ExposureSimulation simA = ExposureSimulation.of(a, steps).on(engine);
     CvaResult resultA = simA.run(market, paths, seed);
     printProfile(resultA.epeProfile());
     System.out.printf(Locale.ROOT,
@@ -196,9 +193,9 @@ public final class CvaShowcase {
 
     SaCvaResult sa = capital.saCva();
     System.out.printf(Locale.ROOT, "      SA-CVA  LOW %s  MEDIUM %s  HIGH %s  ->  %s  %s%n",
-        money(sa.perScenario().get(com.nablatensor.risk.CorrelationScenario.LOW)),
-        money(sa.perScenario().get(com.nablatensor.risk.CorrelationScenario.MEDIUM)),
-        money(sa.perScenario().get(com.nablatensor.risk.CorrelationScenario.HIGH)),
+        money(sa.perScenario().get(com.nablatensor.risk.CorrelationScenarioEnum.LOW)),
+        money(sa.perScenario().get(com.nablatensor.risk.CorrelationScenarioEnum.MEDIUM)),
+        money(sa.perScenario().get(com.nablatensor.risk.CorrelationScenarioEnum.HIGH)),
         sa.selected(), money(sa.total()));
 
     System.out.println("\n[7/8] THE THREE PRA STANDARDISED METHODS");

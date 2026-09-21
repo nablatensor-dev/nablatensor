@@ -23,7 +23,7 @@ Source: [`nablatensor-quant/.../analytic/`](../../nablatensor-quant/src/main/jav
 | `BarrierAnalytic` | Reiner-Rubinstein, continuous monitoring, zero rebate | the reference for the smoothed `ExoticProducts.barrier` |
 | `CdsParSpread` | survival curve + discount curve on a grid | the reference for bootstrapped-hazard CDS pricing |
 
-Every vanilla-family pricer returns an `AnalyticGreeks` record: the **price in
+Every vanilla-family pricer returns an `AnalyticGreeks` immutable value: the **price in
 closed form**, and `delta / gamma / vega / theta / rho / dV/dK` by central
 differencing of that closed form. The differences carry no Monte-Carlo noise and
 only `~1e-7` truncation error — writing the six Greeks this way instead of
@@ -41,8 +41,9 @@ CDF by `1/h^2`.
 Report report = ModelValidation.of(Products.europeanCall())
     .market(EquityMarket.atmOneYear()).steps(1)
     .scenarios(500_000).seed(42L)
-    .analyticReference(m -> GeneralizedBsm.of(OptionType.CALL,
-        m.spot(), m.strike(), m.maturity(), m.rate(), 0.0, m.vol()).greeks())
+    .analyticReference(m -> GeneralizedBsm.of().type(OptionTypeEnum.CALL)
+        .spot(m.spot()).strike(m.strike()).maturity(m.maturity())
+        .rate(m.rate()).dividend(0.0).vol(m.vol()).build().greeks())
     .run();
 System.out.println(report);
 ```

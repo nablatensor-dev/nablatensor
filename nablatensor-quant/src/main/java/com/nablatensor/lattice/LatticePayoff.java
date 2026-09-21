@@ -15,7 +15,7 @@
  */
 package com.nablatensor.lattice;
 
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 
 /**
  * The exercise value of a contract at a lattice node, as a function of the
@@ -28,7 +28,7 @@ public interface LatticePayoff {
   double exerciseValue(double underlying);
 
   /** {@code max(sign * (S - K), 0)} for a vanilla call or put. */
-  static LatticePayoff vanilla(OptionType type, double strike) {
+  static LatticePayoff vanilla(OptionTypeEnum type, double strike) {
     double sign = type.sign();
     return s -> Math.max(sign * (s - strike), 0.0);
   }

@@ -110,8 +110,7 @@ public final class AsianRiskRun {
   }
 
   private static List<AadEngine> available(boolean fp32) {
-    AadOptions options = new AadOptions(
-        fp32 ? AadOptions.Precision.FLOAT32 : AadOptions.Precision.FLOAT64, true);
+    AadOptions options = AadOptions.of().precision(fp32 ? AadOptions.PrecisionEnum.FLOAT32 : AadOptions.PrecisionEnum.FLOAT64).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build();
     // cpu first so the speedup column has its baseline.
     List<AadEngine> ordered = new ArrayList<>();
     for (AadEngine e : AadEngines.available(options)) {

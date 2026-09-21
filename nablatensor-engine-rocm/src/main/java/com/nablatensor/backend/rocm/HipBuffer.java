@@ -15,7 +15,7 @@
  */
 package com.nablatensor.backend.rocm;
 
-import com.nablatensor.tensor.DType;
+import com.nablatensor.tensor.DTypeEnum;
 import com.nablatensor.tensor.Device;
 import com.nablatensor.tensor.Shape;
 import com.nablatensor.tensor.spi.DeviceBuffer;
@@ -41,11 +41,11 @@ final class HipBuffer implements DeviceBuffer {
 
   final long pointer;
   private final Shape shape;
-  private final DType dtype;
+  private final DTypeEnum dtype;
   private final Device device;
   private final Cleaner.Cleanable cleanable;
 
-  HipBuffer(long pointer, Shape shape, DType dtype, Device device) {
+  HipBuffer(long pointer, Shape shape, DTypeEnum dtype, Device device) {
     this.pointer = pointer;
     this.shape = shape;
     this.dtype = dtype;
@@ -70,7 +70,7 @@ final class HipBuffer implements DeviceBuffer {
   }
 
   @Override
-  public DType dtype() {
+  public DTypeEnum dtype() {
     return dtype;
   }
 

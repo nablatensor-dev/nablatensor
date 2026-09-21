@@ -29,11 +29,11 @@ class NewProductsTest {
 
   @Test
   void fxOptionMatchesGarmanKohlhagen() {
-    FxMarket m = new FxMarket(1.10, 1.12, 0.10, 0.03, 0.015);
-    double px = Phase1Support.priceAt(m, FxProducts.fxOption(OptionType.CALL, 1.0, 1));
+    FxMarket m = FxMarket.of().spot(1.10).strike(1.12).volFx(0.10).rateDom(0.03).rateForeign(0.015).build();
+    double px = Phase1Support.priceAt(m, FxProducts.fxOption(OptionTypeEnum.CALL, 1.0, 1));
     // Garman-Kohlhagen == Black-Scholes with carry = rd - rf on a forward S0 e^{(rd-rf)T}
-    EquityMarket equiv = new EquityMarket(m.spot(), m.strike(), m.volFx(), m.rateDom() - m.rateForeign(), 1.0);
-    BlackScholes bs = BlackScholes.of(OptionType.CALL, equiv);
+    EquityMarket equiv = EquityMarket.of().spot(m.spot()).strike(m.strike()).vol(m.volFx()).rate(m.rateDom() - m.rateForeign()).maturity(1.0).build();
+    BlackScholes bs = BlackScholes.of(OptionTypeEnum.CALL, equiv);
     double gk = bs.price() * Math.exp(-m.rateForeign() * 1.0);   // discount the extra carry back
     assertEquals(gk, px, 3e-3, "FX call vs Garman-Kohlhagen");
   }
@@ -41,7 +41,7 @@ class NewProductsTest {
   @Test
   void quantoOptionPricesAndDiffs() {
     QuantoMarket m = QuantoMarket.base();
-    var val = FxProducts.quantoOption(OptionType.CALL, 1.0, 32, 1.25);
+    var val = FxProducts.quantoOption(OptionTypeEnum.CALL, 1.0, 32, 1.25);
     double[] adj = Phase1Support.adjoint(m, val);
     assertTrue(adj[0] > 0.0, "quanto call price positive");
     String[] names = Phase1Support.names(QuantoMarket.class);
@@ -62,7 +62,7 @@ class NewProductsTest {
   @Test
   void lmmCapAdjointMatchesBumpAndSwaptionParityHolds() {
     LmmMarket m = LmmMarket.flat3pct();
-    var cap = LmmModel.capFloor(OptionType.CALL, 6, 0.03, 100.0);
+    var cap = LmmModel.capFloor(OptionTypeEnum.CALL, 6, 0.03, 100.0);
     double[] adj = Phase1Support.adjoint(m, cap);
     assertTrue(adj[0] > 0.0, "cap price positive");
     int volIdx = Arrays.asList(Phase1Support.names(LmmMarket.class)).indexOf("vol");
@@ -88,10 +88,11 @@ class NewProductsTest {
 
   @Test
   void bermudanShellCollapsesToEuropean() {
-    EquityMarket m = new EquityMarket(100, 105, 0.25, 0.04, 1.0);   // ITM-ish put
+    EquityMarket m = EquityMarket.of().spot(100).strike(105).vol(0.25).rate(0.04).maturity(1.0).build();   // ITM-ish put
     int dates = 6;
-    Product berm = BermudanOption.option(OptionType.PUT, dates, 8, 1.0,
-        BermudanOption.ContinuationValue.EUROPEAN);
+    Product berm = BermudanOption.of().type(OptionTypeEnum.PUT).exerciseDates(dates)
+        .stepsPerDate(8).decisionWidth(1.0)
+        .continuation(BermudanOption.ContinuationValue.EUROPEAN).build();
     Product euro = Products.europeanPut();
 
     double bermPx;
@@ -104,8 +105,9 @@ class NewProductsTest {
     assertEquals(euroPx, bermPx, 0.05 * (1 + euroPx), "EUROPEAN-continuation Bermudan == European put");
 
     // exercise-when-ITM is a valid stopping rule -> still a positive, finite price
-    Product<EquityMarket> eager = BermudanOption.option(OptionType.PUT, dates, 8, 1.0,
-        BermudanOption.ContinuationValue.EXERCISE_WHEN_ITM);
+    Product<EquityMarket> eager = BermudanOption.of().type(OptionTypeEnum.PUT).exerciseDates(dates)
+        .stepsPerDate(8).decisionWidth(1.0)
+        .continuation(BermudanOption.ContinuationValue.EXERCISE_WHEN_ITM).build();
     try (MonteCarlo<EquityMarket> x = MonteCarlo.of(eager).market(m).steps(dates * 8).greeks().on("cpu-jit").build()) {
       Nabla.TypedValuation<EquityMarket> p = x.run(300_000L, 7L);
       assertTrue(p.price() > 0.0 && Double.isFinite(p.greek(EquityMarket::spot)), "exercise-when-ITM Bermudan prices and diffs");

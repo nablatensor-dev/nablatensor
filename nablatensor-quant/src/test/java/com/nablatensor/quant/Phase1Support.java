@@ -17,7 +17,9 @@ package com.nablatensor.quant;
 
 import com.nablatensor.engine.AadRecorder;
 import com.nablatensor.engine.Nabla;
-import java.lang.reflect.RecordComponent;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.function.BiConsumer;
 
 /**
@@ -34,19 +36,17 @@ final class Phase1Support {
   private Phase1Support() {
   }
 
-  /** Component names of a record market, in declaration order. */
-  static String[] names(Class<? extends Record> market) {
-    RecordComponent[] rc = market.getRecordComponents();
-    String[] n = new String[rc.length];
-    for (int i = 0; i < rc.length; i++) {
-      n[i] = rc[i].getName();
-    }
-    return n;
+  /** Component names of a market class, in declaration order. */
+  static String[] names(Class<?> market) {
+    return Arrays.stream(market.getDeclaredFields())
+        .filter(field -> !Modifier.isStatic(field.getModifiers()))
+        .map(Field::getName)
+        .toArray(String[]::new);
   }
 
   /** {@code [price, dValue/dComp_0, dValue/dComp_1, ...]} from one build + one adjoint replay. */
-  static <M extends Record> double[] adjoint(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> valuation) {
-    RecordComponent[] rc = market.getClass().getRecordComponents();
+  static <M> double[] adjoint(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> valuation) {
+    Field[] rc = fields(market.getClass());
     try (Nabla.TypedPricer<M> pricer = Nabla.model(market, valuation).fp64().greeks().on("cpu-jit").build()) {
       Nabla.TypedValuation<M> v = pricer.value().with(market).scenarios(SCENARIOS).seed(SEED).run();
       double[] out = new double[rc.length + 1];
@@ -55,7 +55,7 @@ final class Phase1Support {
       Object greeks = v.greeks();
       for (int i = 0; i < rc.length; i++) {
         try {
-          out[i + 1] = ((Number) rc[i].getAccessor().invoke(greeks)).doubleValue();
+          out[i + 1] = ((Number) greeks.getClass().getMethod(rc[i].getName()).invoke(greeks)).doubleValue();
         } catch (ReflectiveOperationException e) {
           throw new RuntimeException(e);
         }
@@ -65,31 +65,39 @@ final class Phase1Support {
   }
 
   /** Central-bump {@code dValue/dComp_index} on the same seed. */
-  static <M extends Record> double bump(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> valuation,
+  static <M> double bump(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> valuation,
                                         int index, double h) {
     return (priceAt(shift(market, index, h), valuation) - priceAt(shift(market, index, -h), valuation)) / (2 * h);
   }
 
-  static <M extends Record> double priceAt(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> valuation) {
+  static <M> double priceAt(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> valuation) {
     try (Nabla.TypedPricer<M> pricer = Nabla.model(market, valuation).fp64().priceOnly().on("cpu-jit").build()) {
       return pricer.value().with(market).scenarios(SCENARIOS).seed(SEED).run().price();
     }
   }
 
   @SuppressWarnings("unchecked")
-  static <M extends Record> M shift(M market, int index, double delta) {
+  static <M> M shift(M market, int index, double delta) {
     try {
-      RecordComponent[] rc = market.getClass().getRecordComponents();
+      Field[] rc = fields(market.getClass());
       Object[] args = new Object[rc.length];
       Class<?>[] types = new Class<?>[rc.length];
       for (int i = 0; i < rc.length; i++) {
         types[i] = rc[i].getType();
-        double val = ((Number) rc[i].getAccessor().invoke(market)).doubleValue();
+        double val = ((Number) market.getClass().getMethod(rc[i].getName()).invoke(market)).doubleValue();
         args[i] = i == index ? val + delta : val;
       }
-      return (M) market.getClass().getDeclaredConstructor(types).newInstance(args);
+      var constructor = market.getClass().getDeclaredConstructor(types);
+      constructor.setAccessible(true);
+      return (M) constructor.newInstance(args);
     } catch (ReflectiveOperationException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static Field[] fields(Class<?> market) {
+    return Arrays.stream(market.getDeclaredFields())
+        .filter(field -> !Modifier.isStatic(field.getModifiers()))
+        .toArray(Field[]::new);
   }
 }

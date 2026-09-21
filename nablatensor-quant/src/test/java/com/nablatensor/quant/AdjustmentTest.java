@@ -65,7 +65,7 @@ class AdjustmentTest {
       pillars[i] = i + 1.0;
       zeros[i] = r0;
     }
-    YieldCurve curve = new YieldCurve(pillars, zeros);
+    YieldCurve curve = YieldCurve.of().pillars(pillars).zeroRates(zeros).build();
     HullWhiteAnalytic hw = HullWhiteAnalytic.of(curve, a, sigma);
 
     double forwardRate = (curve.discountFactor(t1) / curve.discountFactor(t2) - 1.0) / tau;
@@ -148,20 +148,19 @@ class AdjustmentTest {
 
   @Test
   void quantoOptionMatchesFxProductsMonteCarlo() {
-    QuantoMarket m = new QuantoMarket(100.0, 100.0, 0.22, 0.09, -0.35, 0.03, 0.012);
+    QuantoMarket m = QuantoMarket.of().assetSpot(100.0).strike(100.0).volAsset(0.22).volFx(0.09).corr(-0.35).rateDom(0.03).rateForeign(0.012).build();
     double maturity = 1.0;
     double fixedFx = 1.25;
 
-    AnalyticGreeks closed = QuantoAdjustment.quantoOption(OptionType.CALL, m, maturity, fixedFx);
-    double mc = Phase1Support.priceAt(m, FxProducts.quantoOption(OptionType.CALL, maturity, 64, fixedFx));
+    AnalyticGreeks closed = QuantoAdjustment.quantoOption(OptionTypeEnum.CALL, m, maturity, fixedFx);
+    double mc = Phase1Support.priceAt(m, FxProducts.quantoOption(OptionTypeEnum.CALL, maturity, 64, fixedFx));
 
     assertEquals(mc, closed.price(), 0.02 * closed.price() + 1e-3, "quanto option: closed form vs FxProducts MC");
 
     // Zero correlation collapses to the plain foreign option, converted at fixed FX.
-    QuantoMarket zeroCorr = new QuantoMarket(100.0, 100.0, 0.22, 0.09, 0.0, 0.03, 0.012);
-    double plain = fixedFx * GeneralizedBsm.of(OptionType.CALL, 100.0, 100.0, maturity,
-        zeroCorr.rateDom(), zeroCorr.rateDom() - zeroCorr.rateForeign(), 0.22).price();
-    assertEquals(plain, QuantoAdjustment.quantoOption(OptionType.CALL, zeroCorr, maturity, fixedFx).price(),
+    QuantoMarket zeroCorr = QuantoMarket.of().assetSpot(100.0).strike(100.0).volAsset(0.22).volFx(0.09).corr(0.0).rateDom(0.03).rateForeign(0.012).build();
+    double plain = fixedFx * GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(100.0).strike(100.0).maturity(maturity).rate(zeroCorr.rateDom()).dividend(zeroCorr.rateDom() - zeroCorr.rateForeign()).vol(0.22).build().price();
+    assertEquals(plain, QuantoAdjustment.quantoOption(OptionTypeEnum.CALL, zeroCorr, maturity, fixedFx).price(),
         1e-9, "zero-correlation quanto == foreign option at fixed FX");
   }
 

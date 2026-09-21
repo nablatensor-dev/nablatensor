@@ -46,7 +46,7 @@ import com.nablatensor.engine.Nabla;
  *
  * @param <M> the market record the payoff reads its differentiable inputs from
  */
-public final class MonteCarlo<M extends Record> implements AutoCloseable {
+public final class MonteCarlo<M> implements AutoCloseable {
 
   private final Nabla.TypedPricer<M> pricer;
   private final M market;
@@ -58,7 +58,7 @@ public final class MonteCarlo<M extends Record> implements AutoCloseable {
     this.greeks = greeks;
   }
 
-  public static <M extends Record> Builder<M> of(Product<M> product) {
+  public static <M> Builder<M> of(Product<M> product) {
     return new Builder<>(product);
   }
 
@@ -104,7 +104,7 @@ public final class MonteCarlo<M extends Record> implements AutoCloseable {
   }
 
   /** Fluent configuration for a {@link MonteCarlo}. Mirrors the engine's own model builder. */
-  public static final class Builder<M extends Record> {
+  public static final class Builder<M> {
 
     private final Product<M> product;
     private M market;
@@ -113,7 +113,7 @@ public final class MonteCarlo<M extends Record> implements AutoCloseable {
     private boolean fp32;
     private int threads;
     private String engine;
-    private JitOptimizations.Level jit;
+    private JitOptimizations.LevelEnum jit;
 
     private Builder(Product<M> product) {
       this.product = product;
@@ -177,7 +177,7 @@ public final class MonteCarlo<M extends Record> implements AutoCloseable {
     }
 
     /** Enable a bundle of {@code cpu-jit} code-generation optimizations; off by default. */
-    public Builder<M> jit(JitOptimizations.Level level) {
+    public Builder<M> jit(JitOptimizations.LevelEnum level) {
       this.jit = level;
       return this;
     }

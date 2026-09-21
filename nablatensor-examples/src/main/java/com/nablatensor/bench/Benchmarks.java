@@ -113,7 +113,7 @@ public final class Benchmarks {
   }
 
   private static List<AadEngine> available() {
-    return new ArrayList<>(AadEngines.available(new AadOptions(AadOptions.Precision.FLOAT64, true)));
+    return new ArrayList<>(AadEngines.available(AadOptions.of().precision(AadOptions.PrecisionEnum.FLOAT64).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build()));
   }
 
   private static double bestOf(int rounds, DoubleSupplier body) {

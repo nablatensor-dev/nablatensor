@@ -15,25 +15,57 @@
  */
 package com.nablatensor.scenario;
 
+import com.nablatensor.codegen.Of;
+
 import java.util.function.DoubleUnaryOperator;
 
 /**
  * A single named-input perturbation. Declarative data: the driver turns a set of
  * these into {@code setInput} calls on a compiled kernel (Seam 6).
  *
- * <p>{@link Kind#ABSOLUTE}, {@link Kind#RELATIVE} and {@link Kind#ADDITIVE} are
- * the common closed forms and ignore {@code transform}. {@link Kind#CUSTOM}
+ * <p>{@link KindEnum#ABSOLUTE}, {@link KindEnum#RELATIVE} and {@link KindEnum#ADDITIVE} are
+ * the common closed forms and ignore {@code transform}. {@link KindEnum#CUSTOM}
  * carries an arbitrary {@code base -> shocked} function for anything that does
  * not fit — a log-shock, a floor, a curve twist.
  *
  * @param input     the recorded input name to move
  * @param kind      how {@code amount} / {@code transform} is interpreted
- * @param amount    the shock size (unused for {@link Kind#CUSTOM})
- * @param transform the {@code base -> shocked} function for {@link Kind#CUSTOM}; {@code null} otherwise
+ * @param amount    the shock size (unused for {@link KindEnum#CUSTOM})
+ * @param transform the {@code base -> shocked} function for {@link KindEnum#CUSTOM}; {@code null} otherwise
  */
-public record Shock(String input, Kind kind, double amount, DoubleUnaryOperator transform) {
+@Of
+public final class Shock {
 
-  public enum Kind {
+  private final String input;
+  private final KindEnum kind;
+  private final double amount;
+  private final DoubleUnaryOperator transform;
+  static Shock create(String input, KindEnum kind, double amount, DoubleUnaryOperator transform) {
+    return new Shock(input, kind, amount, transform);
+  }
+
+  public static ShockBuilder of() {
+    return new ShockBuilder();
+  }
+
+  public String input() {
+    return input;
+  }
+
+  public KindEnum kind() {
+    return kind;
+  }
+
+  public double amount() {
+    return amount;
+  }
+
+  public DoubleUnaryOperator transform() {
+    return transform;
+  }
+
+
+  public enum KindEnum {
     /** Replace the input with {@code amount}. */
     ABSOLUTE,
     /** Multiply the base value by {@code (1 + amount)}. */
@@ -44,31 +76,35 @@ public record Shock(String input, Kind kind, double amount, DoubleUnaryOperator 
     CUSTOM
   }
 
-  public Shock(String input, Kind kind, double amount) {
+  private Shock(String input, KindEnum kind, double amount) {
     this(input, kind, amount, null);
   }
 
-  public Shock {
-    if (kind == Kind.CUSTOM && transform == null) {
+  private Shock(String input, KindEnum kind, double amount, DoubleUnaryOperator transform) {
+    if (kind == KindEnum.CUSTOM && transform == null) {
       throw new IllegalArgumentException("a CUSTOM shock needs a transform function");
     }
+    this.input = input;
+    this.kind = kind;
+    this.amount = amount;
+    this.transform = transform;
   }
 
   public static Shock absolute(String input, double value) {
-    return new Shock(input, Kind.ABSOLUTE, value);
+    return Shock.of().input(input).kind(KindEnum.ABSOLUTE).amount(value).transform(null).build();
   }
 
   public static Shock relative(String input, double fraction) {
-    return new Shock(input, Kind.RELATIVE, fraction);
+    return Shock.of().input(input).kind(KindEnum.RELATIVE).amount(fraction).transform(null).build();
   }
 
   public static Shock additive(String input, double delta) {
-    return new Shock(input, Kind.ADDITIVE, delta);
+    return Shock.of().input(input).kind(KindEnum.ADDITIVE).amount(delta).transform(null).build();
   }
 
   /** An arbitrary {@code base -> shocked} perturbation of {@code input}. */
   public static Shock custom(String input, DoubleUnaryOperator transform) {
-    return new Shock(input, Kind.CUSTOM, Double.NaN, transform);
+    return Shock.of().input(input).kind(KindEnum.CUSTOM).amount(Double.NaN).transform(transform).build();
   }
 
   /** The shocked value of {@code input}, given its base value. */

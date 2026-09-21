@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant.analytic;
 
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 
 /**
  * The generalised Black-Scholes-Merton price for a European option under a
@@ -57,7 +57,7 @@ public final class CostOfCarry {
    * @param b     cost of carry {@code b}
    * @param sigma lognormal volatility {@code sigma}
    */
-  public static double price(OptionType type, double s, double k, double t, double r, double b, double sigma) {
+  public static double price(OptionTypeEnum type, double s, double k, double t, double r, double b, double sigma) {
     if (t <= 0.0 || sigma <= 0.0) {
       double fwd = s * Math.exp(b * t);
       return Math.max(type.sign() * (fwd - k), 0.0) * Math.exp(-r * t);
@@ -67,7 +67,7 @@ public final class CostOfCarry {
     double d2 = d1 - sigma * sqrtT;
     double carryDisc = Math.exp((b - r) * t);
     double disc = Math.exp(-r * t);
-    if (type == OptionType.CALL) {
+    if (type == OptionTypeEnum.CALL) {
       return s * carryDisc * Normal.cdf(d1) - k * disc * Normal.cdf(d2);
     }
     return k * disc * Normal.cdf(-d2) - s * carryDisc * Normal.cdf(-d1);
@@ -79,7 +79,7 @@ public final class CostOfCarry {
    * {@link Black76} uses this directly; the dividend-yield and FX wrappers add
    * the carry's own {@code r}-dependence on top.
    */
-  static AnalyticGreeks greeksCarryFixed(OptionType type, double s, double k, double t,
+  static AnalyticGreeks greeksCarryFixed(OptionTypeEnum type, double s, double k, double t,
                                          double r, double b, double sigma) {
     if (t <= 0.0 || sigma <= 0.0) {
       return AnalyticGreeks.intrinsic(price(type, s, k, t, r, b, sigma));
@@ -93,14 +93,14 @@ public final class CostOfCarry {
    * a put. The dividend-yield and FX wrappers chain this through {@code db/dr}
    * and {@code db/dq} (or {@code db/dr_f}).
    */
-  static double carryRho(OptionType type, double s, double k, double t, double r, double b, double sigma) {
+  static double carryRho(OptionTypeEnum type, double s, double k, double t, double r, double b, double sigma) {
     if (t <= 0.0 || sigma <= 0.0) {
       return 0.0;
     }
     double sqrtT = Math.sqrt(t);
     double d1 = (Math.log(s / k) + (b + 0.5 * sigma * sigma) * t) / (sigma * sqrtT);
     double carryDisc = Math.exp((b - r) * t);
-    return type == OptionType.CALL
+    return type == OptionTypeEnum.CALL
         ? t * s * carryDisc * Normal.cdf(d1)
         : -t * s * carryDisc * Normal.cdf(-d1);
   }

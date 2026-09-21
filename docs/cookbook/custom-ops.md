@@ -44,7 +44,7 @@ definition-of-done for custom ops.
 ## What a macro can't do
 
 A genuinely non-composable kernel — one that must call an external special
-function not expressible in the primitive set — would need a new `AadOp` value
+function not expressible in the primitive set — would need a new `AadOpEnum` value
 handled in every code generator (scalar interpreter, batched, bytecode, SIMD,
 CUDA-C, GLSL). That fused `{forward, adjoint}` form is a planned engine feature;
 in practice the special functions quants reach for (`N(x)`, `erf`, `pow`,

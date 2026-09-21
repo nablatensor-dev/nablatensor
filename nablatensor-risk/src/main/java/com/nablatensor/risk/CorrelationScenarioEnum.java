@@ -19,7 +19,7 @@ package com.nablatensor.risk;
  * FRTB's three correlation scenarios (MAR21.6). The bank computes the capital
  * charge under each and takes the largest.
  */
-public enum CorrelationScenario {
+public enum CorrelationScenarioEnum {
   /** Prescribed correlations as published. */
   MEDIUM,
   /** {@code min(1.25 * rho, 1)} — correlations move toward 1. */

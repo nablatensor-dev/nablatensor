@@ -22,7 +22,7 @@ try (MonteCarlo mc = MonteCarlo.of(Products.europeanCall())
         .build()) {
 
     Pricing p = mc.run(4_000_000, /*seed*/ 42L);
-    BlackScholes bs = BlackScholes.of(OptionType.CALL, market);
+    BlackScholes bs = BlackScholes.of(OptionTypeEnum.CALL, market);
     // p.price(), p.delta(), p.vega(), p.rho(), p.strikeSensitivity()
 }
 ```
@@ -55,6 +55,6 @@ number of risk factors, which is the whole point.
 
 ## What to change
 
-- **Put instead of call:** `Products.europeanPut()`, `BlackScholes.of(OptionType.PUT, market)`.
+- **Put instead of call:** `Products.europeanPut()`, `BlackScholes.of(OptionTypeEnum.PUT, market)`.
 - **A different market:** any `new EquityMarket(spot, strike, vol, rate, maturity)`.
 - **A path-dependent payoff:** see [Asian Greeks](asian-greeks.md) and [swap the payoff](swap-the-payoff.md).

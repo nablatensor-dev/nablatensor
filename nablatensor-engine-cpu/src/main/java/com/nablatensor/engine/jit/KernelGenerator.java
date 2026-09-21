@@ -15,7 +15,7 @@
  */
 package com.nablatensor.engine.jit;
 
-import com.nablatensor.engine.AadOp;
+import com.nablatensor.engine.AadOpEnum;
 import com.nablatensor.engine.AadTape;
 
 import java.lang.classfile.ClassBuilder;
@@ -166,12 +166,12 @@ final class KernelGenerator {
 
   // ------------------------------------------------------------------ tape ---
 
-  private record Tape(int n, AadOp[] op, int[] a, int[] b, double[] k, boolean[] active,
+  private record Tape(int n, AadOpEnum[] op, int[] a, int[] b, double[] k, boolean[] active,
                       int[] drawIx, int output) {}
 
   private static Tape flatten(AadTape tape) {
     int n = tape.size();
-    AadOp[] op = new AadOp[n];
+    AadOpEnum[] op = new AadOpEnum[n];
     int[] a = new int[n];
     int[] b = new int[n];
     double[] k = new double[n];
@@ -183,7 +183,7 @@ final class KernelGenerator {
       b[i] = tape.argB(i);
       k[i] = tape.constant(i);
       active[i] = tape.isActive(i);
-      drawIx[i] = (op[i] == AadOp.RANDN || op[i] == AadOp.RANDU) ? tape.randFlatIndex(i) : -1;
+      drawIx[i] = (op[i] == AadOpEnum.RANDN || op[i] == AadOpEnum.RANDU) ? tape.randFlatIndex(i) : -1;
     }
     return new Tape(n, op, a, b, k, active, drawIx, tape.outputNode());
   }
@@ -246,8 +246,8 @@ final class KernelGenerator {
         revSegs.add(cur);
       }
     }
-    Slots fwdSlots = new ArraySlots(t, tp, null, 0, -1, 1, 2);   // fwd$k(v, in, draws)
-    Slots revSlots = new ArraySlots(t, tp, null, 0, 1, -1, -1);  // rev$k(v, d)
+    Slots fwdSlots = ArraySlots.of().t(t).tp(tp).remap(null).vSlot(0).dSlot(-1).inSlot(1).drawSlot(2).build();   // fwd$k(v, in, draws)
+    Slots revSlots = ArraySlots.of().t(t).tp(tp).remap(null).vSlot(0).dSlot(1).inSlot(-1).drawSlot(-1).build();  // rev$k(v, d)
 
     for (int si = 0; si < fwdSegs.size(); si++) {
       int[] r = fwdSegs.get(si);
@@ -284,7 +284,7 @@ final class KernelGenerator {
   }
 
   private static boolean revEmit(Tape tp, int i) {
-    return tp.active[i] && tp.op[i] != AadOp.CONST && tp.op[i] != AadOp.INPUT && tp.op[i] != AadOp.RANDN;
+    return tp.active[i] && tp.op[i] != AadOpEnum.CONST && tp.op[i] != AadOpEnum.INPUT && tp.op[i] != AadOpEnum.RANDN;
   }
 
   // ========================================================== rolled shape ===
@@ -314,7 +314,7 @@ final class KernelGenerator {
       java.util.Map<Integer, Integer> invLocal = new java.util.HashMap<>();
       for (int inv : lp.invNodes) { invLocal.put(inv, nxt); nxt += 2; }
 
-      Slots prol = new ArraySlots(t, tp, slot, 1, -1, 2, 3);
+      Slots prol = ArraySlots.of().t(t).tp(tp).remap(slot).vSlot(1).dSlot(-1).inSlot(2).drawSlot(3).build();
       for (int i = 0; i < bodyStart; i++) {
         fwdNode(cb, tp, i, prol, t);
       }
@@ -377,7 +377,7 @@ final class KernelGenerator {
         if (revEmit(tp, bodyStart + j)) { barBl[j] = nxt; nxt += 2; }
       }
 
-      Slots flat = new ArraySlots(t, tp, slot, 1, 2, -1, -1);
+      Slots flat = ArraySlots.of().t(t).tp(tp).remap(slot).vSlot(1).dSlot(2).inSlot(-1).drawSlot(-1).build();
       for (int i = tp.n - 1; i >= lp.epilogueStart; i--) {
         if (revEmit(tp, i)) revNode(cb, tp, i, flat, t);
       }
@@ -454,7 +454,7 @@ final class KernelGenerator {
     public void loadDraw(CodeBuilder cb, int node) {
       int rank = 0;
       for (int q = lp.bodyStart(); q < node; q++) {
-        if (tp.op()[q] == AadOp.RANDN) rank++;
+        if (tp.op()[q] == AadOpEnum.RANDN) rank++;
       }
       cb.aload(3).iload(drawIdxSlot);
       if (rank != 0) {
@@ -474,10 +474,10 @@ final class KernelGenerator {
       int bs = lp.bodyStart();
       if (node >= bs && node < bs + lp.period()) {                 // this iteration's body value
         int j = node - bs;
-        if (tp.op()[node] == AadOp.RANDN) {                       // a draw — read it back directly
+        if (tp.op()[node] == AadOpEnum.RANDN) {                       // a draw — read it back directly
           int rank = 0;
           for (int q = bs; q < node; q++) {
-            if (tp.op()[q] == AadOp.RANDN) rank++;
+            if (tp.op()[q] == AadOpEnum.RANDN) rank++;
           }
           cb.aload(4).loadConstant(lp.firstRandOrd() + rank);
           if (lp.randPerIter() == 1) {
@@ -578,7 +578,7 @@ final class KernelGenerator {
     int randPerIter = 0;
     int firstOrd = 0;
     for (int j = 0; j < period; j++) {
-      if (tp.op[start + j] == AadOp.RANDN) {
+      if (tp.op[start + j] == AadOpEnum.RANDN) {
         if (randPerIter == 0) {
           firstOrd = tp.a[start + j];
         }
@@ -599,7 +599,7 @@ final class KernelGenerator {
     List<Integer> carryRel = new ArrayList<>();
     for (int j = 0; j < period; j++) {
       if (carry[j]) {
-        if (tp.op[start + j] == AadOp.RANDN) {
+        if (tp.op[start + j] == AadOpEnum.RANDN) {
           return null;   // a draw carried to the next iteration (noise-MA) — not modelled; bail
         }
         carryRel.add(j);
@@ -627,7 +627,7 @@ final class KernelGenerator {
       for (int side : revReads(tp.op[i])) {
         int arg = side == -1 ? i : (side == 0 ? tp.a[i] : tp.b[i]);
         if (arg >= start && arg < start + period) {
-          if (tp.op[arg] != AadOp.RANDN) {
+          if (tp.op[arg] != AadOpEnum.RANDN) {
             tapedMask[arg - start] = true;      // per-iteration body value
           }
         } else if (arg >= start - period && arg < start && carry[arg - (start - period)]) {
@@ -661,7 +661,7 @@ final class KernelGenerator {
   private static int uniformRepeats(Tape tp, int start, int period) {
     int rpi = 0;
     for (int j = 0; j < period; j++) {
-      if (tp.op[start + j] == AadOp.RANDN) {
+      if (tp.op[start + j] == AadOpEnum.RANDN) {
         rpi++;
       }
     }
@@ -675,7 +675,7 @@ final class KernelGenerator {
           ok = false;
           break;
         }
-        if (tp.op[q] == AadOp.RANDN) {
+        if (tp.op[q] == AadOpEnum.RANDN) {
           if (tp.a[q] != tp.a[r] + rpi) {
             ok = false;
           }
@@ -716,7 +716,7 @@ final class KernelGenerator {
   }
 
   /** Which {@code v[.]} the reverse rule for {@code op} reads: -1=this node, 0=a, 1=b. */
-  private static int[] revReads(AadOp op) {
+  private static int[] revReads(AadOpEnum op) {
     return switch (op) {
       case MUL, MAX, MIN -> new int[] {0, 1};
       case DIV -> new int[] {1, -1};
@@ -820,8 +820,28 @@ final class KernelGenerator {
 
   /** Node value/adjoint live in {@code v[]}/{@code d[]} arrays; slot {@code -1} = absent. */
   /** {@code remap} compacts sparse node indices for the rolled kernel; {@code null} = identity. */
-  private record ArraySlots(T t, Tape tp, int[] remap, int vSlot, int dSlot, int inSlot, int drawSlot)
-      implements Slots {
+  private static final class ArraySlots implements Slots {
+    private final T t;
+    private final Tape tp;
+    private final int[] remap;
+    private final int vSlot;
+    private final int dSlot;
+    private final int inSlot;
+    private final int drawSlot;
+
+    private ArraySlots(T t, Tape tp, int[] remap, int vSlot, int dSlot, int inSlot, int drawSlot) {
+      this.t = t;
+      this.tp = tp;
+      this.remap = remap;
+      this.vSlot = vSlot;
+      this.dSlot = dSlot;
+      this.inSlot = inSlot;
+      this.drawSlot = drawSlot;
+    }
+
+    private static Builder of() { return new Builder(); }
+
+
     private int s(int node) { return remap == null ? node : remap[node]; }
     public void storeV(CodeBuilder cb, int node, Runnable value) {
       cb.aload(vSlot).loadConstant(s(node));
@@ -845,6 +865,31 @@ final class KernelGenerator {
       delta.run();
       t.add(cb);
       cb.arrayStore(t.tk());
+    }
+      private static final class Builder {
+      private T t;
+      private Tape tp;
+      private int[] remap;
+      private int vSlot;
+      private int dSlot;
+      private int inSlot;
+      private int drawSlot;
+      private boolean tSet, tpSet, remapSet, vSlotSet, dSlotSet, inSlotSet, drawSlotSet;
+
+      private Builder t(T value) { t = value; tSet = true; return this; }
+      private Builder tp(Tape value) { tp = value; tpSet = true; return this; }
+      private Builder remap(int[] value) { remap = value; remapSet = true; return this; }
+      private Builder vSlot(int value) { vSlot = value; vSlotSet = true; return this; }
+      private Builder dSlot(int value) { dSlot = value; dSlotSet = true; return this; }
+      private Builder inSlot(int value) { inSlot = value; inSlotSet = true; return this; }
+      private Builder drawSlot(int value) { drawSlot = value; drawSlotSet = true; return this; }
+
+      private ArraySlots build() {
+        if (!tSet || !tpSet || !remapSet || !vSlotSet || !dSlotSet || !inSlotSet || !drawSlotSet) {
+          throw new IllegalStateException("all ArraySlots values are required");
+        }
+        return new ArraySlots(t, tp, remap, vSlot, dSlot, inSlot, drawSlot);
+      }
     }
   }
 

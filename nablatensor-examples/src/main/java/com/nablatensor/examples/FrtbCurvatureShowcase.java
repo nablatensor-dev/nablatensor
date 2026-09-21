@@ -41,6 +41,22 @@ public final class FrtbCurvatureShowcase {
   private static final double EQUITY_CURVATURE_RISK_WEIGHT = 0.30;
   private static final double SHORT_POSITION = -1.0;
 
+  private enum CurvatureScenarioEnum {
+    BASE("base"),
+    SPOT_UP("spot-up"),
+    SPOT_DOWN("spot-down");
+
+    private final String id;
+
+    CurvatureScenarioEnum(String id) {
+      this.id = id;
+    }
+
+    String id() {
+      return id;
+    }
+  }
+
   private FrtbCurvatureShowcase() {
   }
 
@@ -53,9 +69,9 @@ public final class FrtbCurvatureShowcase {
     String engine = System.getProperty("engine", "cpu-jit");
 
     ScenarioSet shocks = ScenarioSet.list(
-        Scenario.of("base"),
-        Scenario.of("spot-up", Shock.relative("spot", EQUITY_CURVATURE_RISK_WEIGHT)),
-        Scenario.of("spot-down", Shock.relative("spot", -EQUITY_CURVATURE_RISK_WEIGHT)));
+        Scenario.of(CurvatureScenarioEnum.BASE.id()),
+        Scenario.of(CurvatureScenarioEnum.SPOT_UP.id(), Shock.relative("spot", EQUITY_CURVATURE_RISK_WEIGHT)),
+        Scenario.of(CurvatureScenarioEnum.SPOT_DOWN.id(), Shock.relative("spot", -EQUITY_CURVATURE_RISK_WEIGHT)));
 
     System.out.printf(Locale.ROOT, "FRTB curvature showcase: short arithmetic Asian call%n");
     System.out.printf(Locale.ROOT, "%,d scenarios x %d fixings, engine %s, seed %d%n%n",
@@ -72,9 +88,9 @@ public final class FrtbCurvatureShowcase {
       Nabla.TypedValuation<EquityMarket> deltaRun = greeks.run(market, scenarios, seed);
       Map<String, Nabla.TypedValuation<EquityMarket>> valuations =
         ScenarioRunner.run(pricer, market, shocks, scenarios, seed);
-      Nabla.TypedValuation<EquityMarket> base = valuations.get("base");
-      Nabla.TypedValuation<EquityMarket> up = valuations.get("spot-up");
-      Nabla.TypedValuation<EquityMarket> down = valuations.get("spot-down");
+      Nabla.TypedValuation<EquityMarket> base = valuation(valuations, CurvatureScenarioEnum.BASE);
+      Nabla.TypedValuation<EquityMarket> up = valuation(valuations, CurvatureScenarioEnum.SPOT_UP);
+      Nabla.TypedValuation<EquityMarket> down = valuation(valuations, CurvatureScenarioEnum.SPOT_DOWN);
 
       double pvBase = SHORT_POSITION * base.price();
       double pvUp = SHORT_POSITION * up.price();
@@ -110,6 +126,15 @@ public final class FrtbCurvatureShowcase {
       System.out.println("NestedAggregation are small scalar post-processing steps.");
       System.out.println("Equal seeds provide common random numbers across base/up/down runs.");
     }
+  }
+
+  private static Nabla.TypedValuation<EquityMarket> valuation(
+      Map<String, Nabla.TypedValuation<EquityMarket>> valuations, CurvatureScenarioEnum scenario) {
+    Nabla.TypedValuation<EquityMarket> valuation = valuations.get(scenario.id());
+    if (valuation == null) {
+      throw new IllegalStateException("Missing valuation for scenario " + scenario.id());
+    }
+    return valuation;
   }
 
   static double curvatureValue(double pvBase, double pvUp, double pvDown,

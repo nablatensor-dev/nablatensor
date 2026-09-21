@@ -16,7 +16,7 @@
 package com.nablatensor.tensor;
 
 /** Primitive operation kinds dispatched to the compute backends. */
-public enum Op {
+public enum OpEnum {
   // ---- binary elementwise ----
   /** Elementwise addition, {@code a + b}. */
   ADD,

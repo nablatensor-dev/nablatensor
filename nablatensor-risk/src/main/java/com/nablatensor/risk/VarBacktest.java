@@ -15,6 +15,8 @@
  */
 package com.nablatensor.risk;
 
+import com.nablatensor.codegen.Of;
+
 import com.nablatensor.quant.analytic.Normal;
 
 /**
@@ -28,17 +30,82 @@ import com.nablatensor.quant.analytic.Normal;
  * for one degree, {@code exp(-s/2)} for two — so no incomplete-gamma routine is
  * needed.
  */
-public record VarBacktest(int observations, int exceptions, double expectedExceptions,
-                          double kupiecStatistic, double kupiecPValue,
-                          double christoffersenStatistic, double christoffersenPValue,
-                          double conditionalCoverageStatistic, double conditionalCoveragePValue) {
+@Of
+public final class VarBacktest {
+
+  private final int observations;
+  private final int exceptions;
+  private final double expectedExceptions;
+  private final double kupiecStatistic;
+  private final double kupiecPValue;
+  private final double christoffersenStatistic;
+  private final double christoffersenPValue;
+  private final double conditionalCoverageStatistic;
+  private final double conditionalCoveragePValue;
+
+  private VarBacktest(int observations, int exceptions, double expectedExceptions, double kupiecStatistic, double kupiecPValue, double christoffersenStatistic, double christoffersenPValue, double conditionalCoverageStatistic, double conditionalCoveragePValue) {
+    this.observations = observations;
+    this.exceptions = exceptions;
+    this.expectedExceptions = expectedExceptions;
+    this.kupiecStatistic = kupiecStatistic;
+    this.kupiecPValue = kupiecPValue;
+    this.christoffersenStatistic = christoffersenStatistic;
+    this.christoffersenPValue = christoffersenPValue;
+    this.conditionalCoverageStatistic = conditionalCoverageStatistic;
+    this.conditionalCoveragePValue = conditionalCoveragePValue;
+  }
+
+  static VarBacktest create(int observations, int exceptions, double expectedExceptions, double kupiecStatistic, double kupiecPValue, double christoffersenStatistic, double christoffersenPValue, double conditionalCoverageStatistic, double conditionalCoveragePValue) {
+    return new VarBacktest(observations, exceptions, expectedExceptions, kupiecStatistic, kupiecPValue, christoffersenStatistic, christoffersenPValue, conditionalCoverageStatistic, conditionalCoveragePValue);
+  }
+
+  public static VarBacktestBuilder of() {
+    return new VarBacktestBuilder();
+  }
+
+  public int observations() {
+    return observations;
+  }
+
+  public int exceptions() {
+    return exceptions;
+  }
+
+  public double expectedExceptions() {
+    return expectedExceptions;
+  }
+
+  public double kupiecStatistic() {
+    return kupiecStatistic;
+  }
+
+  public double kupiecPValue() {
+    return kupiecPValue;
+  }
+
+  public double christoffersenStatistic() {
+    return christoffersenStatistic;
+  }
+
+  public double christoffersenPValue() {
+    return christoffersenPValue;
+  }
+
+  public double conditionalCoverageStatistic() {
+    return conditionalCoverageStatistic;
+  }
+
+  public double conditionalCoveragePValue() {
+    return conditionalCoveragePValue;
+  }
+
 
   /**
    * @param realisedPnl   realised P&L, one per day (loss is {@code -pnl})
    * @param varForecast   the VaR forecast for each day (positive loss numbers, same length)
    * @param alpha         the confidence the forecast was made at, e.g. {@code 0.99}
    */
-  public static VarBacktest of(double[] realisedPnl, double[] varForecast, double alpha) {
+  private static VarBacktest analyze(double[] realisedPnl, double[] varForecast, double alpha) {
     if (realisedPnl.length != varForecast.length || realisedPnl.length == 0) {
       throw new IllegalArgumentException("realisedPnl and varForecast must be non-empty and the same length");
     }
@@ -64,14 +131,35 @@ public record VarBacktest(int observations, int exceptions, double expectedExcep
     double cc = kupiec + ind;
     double ccP = chiSquareSurvival2(cc);
 
-    return new VarBacktest(n, x, n * p, kupiec, kupiecP, ind, indP, cc, ccP);
+    return VarBacktest.of().observations(n).exceptions(x).expectedExceptions(n * p).kupiecStatistic(kupiec).kupiecPValue(kupiecP).christoffersenStatistic(ind).christoffersenPValue(indP).conditionalCoverageStatistic(cc).conditionalCoveragePValue(ccP).build();
   }
 
-  /** Constant-forecast convenience. */
-  public static VarBacktest of(double[] realisedPnl, double varForecast, double alpha) {
-    double[] f = new double[realisedPnl.length];
-    java.util.Arrays.fill(f, varForecast);
-    return of(realisedPnl, f, alpha);
+
+  /** Named inputs for running the backtest analysis. */
+  public static final class Analysis {
+    private double[] realisedPnl;
+    private double[] varForecast;
+    private Double constantVarForecast;
+    private Double alpha;
+
+    private Analysis() {}
+    public static Analysis of() { return new Analysis(); }
+    public Analysis realisedPnl(double[] value) { realisedPnl = value.clone(); return this; }
+    public Analysis varForecast(double[] value) { varForecast = value.clone(); constantVarForecast = null; return this; }
+    public Analysis varForecast(double value) { constantVarForecast = value; varForecast = null; return this; }
+    public Analysis alpha(double value) { alpha = value; return this; }
+
+    public VarBacktest build() {
+      if (realisedPnl == null) throw new IllegalStateException("Required field realisedPnl is not set");
+      if (alpha == null) throw new IllegalStateException("Required field alpha is not set");
+      double[] forecast = varForecast;
+      if (forecast == null && constantVarForecast != null) {
+        forecast = new double[realisedPnl.length];
+        java.util.Arrays.fill(forecast, constantVarForecast);
+      }
+      if (forecast == null) throw new IllegalStateException("Required field varForecast is not set");
+      return analyze(realisedPnl, forecast, alpha);
+    }
   }
 
   /** True if the model is rejected at the given significance (e.g. {@code 0.05}) by conditional coverage. */

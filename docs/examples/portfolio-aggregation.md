@@ -14,7 +14,7 @@ the aggregation layer (`nablatensor-risk`) never touches a kernel.
 | `Sensitivities` | immutable `RiskFactor → value`; `plus`, `scaled`, `filter`, `ofClass`, `ofMeasure`, `inBucket` |
 | `Portfolio` / `Portfolio.Trade` | a book of trades; `aggregate()`, `byNettingSet()` |
 | `NestedAggregation` | the two-level `√(Σ K_b² + Σ γ_bc S_b S_c)` engine — see below |
-| `CorrelationScenario` | FRTB's `LOW` / `MEDIUM` / `HIGH` transforms |
+| `CorrelationScenarioEnum` | FRTB's `LOW` / `MEDIUM` / `HIGH` transforms |
 | `TimeProfile` | exposure on a time grid (EPE/ENE/peak/weighted integral) — the XVA hook |
 
 ```java
@@ -22,7 +22,7 @@ Portfolio book = new Portfolio(trades.stream()
     .map(t -> Portfolio.trade(t.id(), t.nettingSet(), t.adjointSensitivities()))
     .toList());
 
-Sensitivities delta = book.aggregate().ofClass(RiskClass.EQUITY).ofMeasure(RiskMeasure.DELTA);
+Sensitivities delta = book.aggregate().ofClass(RiskClassEnum.EQUITY).ofMeasure(RiskMeasureEnum.DELTA);
 Map<String, Sensitivities> perNettingSet = book.byNettingSet();
 ```
 

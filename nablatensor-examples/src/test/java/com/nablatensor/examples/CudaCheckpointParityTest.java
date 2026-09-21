@@ -38,7 +38,7 @@ class CudaCheckpointParityTest {
     String portable = CudaAadCodegen.generateCheckpointed(tape, options, plan);
     assertFalse(portable.contains("asm volatile"));
     assertFalse(portable.contains("__launch_bounds__"));
-    for (AadOptions.Precision precision : AadOptions.Precision.values()) {
+    for (AadOptions.PrecisionEnum precision : AadOptions.PrecisionEnum.values()) {
       String cuda = CudaAadCodegen.generateCheckpointed(tape, options.withPrecision(precision), plan, true);
       assertTrue(cuda.contains("asm volatile"));
       assertTrue(cuda.contains("volatile real* __restrict__ scratch"));
@@ -69,7 +69,7 @@ class CudaCheckpointParityTest {
 
   @Test
   void fp64AsianMatchesPlain() {
-    assertParity(asian(32), AadOptions.defaults().withPrecision(AadOptions.Precision.FLOAT64),
+    assertParity(asian(32), AadOptions.defaults().withPrecision(AadOptions.PrecisionEnum.FLOAT64),
         "spot", 98.0, 17);
   }
 
@@ -125,8 +125,8 @@ class CudaCheckpointParityTest {
     }
   }
 
-  private static void assertSame(AadResult expected, AadResult actual, AadOptions.Precision precision) {
-    double tolerance = precision == AadOptions.Precision.FLOAT32 ? 2e-6 : 2e-12;
+  private static void assertSame(AadResult expected, AadResult actual, AadOptions.PrecisionEnum precision) {
+    double tolerance = precision == AadOptions.PrecisionEnum.FLOAT32 ? 2e-6 : 2e-12;
     assertClose(expected.value(), actual.value(), tolerance);
     double[] expectedGradients = expected.gradients();
     double[] actualGradients = actual.gradients();

@@ -35,10 +35,84 @@ import java.util.List;
 public final class HullWhiteCalibration {
 
   /** One ATM European swaption quote: an option expiry, a swap tenor, and a normal vol. */
-  public record SwaptionQuote(double expiryYears, int swapTenorYears, double accrual, double normalVol) {
+  public static final class SwaptionQuote {
+    private final double expiryYears;
+    private final int swapTenorYears;
+    private final double accrual;
+    private final double normalVol;
+
+    private SwaptionQuote(double expiryYears, int swapTenorYears, double accrual, double normalVol) {
+      this.expiryYears = expiryYears;
+      this.swapTenorYears = swapTenorYears;
+      this.accrual = accrual;
+      this.normalVol = normalVol;
+    }
+
+    public static Builder of() { return new Builder(); }
+
+    public double expiryYears() { return expiryYears; }
+
+    public int swapTenorYears() { return swapTenorYears; }
+
+    public double accrual() { return accrual; }
+
+    public double normalVol() { return normalVol; }
+
 
     public int periods() {
       return (int) Math.round(swapTenorYears / accrual);
+    }
+
+    public static final class Builder {
+      private double expiryYears;
+      private boolean expiryYearsSet;
+      private int swapTenorYears;
+      private boolean swapTenorYearsSet;
+      private double accrual;
+      private boolean accrualSet;
+      private double normalVol;
+      private boolean normalVolSet;
+
+      public Builder expiryYears(double value) {
+        this.expiryYears = value;
+        this.expiryYearsSet = true;
+        return this;
+      }
+
+      public Builder swapTenorYears(int value) {
+        this.swapTenorYears = value;
+        this.swapTenorYearsSet = true;
+        return this;
+      }
+
+      public Builder accrual(double value) {
+        this.accrual = value;
+        this.accrualSet = true;
+        return this;
+      }
+
+      public Builder normalVol(double value) {
+        this.normalVol = value;
+        this.normalVolSet = true;
+        return this;
+      }
+
+      public Builder from(SwaptionQuote value) {
+        if (value == null) throw new NullPointerException("value");
+        expiryYears(value.expiryYears());
+        swapTenorYears(value.swapTenorYears());
+        accrual(value.accrual());
+        normalVol(value.normalVol());
+        return this;
+      }
+
+      public SwaptionQuote build() {
+        if (!expiryYearsSet) throw new IllegalStateException("Missing required value: expiryYears");
+        if (!swapTenorYearsSet) throw new IllegalStateException("Missing required value: swapTenorYears");
+        if (!accrualSet) throw new IllegalStateException("Missing required value: accrual");
+        if (!normalVolSet) throw new IllegalStateException("Missing required value: normalVol");
+        return new SwaptionQuote(expiryYears, swapTenorYears, accrual, normalVol);
+      }
     }
   }
 
@@ -77,7 +151,7 @@ public final class HullWhiteCalibration {
       annuity[k] = ann;
       forward[k] = fwd;
       // ATM payer swaption price from the quoted normal vol (undiscounted Bachelier * annuity).
-      AnalyticGreeks bach = Bachelier.of(OptionType.CALL, fwd, fwd, q.expiryYears(), 0.0, q.normalVol());
+      AnalyticGreeks bach = Bachelier.of().type(OptionTypeEnum.CALL).forward(fwd).strike(fwd).maturity(q.expiryYears()).rate(0.0).normalVol(q.normalVol()).build();
       target[k] = bach.price() * ann;
     }
 
@@ -118,7 +192,7 @@ public final class HullWhiteCalibration {
     }
     List<SwaptionQuote> q = new ArrayList<>();
     for (int i = 0; i < expiries.length; i++) {
-      q.add(new SwaptionQuote(expiries[i], tenors[i], accrual, normalVols[i]));
+      q.add(SwaptionQuote.of().expiryYears(expiries[i]).swapTenorYears(tenors[i]).accrual(accrual).normalVol(normalVols[i]).build());
     }
     return q;
   }

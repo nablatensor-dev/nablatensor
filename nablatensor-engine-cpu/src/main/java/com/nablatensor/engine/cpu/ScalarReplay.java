@@ -15,7 +15,7 @@
  */
 package com.nablatensor.engine.cpu;
 
-import com.nablatensor.engine.AadOp;
+import com.nablatensor.engine.AadOpEnum;
 import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadResult;
 import com.nablatensor.engine.AadTape;
@@ -59,7 +59,7 @@ final class ScalarReplay extends HostAadExecutable {
   ScalarReplay(AadTape tape, AadOptions options) {
     super(tape, options, "aad-cpu");
     this.flat = new FlatTape(tape);
-    this.f32 = options.precision() == AadOptions.Precision.FLOAT32;
+    this.f32 = options.precision() == AadOptions.PrecisionEnum.FLOAT32;
     this.adjoints = options.adjoints();
   }
 
@@ -76,7 +76,7 @@ final class ScalarReplay extends HostAadExecutable {
   }
 
   private AadTotals run(long pathFrom, long count, long seed) {
-    final AadOp[] ops = flat.op;
+    final AadOpEnum[] ops = flat.op;
     final int[] argA = flat.argA;
     final int[] argB = flat.argB;
     final double[] constants = flat.constant;

@@ -21,7 +21,7 @@ import com.nablatensor.engine.AadTape;
 import com.nablatensor.engine.AadTotals;
 import com.nablatensor.engine.HostAadExecutable;
 import com.nablatensor.engine.JitOptimizations;
-import com.nablatensor.engine.JitOptimizations.Category;
+import com.nablatensor.engine.JitOptimizations.CategoryEnum;
 
 import java.util.Arrays;
 
@@ -55,14 +55,14 @@ final class JitReplay extends HostAadExecutable {
 
   /**
    * Whether the loop-rolling code generator ran for this tape. Enabled by
-   * {@link Category#ROLLED_LOOPS} (via {@code .jit(...)}); the system property
+   * {@link CategoryEnum#ROLLED_LOOPS} (via {@code .jit(...)}); the system property
    * {@code -Dnablatensor.jit.roll} overrides it either way ({@code on}/{@code off}).
    */
   private final boolean roll;
 
   /**
    * Whether the Box-Muller draw generator uses the polynomial approximations in
-   * {@link JitFastMath}. Enabled by {@link Category#FAST_MATH}.
+   * {@link JitFastMath}. Enabled by {@link CategoryEnum#FAST_MATH}.
    */
   private final boolean fastMath;
 
@@ -70,7 +70,7 @@ final class JitReplay extends HostAadExecutable {
    * Common-random-numbers caching. The first {@link #replay} for a given
    * {@code (seed, pathOffset, paths)} generates the whole draw block once and
    * keeps it; later replays of the same block — a re-price under a shocked
-   * market — reuse it and skip the RNG. Enabled by {@link Category#DRAW_CACHE}
+   * market — reuse it and skip the RNG. Enabled by {@link CategoryEnum#DRAW_CACHE}
    * (via {@code .jit(...)}) or {@code -Dnablatensor.crn=on}. Bounded by
    * {@code -Dnablatensor.crn.cap} draw elements (default 1<<27); larger blocks
    * fall back to regenerating. In fp32 the cache is {@code float[]}, so it is
@@ -90,21 +90,21 @@ final class JitReplay extends HostAadExecutable {
 
   JitReplay(AadTape tape, AadOptions options) {
     super(tape, options, "aad-jit");
-    this.f32 = options.precision() == AadOptions.Precision.FLOAT32;
+    this.f32 = options.precision() == AadOptions.PrecisionEnum.FLOAT32;
     this.segNodes = Math.max(8, Integer.getInteger("nablatensor.jit.seg", 128));
 
     JitOptimizations jit = options.jit();
     String rollProp = System.getProperty("nablatensor.jit.roll");
     boolean rollWanted = "off".equals(rollProp) ? false
         : "on".equals(rollProp) ? true
-        : jit.has(Category.ROLLED_LOOPS);
+        : jit.has(CategoryEnum.ROLLED_LOOPS);
     // The loop-roller's per-iteration draw indexing assumes one stream of normals,
     // and its reverse assumes a single seeded output; uniforms, named streams and
     // multi-output tapes take the flat kernel, which handles any layout.
     this.roll = rollWanted && !tape.hasExtendedRandom() && tape.outputCount() == 1;
-    this.fastMath = jit.has(Category.FAST_MATH);
+    this.fastMath = jit.has(CategoryEnum.FAST_MATH);
     this.crn = "on".equals(System.getProperty("nablatensor.crn"))
-        || jit.has(Category.DRAW_CACHE);
+        || jit.has(CategoryEnum.DRAW_CACHE);
 
     boolean adj = options.adjoints();
     long start = System.nanoTime();

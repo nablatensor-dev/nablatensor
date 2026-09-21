@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A quanto market: a foreign asset and the FX rate it would convert through,
  * with their correlation. The payoff settles at a fixed FX rate, so only the
@@ -28,8 +30,62 @@ package com.nablatensor.quant;
  * @param rateDom      domestic rate
  * @param rateForeign  foreign rate
  */
-public record QuantoMarket(double assetSpot, double strike, double volAsset, double volFx,
-                           double corr, double rateDom, double rateForeign) {
+@Of
+public final class QuantoMarket {
+
+  private QuantoMarket(double assetSpot, double strike, double volAsset, double volFx, double corr, double rateDom, double rateForeign) {
+    this.assetSpot = assetSpot;
+    this.strike = strike;
+    this.volAsset = volAsset;
+    this.volFx = volFx;
+    this.corr = corr;
+    this.rateDom = rateDom;
+    this.rateForeign = rateForeign;
+  }
+
+  private final double assetSpot;
+  private final double strike;
+  private final double volAsset;
+  private final double volFx;
+  private final double corr;
+  private final double rateDom;
+  private final double rateForeign;
+  static QuantoMarket create(double assetSpot, double strike, double volAsset, double volFx, double corr, double rateDom, double rateForeign) {
+    return new QuantoMarket(assetSpot, strike, volAsset, volFx, corr, rateDom, rateForeign);
+  }
+
+  public static QuantoMarketBuilder of() {
+    return new QuantoMarketBuilder();
+  }
+
+  public double assetSpot() {
+    return assetSpot;
+  }
+
+  public double strike() {
+    return strike;
+  }
+
+  public double volAsset() {
+    return volAsset;
+  }
+
+  public double volFx() {
+    return volFx;
+  }
+
+  public double corr() {
+    return corr;
+  }
+
+  public double rateDom() {
+    return rateDom;
+  }
+
+  public double rateForeign() {
+    return rateForeign;
+  }
+
 
   public QuantoMarket validated() {
     if (!(assetSpot > 0 && strike > 0 && volAsset >= 0 && volFx >= 0 && corr > -1 && corr < 1)) {
@@ -39,6 +95,6 @@ public record QuantoMarket(double assetSpot, double strike, double volAsset, dou
   }
 
   public static QuantoMarket base() {
-    return new QuantoMarket(100.0, 100.0, 0.25, 0.10, -0.3, 0.03, 0.01);
+    return QuantoMarket.of().assetSpot(100.0).strike(100.0).volAsset(0.25).volFx(0.10).corr(-0.3).rateDom(0.03).rateForeign(0.01).build();
   }
 }

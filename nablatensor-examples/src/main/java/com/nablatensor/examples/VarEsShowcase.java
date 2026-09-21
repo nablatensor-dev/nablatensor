@@ -91,7 +91,7 @@ public final class VarEsShowcase {
 
     // Backtest the delta-normal number against a fresh realised series.
     double[] realised = simulatePnl(2000, seed + 1).pnl();
-    VarBacktest bt = VarBacktest.of(realised, dn1, 0.99);
+    VarBacktest bt = VarBacktest.Analysis.of().realisedPnl(realised).varForecast(dn1).alpha(0.99).build();
     System.out.printf(Locale.ROOT, "%nBacktest of the 1-day delta-normal forecast over %d days:%n", bt.observations());
     System.out.printf(Locale.ROOT, "  exceptions %d  (expected %.1f)%n", bt.exceptions(), bt.expectedExceptions());
     System.out.printf(Locale.ROOT, "  Kupiec POF p-value            %.3f%n", bt.kupiecPValue());

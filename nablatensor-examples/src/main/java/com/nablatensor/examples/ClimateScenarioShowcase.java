@@ -58,13 +58,101 @@ public final class ClimateScenarioShowcase {
   private ClimateScenarioShowcase() {
   }
 
-  private record Pathway(String name, double spotTarget, double volTarget, double rateTarget, double power) {
+  private static final class Pathway {
+    private final String name;
+    private final double spotTarget;
+    private final double volTarget;
+    private final double rateTarget;
+    private final double power;
+
+    private Pathway(String name, double spotTarget, double volTarget, double rateTarget, double power) {
+      this.name = name;
+      this.spotTarget = spotTarget;
+      this.volTarget = volTarget;
+      this.rateTarget = rateTarget;
+      this.power = power;
+    }
+
+    private static Builder of() { return new Builder(); }
+
+    public String name() { return name; }
+
+    public double spotTarget() { return spotTarget; }
+
+    public double volTarget() { return volTarget; }
+
+    public double rateTarget() { return rateTarget; }
+
+    public double power() { return power; }
+
     Scenario at(int years) {
       double f = Math.pow((double) years / HORIZON_YEARS, power);
       return Scenario.of(name + "@" + (2025 + years),
           Shock.relative("spot", spotTarget * f),
           Shock.additive("vol", volTarget * f),
           Shock.additive("rate", rateTarget * f));
+    }
+
+    private static final class Builder {
+      private String name;
+      private boolean nameSet;
+      private double spotTarget;
+      private boolean spotTargetSet;
+      private double volTarget;
+      private boolean volTargetSet;
+      private double rateTarget;
+      private boolean rateTargetSet;
+      private double power;
+      private boolean powerSet;
+
+      public Builder name(String value) {
+        this.name = value;
+        this.nameSet = true;
+        return this;
+      }
+
+      public Builder spotTarget(double value) {
+        this.spotTarget = value;
+        this.spotTargetSet = true;
+        return this;
+      }
+
+      public Builder volTarget(double value) {
+        this.volTarget = value;
+        this.volTargetSet = true;
+        return this;
+      }
+
+      public Builder rateTarget(double value) {
+        this.rateTarget = value;
+        this.rateTargetSet = true;
+        return this;
+      }
+
+      public Builder power(double value) {
+        this.power = value;
+        this.powerSet = true;
+        return this;
+      }
+
+      public Builder from(Pathway value) {
+        if (value == null) throw new NullPointerException("value");
+        name(value.name());
+        spotTarget(value.spotTarget());
+        volTarget(value.volTarget());
+        rateTarget(value.rateTarget());
+        power(value.power());
+        return this;
+      }
+
+      public Pathway build() {
+        if (!nameSet) throw new IllegalStateException("Missing required value: name");
+        if (!spotTargetSet) throw new IllegalStateException("Missing required value: spotTarget");
+        if (!volTargetSet) throw new IllegalStateException("Missing required value: volTarget");
+        if (!rateTargetSet) throw new IllegalStateException("Missing required value: rateTarget");
+        if (!powerSet) throw new IllegalStateException("Missing required value: power");
+        return new Pathway(name, spotTarget, volTarget, rateTarget, power);
+      }
     }
   }
 
@@ -79,9 +167,9 @@ public final class ClimateScenarioShowcase {
     double putUnits = PUT_NOTIONAL / market.spot();
 
     List<Pathway> pathways = List.of(
-        new Pathway("orderly", -0.15, 0.03, 0.010, 1.0),
-        new Pathway("disorderly", -0.30, 0.15, 0.020, 2.0),
-        new Pathway("hot-house-world", -0.35, 0.10, -0.015, 1.5));
+        Pathway.of().name("orderly").spotTarget(-0.15).volTarget(0.03).rateTarget(0.010).power(1.0).build(),
+        Pathway.of().name("disorderly").spotTarget(-0.30).volTarget(0.15).rateTarget(0.020).power(2.0).build(),
+        Pathway.of().name("hot-house-world").spotTarget(-0.35).volTarget(0.10).rateTarget(-0.015).power(1.5).build());
 
     List<Scenario> scenarioList = new ArrayList<>();
     for (Pathway p : pathways) {

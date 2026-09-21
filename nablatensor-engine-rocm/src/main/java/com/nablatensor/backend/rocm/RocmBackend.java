@@ -16,10 +16,10 @@
 package com.nablatensor.backend.rocm;
 
 import com.nablatensor.tensor.ConvSpec;
-import com.nablatensor.tensor.DType;
+import com.nablatensor.tensor.DTypeEnum;
 import com.nablatensor.tensor.Device;
-import com.nablatensor.tensor.DeviceType;
-import com.nablatensor.tensor.Op;
+import com.nablatensor.tensor.DeviceTypeEnum;
+import com.nablatensor.tensor.OpEnum;
 import com.nablatensor.tensor.Shape;
 import com.nablatensor.tensor.expr.Expr;
 import com.nablatensor.tensor.spi.AxisReduction;
@@ -61,8 +61,8 @@ public final class RocmBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceType deviceType() {
-    return DeviceType.ROCM;
+  public DeviceTypeEnum deviceType() {
+    return DeviceTypeEnum.ROCM;
   }
 
   @Override
@@ -98,10 +98,10 @@ public final class RocmBackend implements ComputeBackend {
   // ---- data movement ---------------------------------------------------------
 
   @Override
-  public DeviceBuffer upload(float[] data, Shape shape, DType dtype, Device device) {
+  public DeviceBuffer upload(float[] data, Shape shape, DTypeEnum dtype, Device device) {
     ensureInitialized();
     requireRocmDevice(device);
-    if (dtype != DType.F32) {
+    if (dtype != DTypeEnum.F32) {
       throw new UnsupportedOperationException("ROCm float upload supports F32 only, got " + dtype);
     }
     HipRuntime.synchronize();
@@ -139,7 +139,7 @@ public final class RocmBackend implements ComputeBackend {
   // ---- elementwise ---------------------------------------------------------
 
   @Override
-  public DeviceBuffer binary(Op op, DeviceBuffer a, DeviceBuffer b) {
+  public DeviceBuffer binary(OpEnum op, DeviceBuffer a, DeviceBuffer b) {
     ensureInitialized();
     HipBuffer left = hip(a);
     HipBuffer right = hip(b);
@@ -154,7 +154,7 @@ public final class RocmBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceBuffer scalar(Op op, DeviceBuffer a, double value) {
+  public DeviceBuffer scalar(OpEnum op, DeviceBuffer a, double value) {
     ensureInitialized();
     HipBuffer left = hip(a);
     int n = left.count();
@@ -165,7 +165,7 @@ public final class RocmBackend implements ComputeBackend {
   }
 
   @Override
-  public DeviceBuffer unary(Op op, DeviceBuffer a) {
+  public DeviceBuffer unary(OpEnum op, DeviceBuffer a) {
     ensureInitialized();
     HipBuffer left = hip(a);
     int n = left.count();
@@ -503,10 +503,10 @@ public final class RocmBackend implements ComputeBackend {
   // ---- helpers -----------------------------------------------------------
 
   private HipBuffer alloc(Shape shape) {
-    return alloc(shape, DType.F32, Device.rocm());
+    return alloc(shape, DTypeEnum.F32, Device.rocm());
   }
 
-  private HipBuffer alloc(Shape shape, DType dtype, Device device) {
+  private HipBuffer alloc(Shape shape, DTypeEnum dtype, Device device) {
     requireRocmDevice(device);
     long bytes = Math.multiplyExact(shape.size(), dtype.byteSize());
     return new HipBuffer(HipRuntime.malloc(bytes), shape, dtype, device);
@@ -539,7 +539,7 @@ public final class RocmBackend implements ComputeBackend {
       throw new IllegalArgumentException("matmul operands must use the same device and dtype");
     }
     requireRocmDevice(left.device());
-    if (left.dtype() != DType.F32) {
+    if (left.dtype() != DTypeEnum.F32) {
       throw new UnsupportedOperationException("ROCm matmul supports F32 only, got " + left.dtype());
     }
   }

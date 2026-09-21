@@ -104,7 +104,7 @@ class RandomStreamsTest {
       rec.input("x", 0.0);
       rec.output(rec.randu().add(rec.stream("k").randn()));
     });
-    AadOptions fp64 = new AadOptions(AadOptions.Precision.FLOAT64, true);
+    AadOptions fp64 = AadOptions.of().precision(AadOptions.PrecisionEnum.FLOAT64).adjoints(true).threads(0).jit(com.nablatensor.engine.JitOptimizations.NONE).engineOptions(java.util.Map.of()).build();
     for (AadEngine e : AadEngines.discovered()) {
       if (e.name().equals("simd") && e.isAvailable()) {
         assertThrows(UnsupportedOperationException.class, () -> e.compile(tape, fp64),

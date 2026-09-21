@@ -79,7 +79,7 @@ all cells.
   is expected — the `simd` engine is the JDK Vector API.
 - The JVM starts **once per kernel process**. After any `mvn -o compile`,
   restart the kernel (*Kernel ▸ Restart*) before the new classes are visible.
-- **Backend.** `ENGINE = nt.best_engine()` picks the fastest fp32 adjoint
+- **BackendEnum.** `ENGINE = nt.best_engine()` picks the fastest fp32 adjoint
   backend this machine has — `vulkan`, else `rocm`, else the pure-Java
   `cpu-jit`. Force one by editing that line, e.g. `ENGINE = "cpu-jit"`.
   `nt.engines()` lists what the ServiceLoader found and whether each is usable.

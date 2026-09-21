@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A Hull-White one-factor market.
  *
@@ -24,7 +26,50 @@ package com.nablatensor.quant;
  * @param sigma         absolute (normal) short-rate volatility
  * @param strike        strike for a rate option, e.g. a caplet
  */
-public record HullWhiteMarket(double r0, double level, double meanReversion, double sigma, double strike) {
+@Of
+public final class HullWhiteMarket {
+
+  private HullWhiteMarket(double r0, double level, double meanReversion, double sigma, double strike) {
+    this.r0 = r0;
+    this.level = level;
+    this.meanReversion = meanReversion;
+    this.sigma = sigma;
+    this.strike = strike;
+  }
+
+  private final double r0;
+  private final double level;
+  private final double meanReversion;
+  private final double sigma;
+  private final double strike;
+  static HullWhiteMarket create(double r0, double level, double meanReversion, double sigma, double strike) {
+    return new HullWhiteMarket(r0, level, meanReversion, sigma, strike);
+  }
+
+  public static HullWhiteMarketBuilder of() {
+    return new HullWhiteMarketBuilder();
+  }
+
+  public double r0() {
+    return r0;
+  }
+
+  public double level() {
+    return level;
+  }
+
+  public double meanReversion() {
+    return meanReversion;
+  }
+
+  public double sigma() {
+    return sigma;
+  }
+
+  public double strike() {
+    return strike;
+  }
+
 
   public HullWhiteMarket validated() {
     if (!(meanReversion > 0 && sigma >= 0)) {
@@ -34,6 +79,6 @@ public record HullWhiteMarket(double r0, double level, double meanReversion, dou
   }
 
   public static HullWhiteMarket base() {
-    return new HullWhiteMarket(0.03, 0.03, 0.10, 0.01, 0.03);
+    return HullWhiteMarket.of().r0(0.03).level(0.03).meanReversion(0.10).sigma(0.01).strike(0.03).build();
   }
 }

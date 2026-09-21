@@ -34,13 +34,13 @@ class ModelsTest {
 
   private static final int STEPS = 48;
 
-  private <M extends Record> void adjointMatchesBump(
+  private <M> void adjointMatchesBump(
       M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> v, double[] bumps, double tol) {
     adjointMatchesBump(market, v, bumps, tol, java.util.Map.of());
   }
 
   /** {@code looseTol} overrides {@code tol} for the named components (schemes with a floor). */
-  private <M extends Record> void adjointMatchesBump(
+  private <M> void adjointMatchesBump(
       M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> v, double[] bumps, double tol,
       java.util.Map<String, Double> looseTol) {
     String[] names = Phase1Support.names(market.getClass());
@@ -59,8 +59,8 @@ class ModelsTest {
 
   @Test
   void heston() {
-    HestonMarket m = new HestonMarket(100, 100, 0.02, 0.04, 1.5, 0.04, 0.5, -0.7);
-    var val = HestonModel.european(OptionType.CALL, 1.0, STEPS);
+    HestonMarket m = HestonMarket.of().spot(100).strike(100).rate(0.02).v0(0.04).kappa(1.5).theta(0.04).xi(0.5).rho(-0.7).build();
+    var val = HestonModel.european(OptionTypeEnum.CALL, 1.0, STEPS);
     String[] names = Phase1Support.names(HestonMarket.class);
     double[] adj = Phase1Support.adjoint(m, val);
 
@@ -87,24 +87,24 @@ class ModelsTest {
 
   @Test
   void sabr() {
-    SabrMarket m = new SabrMarket(0.05, 0.055, 0.0, 0.25, 0.5, -0.3, 0.4);
+    SabrMarket m = SabrMarket.of().forward(0.05).strike(0.055).rate(0.0).alpha(0.25).beta(0.5).rho(-0.3).nu(0.4).build();
     // forward strike rate alpha beta rho nu
-    adjointMatchesBump(m, SabrModel.european(OptionType.CALL, 1.0, STEPS),
+    adjointMatchesBump(m, SabrModel.european(OptionTypeEnum.CALL, 1.0, STEPS),
         new double[] {1e-4, 1e-4, 0, 1e-3, 5e-3, 0.02, 5e-3}, 4e-2);
   }
 
   @Test
   void localVolReducesToGbmAndDiffsCleanly() {
     // skew = 0  =>  identical to the GBM European
-    LocalVolMarket flat = new LocalVolMarket(100, 100, 0.03, 0.20, 0.0);
-    double lv = Phase1Support.priceAt(flat, LocalVolModel.european(OptionType.CALL, 1.0, STEPS));
-    EquityMarket gbm = new EquityMarket(100, 100, 0.20, 0.03, 1.0);
+    LocalVolMarket flat = LocalVolMarket.of().spot(100).strike(100).rate(0.03).sigma0(0.20).skew(0.0).build();
+    double lv = Phase1Support.priceAt(flat, LocalVolModel.european(OptionTypeEnum.CALL, 1.0, STEPS));
+    EquityMarket gbm = EquityMarket.of().spot(100).strike(100).vol(0.20).rate(0.03).maturity(1.0).build();
     double bs = Phase1Support.priceAt(gbm, (rec, in) -> Products.europeanCall().record(rec, in, TimeGrid.uniform(STEPS)));
     assertEquals(bs, lv, 1e-6 * (1 + bs), "local vol with skew=0 == GBM European");
 
-    LocalVolMarket smile = new LocalVolMarket(100, 100, 0.03, 0.20, -0.4);
+    LocalVolMarket smile = LocalVolMarket.of().spot(100).strike(100).rate(0.03).sigma0(0.20).skew(-0.4).build();
     // spot strike rate sigma0 skew
-    adjointMatchesBump(smile, LocalVolModel.european(OptionType.CALL, 1.0, STEPS),
+    adjointMatchesBump(smile, LocalVolModel.european(OptionTypeEnum.CALL, 1.0, STEPS),
         new double[] {1.0, 1.0, 1e-3, 1e-3, 1e-2}, 3e-2);
   }
 

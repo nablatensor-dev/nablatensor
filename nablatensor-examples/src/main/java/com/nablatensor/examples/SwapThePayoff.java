@@ -77,7 +77,7 @@ public final class SwapThePayoff {
       ADouble vol = in.of(EquityMarket::vol);
       ADouble maturity = in.of(EquityMarket::maturity);
 
-      GbmPath model = new GbmPath(rec, rate, vol, grid, maturity);
+      GbmPath model = GbmPath.of(rec, rate, vol, grid, maturity);
       ADouble s = spot;
       for (int t = 0; t < grid.steps(); t++) {
         s = model.step(s, rec.randn(), t);

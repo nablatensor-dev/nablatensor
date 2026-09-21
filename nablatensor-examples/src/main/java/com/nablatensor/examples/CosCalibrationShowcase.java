@@ -15,7 +15,7 @@
  */
 package com.nablatensor.examples;
 
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import com.nablatensor.quant.analytic.GeneralizedBsm;
 import com.nablatensor.quant.transform.BsmCf;
 import com.nablatensor.quant.transform.CosMethod;
@@ -44,25 +44,25 @@ public final class CosCalibrationShowcase {
     double r = 0.02;
 
     // COS vs Black-Scholes: spectral accuracy.
-    BsmCf bsm = new BsmCf(r, 0.2);
+    BsmCf bsm = BsmCf.of().rate(r).vol(0.2).build();
     double maxErr = 0.0;
     for (double k : new double[] {70, 85, 100, 115, 130}) {
-      double cos = CosMethod.price(bsm, OptionType.CALL, s, k, r, 1.0);
-      double closed = GeneralizedBsm.of(OptionType.CALL, s, k, 1.0, r, 0.0, 0.2).price();
+      double cos = CosMethod.price(bsm, OptionTypeEnum.CALL, s, k, r, 1.0);
+      double closed = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(s).strike(k).maturity(1.0).rate(r).dividend(0.0).vol(0.2).build().price();
       maxErr = Math.max(maxErr, Math.abs(cos - closed));
     }
     System.out.printf(Locale.ROOT, "COS vs Black-Scholes: max abs error over 5 strikes = %.2e%n%n", maxErr);
 
     // Generate a Heston surface, then calibrate to it (with a slight per-node bump).
-    HestonCf truth = new HestonCf(r, 0.045, 2.0, 0.05, 0.55, -0.65);
+    HestonCf truth = HestonCf.of().rate(r).v0(0.045).kappa(2.0).theta(0.05).xi(0.55).rho(-0.65).build();
     double[] maturities = {0.5, 1.0, 2.0};
     double[] strikes = {85, 95, 105, 115};
     List<HestonCosCalibrator.Quote> quotes = new ArrayList<>();
     double bump = 1.0;
     for (double t : maturities) {
       for (double k : strikes) {
-        double px = CosMethod.price(truth, OptionType.CALL, s, k, r, t);
-        quotes.add(new HestonCosCalibrator.Quote(k, t, px * bump));
+        double px = CosMethod.price(truth, OptionTypeEnum.CALL, s, k, r, t);
+        quotes.add(HestonCosCalibrator.Quote.of().strike(k).maturity(t).price(px * bump).build());
         bump = bump == 1.0 ? 1.004 : 1.0;
       }
     }

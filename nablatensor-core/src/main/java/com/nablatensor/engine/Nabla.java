@@ -85,13 +85,13 @@ public final class Nabla {
 
     /** Single precision: the throughput choice, and the default. */
     default SELF fp32() {
-      options(options().withPrecision(AadOptions.Precision.FLOAT32));
+      options(options().withPrecision(AadOptions.PrecisionEnum.FLOAT32));
       return self();
     }
 
     /** Double precision: slower everywhere, and what to check fp32 against. */
     default SELF fp64() {
-      options(options().withPrecision(AadOptions.Precision.FLOAT64));
+      options(options().withPrecision(AadOptions.PrecisionEnum.FLOAT64));
       return self();
     }
 
@@ -135,12 +135,12 @@ public final class Nabla {
     }
 
     /** Enables a bundle of {@code cpu-jit} optimizations by level. */
-    default SELF jit(JitOptimizations.Level level) {
+    default SELF jit(JitOptimizations.LevelEnum level) {
       return jit(JitOptimizations.level(level));
     }
 
     /** Enables the given {@code cpu-jit} optimization categories. */
-    default SELF jit(JitOptimizations.Category... categories) {
+    default SELF jit(JitOptimizations.CategoryEnum... categories) {
       return jit(JitOptimizations.of(categories));
     }
 
@@ -163,17 +163,17 @@ public final class Nabla {
   }
 
   /**
-   * Records a valuation whose inputs are the components of a market record.
+   * Records a valuation whose inputs are the components of an immutable market class.
    *
-   * <p>The record supplies both the input names and their initial values, so no
+   * <p>The class supplies both the input names and their initial values, so no
    * risk factor is ever named with a string: the valuation reads inputs through
    * accessor references, and {@link TypedValuation#greeks()} hands back the
-   * gradient as a record of the same type.
+   * gradient as an instance of the same type.
    *
    * <pre>{@code
-   * record EquityMarket(double spot, double vol, double rate) {}
-   *
-   * var market = new EquityMarket(100.0, 0.28, 0.03);
+   * var market = EquityMarket.of()
+   *     .spot(100.0).strike(100.0).vol(0.28).rate(0.03).maturity(1.0)
+   *     .build();
    * try (var pricer = Nabla.model(market, (rec, in) -> {
    *         ADouble spot = in.of(EquityMarket::spot);
    *         ...
@@ -185,15 +185,15 @@ public final class Nabla {
    * }
    * }</pre>
    */
-  public static <M extends Record> TypedModel<M> model(
+  public static <M> TypedModel<M> model(
       M defaults, BiConsumer<AadRecorder, Inputs<M>> valuation) {
     MarketShape<M> shape = MarketShape.of(defaults);
     Model model = model(rec -> valuation.accept(rec, new Inputs<>(rec, shape, defaults)));
     return new TypedModel<>(model, shape);
   }
 
-  /** The market a valuation reads from: one {@link ADouble} per record component. */
-  public static final class Inputs<M extends Record> {
+  /** The market a valuation reads from: one {@link ADouble} per declared component. */
+  public static final class Inputs<M> {
 
     private final MarketShape<M> shape;
     private final ADouble[] inputs;
@@ -212,8 +212,8 @@ public final class Nabla {
     }
   }
 
-  /** A recorded valuation over a market record, not yet bound to a device. */
-  public static final class TypedModel<M extends Record> implements ModelConfig<TypedModel<M>> {
+  /** A recorded valuation over a market class, not yet bound to a device. */
+  public static final class TypedModel<M> implements ModelConfig<TypedModel<M>> {
 
     private final Model model;
     private final MarketShape<M> shape;
@@ -253,8 +253,8 @@ public final class Nabla {
     }
   }
 
-  /** A built kernel over a market record. */
-  public static final class TypedPricer<M extends Record> implements AutoCloseable {
+  /** A built kernel over a market class. */
+  public static final class TypedPricer<M> implements AutoCloseable {
 
     private final Pricer pricer;
     private final MarketShape<M> shape;
@@ -291,7 +291,7 @@ public final class Nabla {
   }
 
   /** One valuation, under one market state. */
-  public static final class TypedRequest<M extends Record> {
+  public static final class TypedRequest<M> {
 
     private final Request request;
     private final MarketShape<M> shape;
@@ -331,7 +331,7 @@ public final class Nabla {
   }
 
   /** What came back, with the gradient shaped like the market. */
-  public record TypedValuation<M extends Record>(Valuation valuation, MarketShape<M> shape) {
+  public record TypedValuation<M>(Valuation valuation, MarketShape<M> shape) {
 
     public double price() {
       return valuation.price();

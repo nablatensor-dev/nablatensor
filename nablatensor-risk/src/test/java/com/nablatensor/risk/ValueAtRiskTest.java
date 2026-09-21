@@ -174,13 +174,13 @@ class ValueAtRiskTest {
       pnl[t] = sigma * rng.nextGaussian();
     }
 
-    VarBacktest good = VarBacktest.of(pnl, Z99 * sigma, 0.99);
+    VarBacktest good = VarBacktest.Analysis.of().realisedPnl(pnl).varForecast(Z99 * sigma).alpha(0.99).build();
     assertEquals(n * 0.01, good.expectedExceptions(), 1e-9);
     assertTrue(good.exceptions() >= 12 && good.exceptions() <= 48,
         "calibrated forecast: exceptions near 30, got " + good.exceptions());
     assertFalse(good.rejectedAt(0.01), "calibrated forecast not rejected");
 
-    VarBacktest bad = VarBacktest.of(pnl, 0.8 * sigma, 0.99);   // far too small
+    VarBacktest bad = VarBacktest.Analysis.of().realisedPnl(pnl).varForecast(0.8 * sigma).alpha(0.99).build();   // far too small
     assertTrue(bad.exceptions() > 100, "under-forecast: many exceptions");
     assertTrue(bad.rejectedAt(0.01), "under-forecast rejected by conditional coverage");
   }
@@ -191,7 +191,7 @@ class ValueAtRiskTest {
     double[] forecast = {0.03, 0.03, 0.03, 0.03, 0.01, 0.03};
     // losses:            -0.01 0.05  -0.02 0.20   0.011  0.0
     // exception if loss > forecast: day1 no, day2 yes, day3 no, day4 yes, day5 yes, day6 no
-    VarBacktest bt = VarBacktest.of(pnl, forecast, 0.99);
+    VarBacktest bt = VarBacktest.Analysis.of().realisedPnl(pnl).varForecast(forecast).alpha(0.99).build();
     assertEquals(3, bt.exceptions());
     assertEquals(6, bt.observations());
   }

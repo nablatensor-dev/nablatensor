@@ -15,6 +15,8 @@
  */
 package com.nablatensor.quant;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A parametric local-volatility market. The reference spot the CEV ratio is
  * measured against is fixed at {@link #REF_SPOT}.
@@ -25,7 +27,50 @@ package com.nablatensor.quant;
  * @param sigma0 volatility level at {@code S = REF_SPOT}
  * @param skew   CEV exponent on {@code S / REF_SPOT} (0 = GBM, negative = equity smile)
  */
-public record LocalVolMarket(double spot, double strike, double rate, double sigma0, double skew) {
+@Of
+public final class LocalVolMarket {
+
+  private LocalVolMarket(double spot, double strike, double rate, double sigma0, double skew) {
+    this.spot = spot;
+    this.strike = strike;
+    this.rate = rate;
+    this.sigma0 = sigma0;
+    this.skew = skew;
+  }
+
+  private final double spot;
+  private final double strike;
+  private final double rate;
+  private final double sigma0;
+  private final double skew;
+  static LocalVolMarket create(double spot, double strike, double rate, double sigma0, double skew) {
+    return new LocalVolMarket(spot, strike, rate, sigma0, skew);
+  }
+
+  public static LocalVolMarketBuilder of() {
+    return new LocalVolMarketBuilder();
+  }
+
+  public double spot() {
+    return spot;
+  }
+
+  public double strike() {
+    return strike;
+  }
+
+  public double rate() {
+    return rate;
+  }
+
+  public double sigma0() {
+    return sigma0;
+  }
+
+  public double skew() {
+    return skew;
+  }
+
 
   /** The spot the local-vol ratio {@code (S / REF_SPOT)} is anchored to. */
   public static final double REF_SPOT = 100.0;
@@ -38,6 +83,6 @@ public record LocalVolMarket(double spot, double strike, double rate, double sig
   }
 
   public static LocalVolMarket smile() {
-    return new LocalVolMarket(100.0, 100.0, 0.02, 0.20, -0.5);
+    return LocalVolMarket.of().spot(100.0).strike(100.0).rate(0.02).sigma0(0.20).skew(-0.5).build();
   }
 }

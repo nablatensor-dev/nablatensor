@@ -15,8 +15,8 @@
  */
 package com.nablatensor.cva;
 
-import com.nablatensor.risk.CorrelationScenario;
-import com.nablatensor.risk.RiskClass;
+import com.nablatensor.risk.CorrelationScenarioEnum;
+import com.nablatensor.risk.RiskClassEnum;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -29,9 +29,9 @@ import java.util.Map;
  * @param selected     the binding (largest) correlation scenario
  * @param total        {@code m_CVA * max_scenario(...)}
  */
-public record SaCvaResult(Map<CorrelationScenario, Double> perScenario,
-                          Map<RiskClass, Double> byRiskType,
-                          CorrelationScenario selected, double total) {
+public record SaCvaResult(Map<CorrelationScenarioEnum, Double> perScenario,
+                          Map<RiskClassEnum, Double> byRiskType,
+                          CorrelationScenarioEnum selected, double total) {
 
   public SaCvaResult {
     perScenario = new EnumMap<>(perScenario);

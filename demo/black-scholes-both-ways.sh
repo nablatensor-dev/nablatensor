@@ -111,7 +111,7 @@ var market = EquityMarket.atmOneYear();
 CODE
 
 run <<'CODE'
-var bs = BlackScholes.of(OptionType.CALL, market);
+var bs = BlackScholes.of(OptionTypeEnum.CALL, market);
 CODE
 
 run <<'CODE'
@@ -240,7 +240,7 @@ say "Newton's method needs dPrice/dvol at every step. That is vega, and vega"
 say "is one component of the same reverse sweep — no finite differences."
 
 run <<'CODE'
-double quote = BlackScholes.of(OptionType.CALL, market.withVol(0.28)).price();
+double quote = BlackScholes.of(OptionTypeEnum.CALL, market.withVol(0.28)).price();
 long IV_N = GPU ? 20_000_000L : 2_000_000L;
 double sig = 0.15;
 System.out.printf(Locale.ROOT, "   quote %s   start vol %s%n",
@@ -286,8 +286,8 @@ banner "5 · Two sanity checks, straight off the closed form"
 say "A continuous dividend yield q just shifts the cost of carry to r - q:"
 
 run <<'CODE'
-var g0 = GeneralizedBsm.of(OptionType.CALL,100.0,100.0,1.0,0.03,0.00,0.20).greeks();
-var gq = GeneralizedBsm.of(OptionType.CALL,100.0,100.0,1.0,0.03,0.02,0.20).greeks();
+var g0 = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(100.0).strike(100.0).maturity(1.0).rate(0.03).dividend(0.00).vol(0.20).build().greeks();
+var gq = GeneralizedBsm.of().type(OptionTypeEnum.CALL).spot(100.0).strike(100.0).maturity(1.0).rate(0.03).dividend(0.02).vol(0.20).build().greeks();
 System.out.printf(Locale.ROOT, "   q = 0%%   price %s        q = 2%%   price %s%n",
     white(String.format("%.5f", g0.price())),
     white(String.format("%.5f", gq.price())));
@@ -296,7 +296,7 @@ CODE
 say "And put-call parity, the no-arbitrage identity from the options chapter:"
 
 run <<'CODE'
-var put = BlackScholes.of(OptionType.PUT, market);
+var put = BlackScholes.of(OptionTypeEnum.PUT, market);
 double fwd = market.strike() * Math.exp(-market.rate() * market.maturity());
 double parity = (bs.price() - put.price()) - (market.spot() - fwd);
 System.out.printf(Locale.ROOT, "   C - P  -  (S - K e^{-rT})  =  %s   %s%n",

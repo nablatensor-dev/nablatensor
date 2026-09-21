@@ -15,8 +15,9 @@
  */
 package com.nablatensor.cva;
 
-import com.nablatensor.risk.RiskClass;
+import com.nablatensor.risk.RiskClassEnum;
 import com.nablatensor.risk.RiskFactor;
+import com.nablatensor.risk.RiskMeasureEnum;
 
 /**
  * The regulatory keys the CVA sensitivities of one netting set map onto: the
@@ -38,12 +39,14 @@ public record CvaRiskFactors(String currency, CreditName counterparty, String fx
   }
 
   public RiskFactor irVega() {
-    return RiskFactor.girrVega(currency, IR_VERTEX_YEARS, IR_VERTEX_YEARS);
+    return RiskFactor.of().riskClass(RiskClassEnum.GIRR).measure(RiskMeasureEnum.VEGA)
+        .bucket(currency).name("VOL").tenor(IR_VERTEX_YEARS).tenor2(IR_VERTEX_YEARS).build();
   }
 
   public RiskFactor counterpartySpreadDelta(int bucketVertex) {
-    return RiskFactor.csrDelta(counterpartyBucket(), counterparty.id(),
-        RiskFactor.CsrCurve.CDS, CS_VERTEX_YEARS[bucketVertex]);
+    return RiskFactor.of().riskClass(RiskClassEnum.CSR_NON_SEC).measure(RiskMeasureEnum.DELTA)
+        .bucket(counterpartyBucket()).name(counterparty.id() + "|CDS")
+        .tenor(CS_VERTEX_YEARS[bucketVertex]).tenor2(0.0).build();
   }
 
   public RiskFactor fxDelta() {
@@ -71,7 +74,7 @@ public record CvaRiskFactors(String currency, CreditName counterparty, String fx
     return CS_VERTEX_YEARS.length;
   }
 
-  static RiskClass irRiskClass() {
-    return RiskClass.GIRR;
+  static RiskClassEnum irRiskClass() {
+    return RiskClassEnum.GIRR;
   }
 }

@@ -45,7 +45,11 @@ public class SchwartzOneFactor {
   private final double dt;
   private final double sqrtDt;
 
-  public SchwartzOneFactor(Nabla.Inputs<SchwartzMarket> in, double maturity, int steps) {
+  public static SchwartzOneFactor of(Nabla.Inputs<SchwartzMarket> in, double maturity, int steps) {
+    return new SchwartzOneFactor(in, maturity, steps);
+  }
+
+  protected SchwartzOneFactor(Nabla.Inputs<SchwartzMarket> in, double maturity, int steps) {
     this.kappa = in.of(SchwartzMarket::kappa);
     this.level = in.of(SchwartzMarket::level);
     this.sigma = in.of(SchwartzMarket::sigma);
@@ -82,15 +86,15 @@ public class SchwartzOneFactor {
    * futures option — the underlying is {@code S_T} itself.
    */
   public static BiConsumer<AadRecorder, Nabla.Inputs<SchwartzMarket>> european(
-      OptionType type, double strike, double maturity, int steps) {
+      OptionTypeEnum type, double strike, double maturity, int steps) {
     return (rec, in) -> {
-      SchwartzOneFactor m = new SchwartzOneFactor(in, maturity, steps);
+      SchwartzOneFactor m = SchwartzOneFactor.of(in, maturity, steps);
       ADouble logS = m.startLog(in);
       for (int t = 0; t < steps; t++) {
         logS = m.step(logS, rec.randn());
       }
       ADouble s = logS.exp();
-      ADouble intrinsic = type == OptionType.CALL ? s.sub(strike).max(0.0) : rec.constant(strike).sub(s).max(0.0);
+      ADouble intrinsic = type == OptionTypeEnum.CALL ? s.sub(strike).max(0.0) : rec.constant(strike).sub(s).max(0.0);
       ADouble discount = in.of(SchwartzMarket::rate).neg().mul(maturity).exp();
       rec.output(intrinsic.mul(discount));
     };

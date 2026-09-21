@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant.transform;
 
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 
 /**
  * The Fang-Oosterlee COS method: a European option price as a cosine series in
@@ -39,12 +39,12 @@ public final class CosMethod {
   private CosMethod() {
   }
 
-  public static double price(CharacteristicFunction cf, OptionType type,
+  public static double price(CharacteristicFunction cf, OptionTypeEnum type,
                              double spot, double strike, double rate, double maturity) {
     return price(cf, type, spot, strike, rate, maturity, DEFAULT_TERMS, DEFAULT_L);
   }
 
-  public static double price(CharacteristicFunction cf, OptionType type,
+  public static double price(CharacteristicFunction cf, OptionTypeEnum type,
                              double spot, double strike, double rate, double maturity,
                              int terms, double rangeWidths) {
     double c1 = cf.cumulant1(maturity);
@@ -67,7 +67,7 @@ public final class CosMethod {
     call *= Math.exp(-rate * maturity);
     call = Math.max(call, 0.0);
 
-    if (type == OptionType.CALL) {
+    if (type == OptionTypeEnum.CALL) {
       return call;
     }
     return call - spot + strike * Math.exp(-rate * maturity);   // put-call parity

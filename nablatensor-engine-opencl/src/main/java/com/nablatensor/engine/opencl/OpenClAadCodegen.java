@@ -60,12 +60,12 @@ final class OpenClAadCodegen {
   }
 
   static String generate(AadTape tape, AadOptions options) {
-    boolean f32 = options.precision() == AadOptions.Precision.FLOAT32;
+    boolean f32 = options.precision() == AadOptions.PrecisionEnum.FLOAT32;
     return toOpenCl(CudaAadCodegen.generate(tape, options), f32);
   }
 
   static String generateCheckpointed(AadTape tape, AadOptions options, AadCheckpointPlan plan) {
-    boolean f32 = options.precision() == AadOptions.Precision.FLOAT32;
+    boolean f32 = options.precision() == AadOptions.PrecisionEnum.FLOAT32;
     return toOpenCl(CudaAadCodegen.generateCheckpointed(tape, options, plan), f32);
   }
 

@@ -79,13 +79,13 @@ public final class BackendRegistry {
     throw new IllegalStateException("no nablatensor compute backend is available");
   }
 
-  public static ComputeBackend forSelector(Backend selector) {
+  public static ComputeBackend forSelector(BackendEnum selector) {
     return switch (selector) {
       case AUTO -> defaultBackend();
-      case CPU -> forType(DeviceType.CPU);
-      case CUDA -> forType(DeviceType.CUDA);
-      case ROCM -> forType(DeviceType.ROCM);
-      case VULKAN -> forType(DeviceType.VULKAN);
+      case CPU -> forType(DeviceTypeEnum.CPU);
+      case CUDA -> forType(DeviceTypeEnum.CUDA);
+      case ROCM -> forType(DeviceTypeEnum.ROCM);
+      case VULKAN -> forType(DeviceTypeEnum.VULKAN);
     };
   }
 
@@ -93,7 +93,7 @@ public final class BackendRegistry {
     return forType(device.type());
   }
 
-  private static ComputeBackend forType(DeviceType type) {
+  private static ComputeBackend forType(DeviceTypeEnum type) {
     for (ComputeBackend backend : BACKENDS) {
       if (backend.deviceType() == type && backend.isAvailable()) {
         return backend;

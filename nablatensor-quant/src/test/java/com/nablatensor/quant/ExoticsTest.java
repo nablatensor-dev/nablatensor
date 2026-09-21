@@ -17,6 +17,7 @@ package com.nablatensor.quant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.nablatensor.engine.Nabla;
 import org.junit.jupiter.api.Tag;
@@ -44,10 +45,17 @@ class ExoticsTest {
     }
   }
 
+
+  @Test
+  void exoticBuilderRejectsMissingRequiredFields() {
+    assertThrows(IllegalStateException.class, () -> ExoticProducts.BarrierOption.of()
+        .type(OptionTypeEnum.PUT).kind(ExoticProducts.BarrierEnum.DOWN_IN).barrier(70.0).build());
+  }
+
   @Test
   void knockOutPlusKnockInEqualsVanilla() {
-    double out = price(ExoticProducts.barrier(OptionType.CALL, ExoticProducts.Barrier.UP_OUT, 130.0, 1.0));
-    double in = price(ExoticProducts.barrier(OptionType.CALL, ExoticProducts.Barrier.UP_IN, 130.0, 1.0));
+    double out = price(ExoticProducts.BarrierOption.of().type(OptionTypeEnum.CALL).kind(ExoticProducts.BarrierEnum.UP_OUT).barrier(130.0).width(1.0).build());
+    double in = price(ExoticProducts.BarrierOption.of().type(OptionTypeEnum.CALL).kind(ExoticProducts.BarrierEnum.UP_IN).barrier(130.0).width(1.0).build());
     double vanilla = price(Products.europeanCall());
     assertEquals(vanilla, out + in, 1e-9 * (1 + vanilla), "UP_OUT + UP_IN == vanilla (same smoothing, same seed)");
     assertTrue(out < vanilla && out > 0, "0 < knock-out < vanilla");
@@ -59,7 +67,7 @@ class ExoticsTest {
     double[] w = {4.0, 2.0, 1.0, 0.5, 0.25};
     double[] p = new double[w.length];
     for (int i = 0; i < w.length; i++) {
-      p[i] = price(ExoticProducts.barrier(OptionType.CALL, ExoticProducts.Barrier.UP_OUT, 120.0, w[i]));
+      p[i] = price(ExoticProducts.BarrierOption.of().type(OptionTypeEnum.CALL).kind(ExoticProducts.BarrierEnum.UP_OUT).barrier(120.0).width(w[i]).build());
       assertTrue(p[i] >= -1e-9 && p[i] <= vanilla + 1e-9,
           "knock-out price is a valid, sub-vanilla number (w=" + w[i] + " -> " + p[i] + ")");
     }
@@ -71,7 +79,7 @@ class ExoticsTest {
 
   @Test
   void barrierAdjointDeltaMatchesABumpOfTheSmoothedPayoff() {
-    Product<EquityMarket> p = ExoticProducts.barrier(OptionType.CALL, ExoticProducts.Barrier.UP_OUT, 125.0, 1.5);
+    Product<EquityMarket> p = ExoticProducts.BarrierOption.of().type(OptionTypeEnum.CALL).kind(ExoticProducts.BarrierEnum.UP_OUT).barrier(125.0).width(1.5).build();
     double adjDelta = greeks(p).greek(EquityMarket::spot);
 
     double h = 0.5;
@@ -87,7 +95,7 @@ class ExoticsTest {
 
   @Test
   void cashDigitalMatchesBlackScholes() {
-    Product<EquityMarket> p = ExoticProducts.digitalCash(OptionType.CALL, 1.0, 0.5);
+    Product<EquityMarket> p = ExoticProducts.DigitalCash.of().type(OptionTypeEnum.CALL).cash(1.0).width(0.5).build();
     double mc;
     try (MonteCarlo<EquityMarket> m = MonteCarlo.of(p).market(M).steps(1).priceOnly().on("cpu-jit").build()) {
       mc = m.run(1_000_000L, SEED).price();
@@ -103,7 +111,7 @@ class ExoticsTest {
     double notional = 1000.0;
     double gFloor = 0.0;
     double gCap = 0.30;
-    Nabla.TypedValuation<EquityMarket> p = greeks(ExoticProducts.cliquet(-0.05, 0.05, gFloor, gCap, notional));
+    Nabla.TypedValuation<EquityMarket> p = greeks(ExoticProducts.Cliquet.of().localFloor(-0.05).localCap(0.05).globalFloor(gFloor).globalCap(gCap).notional(notional).build());
     double disc = Math.exp(-M.rate() * M.maturity());
     assertTrue(p.price() >= gFloor * notional * disc - 1e-6
         && p.price() <= gCap * notional * disc + 1e-6, "cliquet PV inside its collar: " + p.price());
@@ -112,7 +120,7 @@ class ExoticsTest {
 
   @Test
   void autocallablePricesAndDiffs() {
-    Product<EquityMarket> p = ExoticProducts.autocallable(105.0, 0.02, 4, 1.0, 100.0);
+    Product<EquityMarket> p = ExoticProducts.Autocallable.of().autocallLevel(105.0).couponPerPeriod(0.02).observations(4).width(1.0).notional(100.0).build();
     Nabla.TypedValuation<EquityMarket> g = greeks(p);
     assertTrue(g.price() > 0.0, "autocallable PV positive");
 
@@ -130,8 +138,8 @@ class ExoticsTest {
   void multiMetricEmitsPricePlusThreeNamedRiskMeasures() {
     try (MultiMetric mm = MultiMetric.market(M).steps(STEPS)
         .metric("call", Products.europeanCall())
-        .metric("digital", ExoticProducts.digitalCash(OptionType.CALL, 1.0, 1.0))
-        .metric("barrierUO", ExoticProducts.barrier(OptionType.CALL, ExoticProducts.Barrier.UP_OUT, 130.0, 1.0))
+        .metric("digital", ExoticProducts.DigitalCash.of().type(OptionTypeEnum.CALL).cash(1.0).width(1.0).build())
+        .metric("barrierUO", ExoticProducts.BarrierOption.of().type(OptionTypeEnum.CALL).kind(ExoticProducts.BarrierEnum.UP_OUT).barrier(130.0).width(1.0).build())
         .metric("asian", Products.asianCall())
         .on("cpu-jit").build()) {
 

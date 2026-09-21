@@ -38,7 +38,7 @@ import com.nablatensor.engine.Nabla;
  * @param <M> the market record this payoff reads its differentiable inputs from
  */
 @FunctionalInterface
-public interface Product<M extends Record> {
+public interface Product<M> {
 
   /**
    * Records the discounted payoff.

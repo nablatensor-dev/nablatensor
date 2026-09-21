@@ -41,11 +41,11 @@ public class GbmPath {
   private final ADouble[] diffusion;  // sigma * sqrt(dt_i)
 
   /** Uniform-grid convenience: {@code n} equal steps to {@code maturity}. */
-  public GbmPath(AadRecorder rec, ADouble rate, ADouble vol, int steps, ADouble maturity) {
+  protected GbmPath(AadRecorder rec, ADouble rate, ADouble vol, int steps, ADouble maturity) {
     this(rec, rate, vol, TimeGrid.uniform(steps), maturity);
   }
 
-  public GbmPath(AadRecorder rec, ADouble rate, ADouble vol, TimeGrid grid, ADouble maturity) {
+  protected GbmPath(AadRecorder rec, ADouble rate, ADouble vol, TimeGrid grid, ADouble maturity) {
     int n = grid.steps();
     this.drift = new ADouble[n];
     this.diffusion = new ADouble[n];
@@ -65,6 +65,14 @@ public class GbmPath {
         diffusion[i] = diffusion(vol.mul(dt.sqrt()));
       }
     }
+  }
+
+  public static GbmPath of(AadRecorder rec, ADouble rate, ADouble vol, int steps, ADouble maturity) {
+    return new GbmPath(rec, rate, vol, steps, maturity);
+  }
+
+  public static GbmPath of(AadRecorder rec, ADouble rate, ADouble vol, TimeGrid grid, ADouble maturity) {
+    return new GbmPath(rec, rate, vol, grid, maturity);
   }
 
   /** Hook: the deterministic per-step log-return. Identity for plain GBM. */

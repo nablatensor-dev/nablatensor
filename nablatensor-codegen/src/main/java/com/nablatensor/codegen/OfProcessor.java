@@ -42,17 +42,28 @@ public final class OfProcessor extends AbstractProcessor {
         out.write("package " + packageName + ";\n\n");
         out.write("/** Generated named construction API. */\n");
         out.write("public final class " + draft + " {\n");
-        for (VariableElement field : fields) out.write("  private " + field.asType() + " " + field.getSimpleName() + ";\n");
+        for (VariableElement field : fields) {
+          out.write("  private " + field.asType() + " " + field.getSimpleName() + ";\n");
+          out.write("  private boolean " + field.getSimpleName() + "Set;\n");
+        }
         out.write("\n  " + draft + "() {}\n\n");
         for (VariableElement field : fields) {
           String fieldName = field.getSimpleName().toString();
           out.write("  public " + draft + " " + fieldName + "(" + field.asType() + " value) {\n");
-          out.write("    this." + fieldName + " = value;\n    return this;\n  }\n\n");
+          out.write("    this." + fieldName + " = value;\n");
+          out.write("    this." + fieldName + "Set = true;\n    return this;\n  }\n\n");
         }
-        out.write("  public " + name + " build() {\n");
-        for (VariableElement field : fields) if (!field.asType().getKind().isPrimitive()) {
+        out.write("  public " + draft + " from(" + name + " value) {\n");
+        out.write("    if (value == null) throw new NullPointerException(\"value\");\n");
+        for (VariableElement field : fields) {
           String fieldName = field.getSimpleName().toString();
-          out.write("    if (" + fieldName + " == null) throw new IllegalStateException(\"Missing required value: " + fieldName + "\");\n");
+          out.write("    " + fieldName + "(value." + fieldName + "());\n");
+        }
+        out.write("    return this;\n  }\n\n");
+        out.write("  public " + name + " build() {\n");
+        for (VariableElement field : fields) {
+          String fieldName = field.getSimpleName().toString();
+          out.write("    if (!" + fieldName + "Set) throw new IllegalStateException(\"Missing required value: " + fieldName + "\");\n");
         }
         out.write("    return " + name + ".create(");
         for (int i = 0; i < fields.size(); i++) {

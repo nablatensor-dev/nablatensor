@@ -46,7 +46,11 @@ public final class HwShortRate {
   private final double dt;
   private final double sqrtDt;
 
-  public HwShortRate(AadRecorder recorder, ADouble r0, ADouble level,
+  public static HwShortRate of(AadRecorder recorder, ADouble r0, ADouble level, ADouble meanReversion, ADouble sigma, double dt) {
+    return HwShortRate.of(recorder, r0, level, meanReversion, sigma, dt);
+  }
+
+  private HwShortRate(AadRecorder recorder, ADouble r0, ADouble level,
                      ADouble meanReversion, ADouble sigma, double dt) {
     if (!(dt > 0.0)) {
       throw new IllegalArgumentException("dt must be > 0, got " + dt);

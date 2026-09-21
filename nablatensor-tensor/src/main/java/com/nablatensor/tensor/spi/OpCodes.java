@@ -15,13 +15,13 @@
  */
 package com.nablatensor.tensor.spi;
 
-import com.nablatensor.tensor.Op;
+import com.nablatensor.tensor.OpEnum;
 
 /**
  * The integer selector the elementwise kernels' {@code switch (op)} expects. The
  * CUDA-C kernels in {@link ElementwiseKernels} (which HIPRTC also compiles) and
  * the GLSL shaders in the {@code nablatensor-backend-vulkan} shader library both
- * branch on these exact values, so every backend maps {@link Op} through here
+ * branch on these exact values, so every backend maps {@link OpEnum} through here
  * instead of repeating the table — change a case label in a kernel and you
  * change it here, once.
  */
@@ -31,7 +31,7 @@ public final class OpCodes {
   }
 
   /** Selector for {@code ew_binary} / {@code ew_scalar}. */
-  public static int binary(Op op) {
+  public static int binary(OpEnum op) {
     return switch (op) {
       case ADD -> 0;
       case SUB -> 1;
@@ -44,7 +44,7 @@ public final class OpCodes {
   }
 
   /** Selector for {@code ew_unary}. */
-  public static int unary(Op op) {
+  public static int unary(OpEnum op) {
     return switch (op) {
       case NEG -> 0;
       case EXP -> 1;

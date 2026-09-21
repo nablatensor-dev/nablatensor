@@ -15,7 +15,7 @@
  */
 package com.nablatensor.tensor.expr;
 
-import com.nablatensor.tensor.Op;
+import com.nablatensor.tensor.OpEnum;
 
 /**
  * A scalar-per-element expression tree describing a chain of elementwise ops
@@ -27,9 +27,9 @@ public sealed interface Expr {
   /** References one of the real buffers passed to {@code ComputeBackend.fused}. */
   record Input(int index) implements Expr {}
 
-  record Unary(Op op, Expr in) implements Expr {}
+  record Unary(OpEnum op, Expr in) implements Expr {}
 
-  record Binary(Op op, Expr left, Expr right) implements Expr {}
+  record Binary(OpEnum op, Expr left, Expr right) implements Expr {}
 
-  record Scalar(Op op, Expr in, double value) implements Expr {}
+  record Scalar(OpEnum op, Expr in, double value) implements Expr {}
 }

@@ -45,7 +45,11 @@ public class HullWhite1F {
   private final double dt;
   private final double sqrtDt;
 
-  public HullWhite1F(Nabla.Inputs<HullWhiteMarket> in, double maturity, int steps) {
+  public static HullWhite1F of(Nabla.Inputs<HullWhiteMarket> in, double maturity, int steps) {
+    return new HullWhite1F(in, maturity, steps);
+  }
+
+  protected HullWhite1F(Nabla.Inputs<HullWhiteMarket> in, double maturity, int steps) {
     this.a = in.of(HullWhiteMarket::meanReversion);
     this.b = in.of(HullWhiteMarket::level);
     this.sigma = in.of(HullWhiteMarket::sigma);
@@ -90,7 +94,7 @@ public class HullWhite1F {
   public static BiConsumer<AadRecorder, Nabla.Inputs<HullWhiteMarket>> caplet(
       double maturity, int steps, double tau, double notional) {
     return (rec, in) -> {
-      HullWhite1F m = new HullWhite1F(in, maturity, steps);
+      HullWhite1F m = HullWhite1F.of(in, maturity, steps);
       State s = m.start(rec, in);
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn());
@@ -105,7 +109,7 @@ public class HullWhite1F {
   public static BiConsumer<AadRecorder, Nabla.Inputs<HullWhiteMarket>> zeroCouponBond(
       double maturity, int steps) {
     return (rec, in) -> {
-      HullWhite1F m = new HullWhite1F(in, maturity, steps);
+      HullWhite1F m = HullWhite1F.of(in, maturity, steps);
       State s = m.start(rec, in);
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn());
@@ -143,7 +147,7 @@ public class HullWhite1F {
   public static BiConsumer<AadRecorder, Nabla.Inputs<HullWhiteMarket>> europeanSwaption(
       double expiry, int swapPeriods, double accrual, int steps, double strike) {
     return (rec, in) -> {
-      HullWhite1F m = new HullWhite1F(in, expiry, steps);
+      HullWhite1F m = HullWhite1F.of(in, expiry, steps);
       State s = m.start(rec, in);
       for (int t = 0; t < steps; t++) {
         s = m.step(rec, s, rec.randn());

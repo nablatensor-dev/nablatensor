@@ -22,11 +22,11 @@ Source: [`nablatensor-quant/.../lattice/`](../../nablatensor-quant/src/main/java
 ## Using it
 
 ```java
-double amer = BinomialTree.of(spot, rate, dividend, vol, T, 2000, BinomialTree.Method.CRR)
-    .priceVanilla(OptionType.PUT, strike, ExerciseSchedule.AMERICAN);
+double amer = BinomialTree.of(spot, rate, dividend, vol, T, 2000, BinomialTree.MethodEnum.CRR)
+    .priceVanilla(OptionTypeEnum.PUT, strike, ExerciseSchedule.AMERICAN);
 
 LatticeGreeks g = LatticeGreeks.vanilla(spot, rate, dividend, vol, T, 800,
-    BinomialTree.Method.CRR, OptionType.CALL, strike, ExerciseSchedule.EUROPEAN);
+    BinomialTree.MethodEnum.CRR, OptionTypeEnum.CALL, strike, ExerciseSchedule.EUROPEAN);
 ```
 
 ## Run it

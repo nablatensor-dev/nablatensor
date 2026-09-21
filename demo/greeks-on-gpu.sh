@@ -31,22 +31,32 @@ say "What is it worth, and what hedges it?"
 nap 0.8
 
 # ── act 2 · the market ──────────────────────────────────────────────────────
-banner "2 · The market is a record. Every field is a risk factor."
+banner "2 · The market is immutable. Every field is a risk factor."
 
 run <<'CODE'
-var market = new EquityMarket(100.0, 100.0, 0.28, 0.03, 1.0);
+var market = (EquityMarket.of()
+    .spot(100.0)
+    .strike(100.0)
+    .vol(0.28)
+    .rate(0.03)
+    .maturity(1.0)
+    .build());
 CODE
 
-say "Five doubles: spot, strike, vol, rate, maturity. No framework, no"
-say "annotations, no risk factor named with a string. EquityMarket::vol is"
+say "Five named doubles: spot, strike, vol, rate, maturity. No risk factor"
+say "is named with a string, and EquityMarket::vol is"
 say "checked by the compiler and impossible to misspell."
 
 # ── act 3 · the payoff ─────────────────────────────────────────────────────
 banner "3 · The payoff is a lambda. Plain Java. No AD, no GPU."
 
 run <<'CODE'
-var note = ExoticProducts.barrier(
-    OptionType.PUT, ExoticProducts.Barrier.DOWN_IN, 70.0, 1.0);
+var note = (ExoticProducts.BarrierOption.of()
+    .type(OptionTypeEnum.PUT)
+    .kind(ExoticProducts.BarrierEnum.DOWN_IN)
+    .barrier(70.0)
+    .width(1.0)
+    .build());
 CODE
 
 say "A down-and-in put, monitored every step with a smoothed indicator so the"

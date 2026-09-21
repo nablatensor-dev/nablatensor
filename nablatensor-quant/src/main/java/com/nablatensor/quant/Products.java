@@ -26,7 +26,7 @@ import com.nablatensor.engine.Nabla;
  * <p>Each factory returns a {@code Product<EquityMarket>} whose {@code record} is
  * a handful of lines over {@link ADouble} — read one as the template for a payoff
  * of your own. The {@code xxxCall} / {@code xxxPut} pairs are conveniences over
- * the {@link OptionType}-parameterised forms ({@link #european(OptionType)} …),
+ * the {@link OptionTypeEnum}-parameterised forms ({@link #european(OptionTypeEnum)} …),
  * which is the shape to reach for when adding an instrument.
  */
 public final class Products {
@@ -35,39 +35,39 @@ public final class Products {
   }
 
   public static Product<EquityMarket> europeanCall() {
-    return european(OptionType.CALL);
+    return european(OptionTypeEnum.CALL);
   }
 
   public static Product<EquityMarket> europeanPut() {
-    return european(OptionType.PUT);
+    return european(OptionTypeEnum.PUT);
   }
 
   public static Product<EquityMarket> asianCall() {
-    return asian(OptionType.CALL);
+    return asian(OptionTypeEnum.CALL);
   }
 
   public static Product<EquityMarket> asianPut() {
-    return asian(OptionType.PUT);
+    return asian(OptionTypeEnum.PUT);
   }
 
   public static Product<EquityMarket> lookbackCall() {
-    return lookback(OptionType.CALL);
+    return lookback(OptionTypeEnum.CALL);
   }
 
   public static Product<EquityMarket> lookbackPut() {
-    return lookback(OptionType.PUT);
+    return lookback(OptionTypeEnum.PUT);
   }
 
   public static Product<EquityMarket> floatingLookbackCall() {
-    return floatingLookback(OptionType.CALL);
+    return floatingLookback(OptionTypeEnum.CALL);
   }
 
   public static Product<EquityMarket> floatingLookbackPut() {
-    return floatingLookback(OptionType.PUT);
+    return floatingLookback(OptionTypeEnum.PUT);
   }
 
   /** {@code max(sign * (S_T - K), 0)} discounted. Only the terminal value matters. */
-  public static Product<EquityMarket> european(OptionType type) {
+  public static Product<EquityMarket> european(OptionTypeEnum type) {
     return new Named("European " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
       ADouble terminal = sim.spot;
@@ -79,7 +79,7 @@ public final class Products {
   }
 
   /** {@code max(sign * (mean_t S_t - K), 0)} discounted; arithmetic average over the fixings. */
-  public static Product<EquityMarket> asian(OptionType type) {
+  public static Product<EquityMarket> asian(OptionTypeEnum type) {
     return new Named("Asian " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
       ADouble path = sim.spot;
@@ -98,16 +98,16 @@ public final class Products {
    * {@code max(K - min_t S_t, 0)} for a put. Discounted. The running extremum
    * includes the initial spot and every simulated fixing.
    */
-  public static Product<EquityMarket> lookback(OptionType type) {
+  public static Product<EquityMarket> lookback(OptionTypeEnum type) {
     return new Named("Lookback " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
       ADouble path = sim.spot;
       ADouble extremum = sim.spot;
       for (int t = 0; t < grid.steps(); t++) {
         path = sim.model.step(path, rec.randn(), t);
-        extremum = type == OptionType.CALL ? extremum.max(path) : extremum.min(path);
+        extremum = type == OptionTypeEnum.CALL ? extremum.max(path) : extremum.min(path);
       }
-      ADouble intrinsic = type == OptionType.CALL
+      ADouble intrinsic = type == OptionTypeEnum.CALL
           ? extremum.sub(sim.strike).max(0.0)
           : sim.strike.sub(extremum).max(0.0);
       rec.output(sim.discount(intrinsic));
@@ -119,22 +119,22 @@ public final class Products {
    * {@code max_t S_t - S_T}. The running extremum includes the initial spot and
    * every simulated fixing. Discounted.
    */
-  public static Product<EquityMarket> floatingLookback(OptionType type) {
+  public static Product<EquityMarket> floatingLookback(OptionTypeEnum type) {
     return new Named("Floating lookback " + type, (rec, in, grid) -> {
       Sim sim = new Sim(rec, in, grid);
       ADouble path = sim.spot;
       ADouble extremum = sim.spot;
       for (int t = 0; t < grid.steps(); t++) {
         path = sim.model.step(path, rec.randn(), t);
-        extremum = type == OptionType.CALL ? extremum.min(path) : extremum.max(path);
+        extremum = type == OptionTypeEnum.CALL ? extremum.min(path) : extremum.max(path);
       }
-      ADouble payoff = type == OptionType.CALL ? path.sub(extremum) : extremum.sub(path);
+      ADouble payoff = type == OptionTypeEnum.CALL ? path.sub(extremum) : extremum.sub(path);
       rec.output(sim.discount(payoff));   // always non-negative by construction
     });
   }
 
-  private static ADouble intrinsic(OptionType type, ADouble underlying, ADouble strike) {
-    ADouble diff = type == OptionType.CALL ? underlying.sub(strike) : strike.sub(underlying);
+  private static ADouble intrinsic(OptionTypeEnum type, ADouble underlying, ADouble strike) {
+    ADouble diff = type == OptionTypeEnum.CALL ? underlying.sub(strike) : strike.sub(underlying);
     return diff.max(0.0);
   }
 
@@ -152,7 +152,7 @@ public final class Products {
       this.rate = in.of(EquityMarket::rate);
       this.maturity = in.of(EquityMarket::maturity);
       ADouble vol = in.of(EquityMarket::vol);
-      this.model = new GbmPath(rec, rate, vol, grid, maturity);
+      this.model = GbmPath.of(rec, rate, vol, grid, maturity);
     }
 
     ADouble discount(ADouble payoff) {

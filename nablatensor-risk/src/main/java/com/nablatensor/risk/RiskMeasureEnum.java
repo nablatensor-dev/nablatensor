@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.nablatensor.tensor;
+package com.nablatensor.risk;
 
-import com.nablatensor.tensor.expr.Expr;
-import com.nablatensor.tensor.spi.DeviceBuffer;
-
-import java.util.List;
-
-/**
- * A lazily-fused elementwise chain traced by {@link Jit}: {@code expr}
- * describes the pending computation and {@code leaves} are the real backend
- * buffers it reads from. Real compute is deferred until a fusion boundary
- * (matmul/transpose/download) forces materialization.
- */
-record ExprBuffer(Expr expr, List<DeviceBuffer> leaves, Shape shape, DTypeEnum dtype, Device device)
-    implements DeviceBuffer {
+/** Whether a sensitivity is a first-order delta, a vega, or a curvature (CVR). */
+public enum RiskMeasureEnum {
+  /** First-order sensitivity to a risk factor (price move per unit factor move). */
+  DELTA,
+  /** Sensitivity to implied volatility. */
+  VEGA,
+  /** Curvature (CVR): the second-order risk left over after the delta hedge. */
+  CURVATURE
 }

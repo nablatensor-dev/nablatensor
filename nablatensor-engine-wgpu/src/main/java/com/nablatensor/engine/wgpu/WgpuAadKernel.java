@@ -109,7 +109,7 @@ public final class WgpuAadKernel extends GpuAadExecutable {
   }
 
   public static WgpuAadKernel compile(AadTape tape, AadOptions options) {
-    if (options.precision() != AadOptions.Precision.FLOAT32) {
+    if (options.precision() != AadOptions.PrecisionEnum.FLOAT32) {
       throw new IllegalArgumentException("the wgpu AAD engine is single-precision only");
     }
     if (!wgpuAvailable()) {

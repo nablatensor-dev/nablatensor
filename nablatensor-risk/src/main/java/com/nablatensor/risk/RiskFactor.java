@@ -15,6 +15,8 @@
  */
 package com.nablatensor.risk;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A regulatory risk factor: the key a sensitivity is bucketed and weighted by.
  *
@@ -46,44 +48,92 @@ package com.nablatensor.risk;
  * @param tenor     primary tenor in years (curve vertex, option expiry, repo tenor); {@code 0} if not applicable
  * @param tenor2    secondary tenor in years (GIRR/CSR vega: underlying residual maturity); {@code 0} otherwise
  */
-public record RiskFactor(RiskClass riskClass, RiskMeasure measure, String bucket, String name,
-                         double tenor, double tenor2) {
+@Of
+public final class RiskFactor {
 
-  public RiskFactor(RiskClass riskClass, RiskMeasure measure, String bucket, String name) {
+  private RiskFactor(RiskClassEnum riskClass, RiskMeasureEnum measure, String bucket, String name, double tenor, double tenor2) {
+    this.riskClass = riskClass;
+    this.measure = measure;
+    this.bucket = bucket;
+    this.name = name;
+    this.tenor = tenor;
+    this.tenor2 = tenor2;
+  }
+
+  private final RiskClassEnum riskClass;
+  private final RiskMeasureEnum measure;
+  private final String bucket;
+  private final String name;
+  private final double tenor;
+  private final double tenor2;
+  static RiskFactor create(RiskClassEnum riskClass, RiskMeasureEnum measure, String bucket, String name, double tenor, double tenor2) {
+    return new RiskFactor(riskClass, measure, bucket, name, tenor, tenor2);
+  }
+
+  public static RiskFactorBuilder of() {
+    return new RiskFactorBuilder();
+  }
+
+  public RiskClassEnum riskClass() {
+    return riskClass;
+  }
+
+  public RiskMeasureEnum measure() {
+    return measure;
+  }
+
+  public String bucket() {
+    return bucket;
+  }
+
+  public String name() {
+    return name;
+  }
+
+  public double tenor() {
+    return tenor;
+  }
+
+  public double tenor2() {
+    return tenor2;
+  }
+
+
+  private RiskFactor(RiskClassEnum riskClass, RiskMeasureEnum measure, String bucket, String name) {
     this(riskClass, measure, bucket, name, 0.0, 0.0);
   }
 
-  public RiskFactor(RiskClass riskClass, RiskMeasure measure, String bucket, String name, double tenor) {
+  private RiskFactor(RiskClassEnum riskClass, RiskMeasureEnum measure, String bucket, String name, double tenor) {
     this(riskClass, measure, bucket, name, tenor, 0.0);
   }
 
   // ---- equity (spot) ----------------------------------------------------
 
   public static RiskFactor equityDelta(String bucket, String name) {
-    return new RiskFactor(RiskClass.EQUITY, RiskMeasure.DELTA, bucket, name);
+    return RiskFactor.of().riskClass(RiskClassEnum.EQUITY).measure(RiskMeasureEnum.DELTA).bucket(bucket).name(name).tenor(0.0).tenor2(0.0).build();
   }
 
-  public static RiskFactor equityVega(String bucket, String name, double tenor) {
-    return new RiskFactor(RiskClass.EQUITY, RiskMeasure.VEGA, bucket, name, tenor);
+  private static RiskFactor equityVega(String bucket, String name, double tenor) {
+    return RiskFactor.of().riskClass(RiskClassEnum.EQUITY).measure(RiskMeasureEnum.VEGA).bucket(bucket).name(name).tenor(tenor).tenor2(0.0).build();
   }
 
   /** The equity repo-rate factor of an issuer (distinguished from spot by {@code tenor > 0}). */
-  public static RiskFactor equityRepoDelta(String bucket, String issuer, double tenorYears) {
+  private static RiskFactor equityRepoDelta(String bucket, String issuer, double tenorYears) {
     if (tenorYears <= 0.0) {
       throw new IllegalArgumentException("equity repo tenor must be > 0 (spot uses equityDelta)");
     }
-    return new RiskFactor(RiskClass.EQUITY, RiskMeasure.DELTA, bucket, issuer, tenorYears);
+    return RiskFactor.of().riskClass(RiskClassEnum.EQUITY).measure(RiskMeasureEnum.DELTA).bucket(bucket).name(issuer).tenor(tenorYears).tenor2(0.0).build();
   }
 
   /** True for an equity repo-rate delta factor (as opposed to spot). */
   public boolean isEquityRepo() {
-    return riskClass == RiskClass.EQUITY && measure == RiskMeasure.DELTA && tenor > 0.0;
+    return riskClass == RiskClassEnum.EQUITY && measure == RiskMeasureEnum.DELTA && tenor > 0.0;
   }
 
   // ---- GIRR -----------------------------------------------------------
 
-  public static RiskFactor girrDelta(String ccy, String curveId, double vertexYears) {
-    return new RiskFactor(RiskClass.GIRR, RiskMeasure.DELTA, ccy, curveId, vertexYears);
+  private static RiskFactor girrDelta(String ccy, String curveId, double vertexYears) {
+    return RiskFactor.of().riskClass(RiskClassEnum.GIRR).measure(RiskMeasureEnum.DELTA).bucket(ccy).name(curveId).tenor(vertexYears).tenor2(0.0).build();
   }
 
   public static RiskFactor girrDelta(String ccy, double vertexYears) {
@@ -91,35 +141,33 @@ public record RiskFactor(RiskClass riskClass, RiskMeasure measure, String bucket
   }
 
   public static RiskFactor girrInflation(String ccy) {
-    return new RiskFactor(RiskClass.GIRR, RiskMeasure.DELTA, ccy, "INFL", 0.0);
+    return RiskFactor.of().riskClass(RiskClassEnum.GIRR).measure(RiskMeasureEnum.DELTA).bucket(ccy).name("INFL").tenor(0.0).tenor2(0.0).build();
   }
 
   public static RiskFactor girrXccyBasis(String ccy) {
-    return new RiskFactor(RiskClass.GIRR, RiskMeasure.DELTA, ccy, "XCCY", 0.0);
+    return RiskFactor.of().riskClass(RiskClassEnum.GIRR).measure(RiskMeasureEnum.DELTA).bucket(ccy).name("XCCY").tenor(0.0).tenor2(0.0).build();
   }
 
-  public static RiskFactor girrVega(String ccy, double optionMaturityYears, double underlyingMaturityYears) {
-    return new RiskFactor(RiskClass.GIRR, RiskMeasure.VEGA, ccy, "VOL",
-        optionMaturityYears, underlyingMaturityYears);
+  private static RiskFactor girrVega(String ccy, double optionMaturityYears, double underlyingMaturityYears) {
+    return RiskFactor.of().riskClass(RiskClassEnum.GIRR).measure(RiskMeasureEnum.VEGA).bucket(ccy).name("VOL").tenor(optionMaturityYears).tenor2(underlyingMaturityYears).build();
   }
 
   // ---- CSR (non-securitisation; the same shape serves sec / CTP) -------
 
-  public static RiskFactor csrDelta(String bucket, String issuer, CsrCurve curve, double vertexYears) {
-    return new RiskFactor(RiskClass.CSR_NON_SEC, RiskMeasure.DELTA, bucket,
-        issuer + "|" + curve.name(), vertexYears);
+  private static RiskFactor csrDelta(String bucket, String issuer, CsrCurveEnum curve, double vertexYears) {
+    return RiskFactor.of().riskClass(RiskClassEnum.CSR_NON_SEC).measure(RiskMeasureEnum.DELTA).bucket(bucket).name(issuer + "|" + curve.name()).tenor(vertexYears).tenor2(0.0).build();
   }
 
-  public static RiskFactor csrDelta(RiskClass csrClass, String bucket, String issuer, CsrCurve curve, double vertexYears) {
-    return new RiskFactor(csrClass, RiskMeasure.DELTA, bucket, issuer + "|" + curve.name(), vertexYears);
+  private static RiskFactor csrDelta(RiskClassEnum csrClass, String bucket, String issuer, CsrCurveEnum curve, double vertexYears) {
+    return RiskFactor.of().riskClass(csrClass).measure(RiskMeasureEnum.DELTA).bucket(bucket).name(issuer + "|" + curve.name()).tenor(vertexYears).tenor2(0.0).build();
   }
 
-  public static RiskFactor csrVega(String bucket, String issuer, double optionMaturityYears) {
-    return new RiskFactor(RiskClass.CSR_NON_SEC, RiskMeasure.VEGA, bucket, issuer + "|VOL", optionMaturityYears);
+  private static RiskFactor csrVega(String bucket, String issuer, double optionMaturityYears) {
+    return RiskFactor.of().riskClass(RiskClassEnum.CSR_NON_SEC).measure(RiskMeasureEnum.VEGA).bucket(bucket).name(issuer + "|VOL").tenor(optionMaturityYears).tenor2(0.0).build();
   }
 
   /** Bond vs CDS credit-spread curve — the CSR "basis" pair. */
-  public enum CsrCurve {
+  public enum CsrCurveEnum {
     /** Spread implied by the issuer's cash bonds. */
     BOND,
     /** Spread quoted in the issuer's credit default swaps. */
@@ -140,13 +188,12 @@ public record RiskFactor(RiskClass riskClass, RiskMeasure measure, String bucket
 
   // ---- commodity ----------------------------------------------------
 
-  public static RiskFactor commodityDelta(String bucket, String commodity, double maturityYears, String deliveryLocation) {
-    return new RiskFactor(RiskClass.COMMODITY, RiskMeasure.DELTA, bucket,
-        commodity + "|" + deliveryLocation, maturityYears);
+  private static RiskFactor commodityDelta(String bucket, String commodity, double maturityYears, String deliveryLocation) {
+    return RiskFactor.of().riskClass(RiskClassEnum.COMMODITY).measure(RiskMeasureEnum.DELTA).bucket(bucket).name(commodity + "|" + deliveryLocation).tenor(maturityYears).tenor2(0.0).build();
   }
 
-  public static RiskFactor commodityVega(String bucket, String commodity, double optionMaturityYears) {
-    return new RiskFactor(RiskClass.COMMODITY, RiskMeasure.VEGA, bucket, commodity + "|VOL", optionMaturityYears);
+  private static RiskFactor commodityVega(String bucket, String commodity, double optionMaturityYears) {
+    return RiskFactor.of().riskClass(RiskClassEnum.COMMODITY).measure(RiskMeasureEnum.VEGA).bucket(bucket).name(commodity + "|VOL").tenor(optionMaturityYears).tenor2(0.0).build();
   }
 
   /** The commodity part of a commodity factor name ({@code "WTI|HUB"} -> {@code "WTI"}). */
@@ -164,22 +211,22 @@ public record RiskFactor(RiskClass riskClass, RiskMeasure measure, String bucket
   // ---- FX -----------------------------------------------------------
 
   public static RiskFactor fxDelta(String currencyPair) {
-    return new RiskFactor(RiskClass.FX, RiskMeasure.DELTA, currencyPair, currencyPair);
+    return RiskFactor.of().riskClass(RiskClassEnum.FX).measure(RiskMeasureEnum.DELTA).bucket(currencyPair).name(currencyPair).tenor(0.0).tenor2(0.0).build();
   }
 
   public static RiskFactor fxVega(String currencyPair, double optionMaturityYears) {
-    return new RiskFactor(RiskClass.FX, RiskMeasure.VEGA, currencyPair, currencyPair, optionMaturityYears);
+    return RiskFactor.of().riskClass(RiskClassEnum.FX).measure(RiskMeasureEnum.VEGA).bucket(currencyPair).name(currencyPair).tenor(optionMaturityYears).tenor2(0.0).build();
   }
 
   // ---- curvature --------------------------------------------------
 
   /** The same factor as a curvature factor (measure {@code CURVATURE}, tenors preserved). */
   public RiskFactor asCurvature() {
-    return new RiskFactor(riskClass, RiskMeasure.CURVATURE, bucket, name, tenor, tenor2);
+    return RiskFactor.of().riskClass(riskClass).measure(RiskMeasureEnum.CURVATURE).bucket(bucket).name(name).tenor(tenor).tenor2(tenor2).build();
   }
 
   /** A curvature factor with the tenor collapsed — one curvature factor per curve (GIRR / CSR). */
   public RiskFactor asCurvatureCurve() {
-    return new RiskFactor(riskClass, RiskMeasure.CURVATURE, bucket, name, 0.0, 0.0);
+    return RiskFactor.of().riskClass(riskClass).measure(RiskMeasureEnum.CURVATURE).bucket(bucket).name(name).tenor(0.0).tenor2(0.0).build();
   }
 }

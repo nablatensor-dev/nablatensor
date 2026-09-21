@@ -15,13 +15,40 @@
  */
 package com.nablatensor.quant.transform;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * Characteristic function of the Black-Scholes log-return:
  * {@code phi(u) = exp( i u (r - sigma^2/2) T - sigma^2 u^2 T / 2 )}.
  * The COS price against this must reproduce the closed form to many digits — it
  * is the oracle for the method itself.
  */
-public record BsmCf(double rate, double vol) implements CharacteristicFunction {
+@Of
+public final class BsmCf implements CharacteristicFunction {
+
+  private BsmCf(double rate, double vol) {
+    this.rate = rate;
+    this.vol = vol;
+  }
+
+  private final double rate;
+  private final double vol;
+  static BsmCf create(double rate, double vol) {
+    return new BsmCf(rate, vol);
+  }
+
+  public static BsmCfBuilder of() {
+    return new BsmCfBuilder();
+  }
+
+  public double rate() {
+    return rate;
+  }
+
+  public double vol() {
+    return vol;
+  }
+
 
   @Override
   public Complex phi(double u, double t) {

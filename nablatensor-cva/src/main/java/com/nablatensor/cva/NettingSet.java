@@ -15,6 +15,8 @@
  */
 package com.nablatensor.cva;
 
+import com.nablatensor.codegen.Of;
+
 import java.util.List;
 
 /**
@@ -26,17 +28,50 @@ import java.util.List;
  * @param trades       the trades in the set (at least one)
  * @param collateral   the CSA, or {@link CollateralAgreement#uncollateralised()}
  */
-public record NettingSet(String id, CreditName counterparty, List<CvaTrade> trades,
-                         CollateralAgreement collateral) {
+@Of
+public final class NettingSet {
 
-  public NettingSet {
+  private final String id;
+  private final CreditName counterparty;
+  private final List<CvaTrade> trades;
+  private final CollateralAgreement collateral;
+  static NettingSet create(String id, CreditName counterparty, List<CvaTrade> trades, CollateralAgreement collateral) {
+    return new NettingSet(id, counterparty, trades, collateral);
+  }
+
+  public static NettingSetBuilder of() {
+    return new NettingSetBuilder();
+  }
+
+  public String id() {
+    return id;
+  }
+
+  public CreditName counterparty() {
+    return counterparty;
+  }
+
+  public List<CvaTrade> trades() {
+    return trades;
+  }
+
+  public CollateralAgreement collateral() {
+    return collateral;
+  }
+
+
+  private NettingSet(String id, CreditName counterparty, List<CvaTrade> trades, CollateralAgreement collateral) {
     if (trades.isEmpty()) {
       throw new IllegalArgumentException("a netting set needs at least one trade");
     }
     trades = List.copyOf(trades);
+    this.id = id;
+    this.counterparty = counterparty;
+    this.trades = trades;
+    this.collateral = collateral;
   }
 
-  public NettingSet(String id, CreditName counterparty, List<CvaTrade> trades) {
+  private NettingSet(String id, CreditName counterparty, List<CvaTrade> trades) {
     this(id, counterparty, trades, CollateralAgreement.uncollateralised());
   }
 

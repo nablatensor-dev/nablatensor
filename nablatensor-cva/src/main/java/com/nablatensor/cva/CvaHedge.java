@@ -15,6 +15,8 @@
  */
 package com.nablatensor.cva;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A CVA credit hedge recognised by BA-CVA (full version, MAR50.6) and SA-CVA.
  * A single-name CDS references one counterparty and gets a correlation
@@ -29,33 +31,68 @@ package com.nablatensor.cva;
  * @param riskWeight    the hedge's supervisory credit risk weight (RW_h)
  * @param correlation   {@code r_hc} to the hedged counterparty (single-name only; {@code 1.0} for an index)
  */
-public record CvaHedge(Kind kind, String referenceId, double notional, double maturityYears,
-                       double riskWeight, double correlation) {
+@Of
+public final class CvaHedge {
 
-  public enum Kind {
+  private final KindEnum kind;
+  private final String referenceId;
+  private final double notional;
+  private final double maturityYears;
+  private final double riskWeight;
+  private final double correlation;
+  static CvaHedge create(KindEnum kind, String referenceId, double notional, double maturityYears, double riskWeight, double correlation) {
+    return new CvaHedge(kind, referenceId, notional, maturityYears, riskWeight, correlation);
+  }
+
+  public static CvaHedgeBuilder of() {
+    return new CvaHedgeBuilder();
+  }
+
+  public KindEnum kind() {
+    return kind;
+  }
+
+  public String referenceId() {
+    return referenceId;
+  }
+
+  public double notional() {
+    return notional;
+  }
+
+  public double maturityYears() {
+    return maturityYears;
+  }
+
+  public double riskWeight() {
+    return riskWeight;
+  }
+
+  public double correlation() {
+    return correlation;
+  }
+
+
+  public enum KindEnum {
     /** A CDS referencing one counterparty; eligible for r_hc credit against that name. */
     SINGLE_NAME_CDS,
     /** A CDS index hedge; correlation to any single counterparty is fixed at 1.0. */
     INDEX_CDS
   }
 
-  public CvaHedge {
+  private CvaHedge(KindEnum kind, String referenceId, double notional, double maturityYears, double riskWeight, double correlation) {
     if (!(notional >= 0.0) || !(maturityYears > 0.0) || !(riskWeight >= 0.0)) {
       throw new IllegalArgumentException("need notional>=0, maturityYears>0, riskWeight>=0");
     }
     if (!(correlation >= 0.0 && correlation <= 1.0)) {
       throw new IllegalArgumentException("r_hc must be in [0, 1], got " + correlation);
     }
-  }
-
-  public static CvaHedge singleName(String counterpartyId, double notional, double maturityYears,
-                                    double riskWeight, double correlation) {
-    return new CvaHedge(Kind.SINGLE_NAME_CDS, counterpartyId, notional, maturityYears,
-        riskWeight, correlation);
-  }
-
-  public static CvaHedge index(double notional, double maturityYears, double riskWeight) {
-    return new CvaHedge(Kind.INDEX_CDS, "", notional, maturityYears, riskWeight, 1.0);
+    this.kind = kind;
+    this.referenceId = referenceId;
+    this.notional = notional;
+    this.maturityYears = maturityYears;
+    this.riskWeight = riskWeight;
+    this.correlation = correlation;
   }
 
   /** Supervisory discount factor {@code (1 - e^{-0.05 M}) / (0.05 M)}. */

@@ -42,7 +42,7 @@ Two implementation choices matter:
   `omega > 0`, `alpha, beta >= 0`, `alpha + beta < 1`. Fitting raw `omega`
   (`~1e-6`, with a gradient `~1e7`) next to `persistence` (`~0.95`) stalls
   L-BFGS on the first step.
-- **Backend.** The likelihood unrolls one tape node per observation, so a
+- **BackendEnum.** The likelihood unrolls one tape node per observation, so a
   10 000-point series is a tape past what the straight-line bytecode kernel can
   emit — the fit runs on the scalar `cpu` engine, which replays a tape of any
   size.

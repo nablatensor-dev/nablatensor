@@ -15,7 +15,7 @@
  */
 package com.nablatensor.engine.simd;
 
-import com.nablatensor.engine.AadOp;
+import com.nablatensor.engine.AadOpEnum;
 import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadResult;
 import com.nablatensor.engine.AadTape;
@@ -44,7 +44,7 @@ abstract class BatchedReplay extends HostAadExecutable {
   static final int BATCH = SimdSupport.BATCH;
 
   // The flat tape, plus the row indices the sweeps address it by.
-  final AadOp[] ops;
+  final AadOpEnum[] ops;
   final int[] rowA;
   final int[] rowB;
   final int[] argA;

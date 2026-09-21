@@ -77,6 +77,6 @@ MAVEN_OPTS="--add-modules jdk.incubator.vector" mvn -o -q -pl nablatensor-exampl
 
 ## What to change
 
-- **Backend:** drop the loop, call `.on("cpu-jit")` or `.fastest()` directly.
+- **BackendEnum:** drop the loop, call `.on("cpu-jit")` or `.fastest()` directly.
 - **Fixings:** `.steps(n)` — the average is taken over the simulated fixings.
 - **Payoff:** `Products.asianPut()`, or a lambda — see [swap the payoff](swap-the-payoff.md).

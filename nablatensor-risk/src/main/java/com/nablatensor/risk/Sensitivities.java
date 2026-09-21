@@ -77,11 +77,11 @@ public final class Sensitivities {
     return new Sensitivities(out);
   }
 
-  public Sensitivities ofClass(RiskClass rc) {
+  public Sensitivities ofClass(RiskClassEnum rc) {
     return filter(f -> f.riskClass() == rc);
   }
 
-  public Sensitivities ofMeasure(RiskMeasure m) {
+  public Sensitivities ofMeasure(RiskMeasureEnum m) {
     return filter(f -> f.measure() == m);
   }
 

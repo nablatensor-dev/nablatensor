@@ -15,6 +15,7 @@
  */
 package com.nablatensor.examples;
 
+import com.nablatensor.cva.CollateralAgreement;
 import com.nablatensor.cva.CreditName;
 import com.nablatensor.cva.CvaMarket;
 import com.nablatensor.cva.CvaResult;
@@ -29,7 +30,7 @@ import com.nablatensor.cva.SaCvaParameters;
 import com.nablatensor.cva.SaCvaResult;
 import com.nablatensor.cva.SaCvaSensitivities;
 import com.nablatensor.risk.RiskFactor;
-import com.nablatensor.risk.RiskMeasure;
+import com.nablatensor.risk.RiskMeasureEnum;
 import com.nablatensor.risk.Sensitivities;
 import java.util.Comparator;
 import java.util.List;
@@ -56,20 +57,18 @@ public final class SaCvaShowcase {
 
   public static void main(String[] args) {
     final long paths = Long.getLong("paths", 30_000L);
-    CreditName counterparty = new CreditName("CPTY-A",
-        HazardCurve.fromFlatSpread(150.0, 0.40, 10.0), 0.40,
-        CreditName.Rating.BBB, CreditName.Sector.FINANCIAL);
-    NettingSet nettingSet = new NettingSet("NS-CPTY-A", counterparty, List.of(
-        InterestRateSwap.payer("SWAP-PAY", 100_000_000.0, 0.032, 5.0),
-        InterestRateSwap.receiver("SWAP-REC", 40_000_000.0, 0.028, 5.0),
-        new FxForward("FX-FWD", FxForward.Side.BUY_FOREIGN, 30_000_000.0, 1.10, 3.0)));
+    CreditName counterparty = CreditName.of().id("CPTY-A").curve(HazardCurve.fromFlatSpread(150.0, 0.40, 10.0)).recovery(0.40).rating(CreditName.RatingEnum.BBB).sector(CreditName.SectorEnum.FINANCIAL).build();
+    NettingSet nettingSet = NettingSet.of().id("NS-CPTY-A").counterparty(counterparty).trades(List.of(
+        InterestRateSwap.of().id("SWAP-PAY").side(InterestRateSwap.SideEnum.PAY_FIXED).notional(100_000_000.0).fixedRate(0.032).startYears(0.0).maturityYears(5.0).accrualYears(0.5).build(),
+        InterestRateSwap.of().id("SWAP-REC").side(InterestRateSwap.SideEnum.RECEIVE_FIXED).notional(40_000_000.0).fixedRate(0.028).startYears(0.0).maturityYears(5.0).accrualYears(0.5).build(),
+        FxForward.of().id("FX-FWD").side(FxForward.SideEnum.BUY_FOREIGN).foreignNotional(30_000_000.0).strike(1.10).settlementYears(3.0).build())).collateral(CollateralAgreement.uncollateralised()).build();
     CvaRiskFactors keys = new CvaRiskFactors("USD", nettingSet.counterparty(), "EURUSD");
 
     System.out.printf(Locale.ROOT,
         "Netting set NS-CPTY-A: 2 interest-rate swaps + 1 FX forward, one BBB counterparty%n");
     System.out.printf(Locale.ROOT, "%,d exposure paths, seed %d, engine cpu-jit%n%n", paths, SEED);
 
-    ExposureSimulation simulation = new ExposureSimulation(nettingSet, 20).on("cpu-jit");
+    ExposureSimulation simulation = ExposureSimulation.of(nettingSet, 20).on("cpu-jit");
     CvaMarket base = CvaMarket.demo();
 
     CvaResult swept = simulation.run(base, paths, SEED);
@@ -104,7 +103,7 @@ public final class SaCvaShowcase {
 
   /** A readable name for one bucketed SA-CVA risk factor (the raw record is a wide toString). */
   private static String label(RiskFactor f) {
-    boolean vega = f.measure() == RiskMeasure.VEGA;
+    boolean vega = f.measure() == RiskMeasureEnum.VEGA;
     return switch (f.riskClass()) {
       case GIRR -> vega
           ? f.bucket() + " rate vega, " + trimYears(f.tenor())

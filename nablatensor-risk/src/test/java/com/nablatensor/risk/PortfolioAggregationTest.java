@@ -55,7 +55,7 @@ class PortfolioAggregationTest {
         var p = mc.run(N, SEED);
         return Sensitivities.builder()
             .add(RiskFactor.equityDelta(bucket, name), weight * p.greek(EquityMarket::spot))
-            .add(RiskFactor.equityVega(bucket, name, 1.0), weight * p.greek(EquityMarket::vol))
+            .add(RiskFactor.of().riskClass(RiskClassEnum.EQUITY).measure(RiskMeasureEnum.VEGA).bucket(bucket).name(name).tenor(1.0).tenor2(0.0).build(), weight * p.greek(EquityMarket::vol))
             .build();
       }
     }
@@ -64,10 +64,10 @@ class PortfolioAggregationTest {
   @Test
   void bookDeltaVectorMatchesAOneAtATimeBumpGrid() {
     List<EqPosition> book = List.of(
-        new EqPosition("t1", "NS_A", "5", "ACME", new EquityMarket(100, 100, 0.20, 0.03, 1.0), 1.0),
-        new EqPosition("t2", "NS_A", "5", "ACME", new EquityMarket(100, 105, 0.22, 0.03, 1.0), -0.5),
-        new EqPosition("t3", "NS_B", "6", "GLOBEX", new EquityMarket(50, 48, 0.30, 0.03, 1.0), 2.0),
-        new EqPosition("t4", "NS_B", "6", "INITECH", new EquityMarket(75, 80, 0.25, 0.03, 1.0), 1.0));
+        new EqPosition("t1", "NS_A", "5", "ACME", EquityMarket.of().spot(100).strike(100).vol(0.20).rate(0.03).maturity(1.0).build(), 1.0),
+        new EqPosition("t2", "NS_A", "5", "ACME", EquityMarket.of().spot(100).strike(105).vol(0.22).rate(0.03).maturity(1.0).build(), -0.5),
+        new EqPosition("t3", "NS_B", "6", "GLOBEX", EquityMarket.of().spot(50).strike(48).vol(0.30).rate(0.03).maturity(1.0).build(), 2.0),
+        new EqPosition("t4", "NS_B", "6", "INITECH", EquityMarket.of().spot(75).strike(80).vol(0.25).rate(0.03).maturity(1.0).build(), 1.0));
 
     Portfolio portfolio = new Portfolio(book.stream()
         .map(p -> Portfolio.trade(p.id(), p.nettingSet(), p.adjointSensitivities()))

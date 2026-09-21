@@ -15,7 +15,7 @@
  */
 package com.nablatensor.tensor.spi;
 
-import com.nablatensor.tensor.Op;
+import com.nablatensor.tensor.OpEnum;
 import com.nablatensor.tensor.expr.Expr;
 
 import java.util.Collections;
@@ -158,7 +158,7 @@ public final class GpuKernels {
     return Float.toString((float) value) + "f";
   }
 
-  private static String binaryExpr(Op op, String l, String r) {
+  private static String binaryExpr(OpEnum op, String l, String r) {
     return switch (op) {
       case ADD -> "(" + l + " + " + r + ")";
       case SUB -> "(" + l + " - " + r + ")";
@@ -172,7 +172,7 @@ public final class GpuKernels {
     };
   }
 
-  private static String unaryExpr(Op op, String x) {
+  private static String unaryExpr(OpEnum op, String x) {
     return switch (op) {
       case NEG -> "(-" + x + ")";
       case EXP -> "expf(" + x + ")";

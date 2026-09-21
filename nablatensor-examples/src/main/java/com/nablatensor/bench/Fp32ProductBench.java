@@ -18,7 +18,7 @@ package com.nablatensor.bench;
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.ExoticProducts;
 import com.nablatensor.quant.MonteCarlo;
-import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.OptionTypeEnum;
 import com.nablatensor.quant.Product;
 import com.nablatensor.engine.Nabla;
 import com.nablatensor.quant.Products;
@@ -58,10 +58,10 @@ public final class Fp32ProductBench {
     book.put("Asian call", Products.asianCall());
     book.put("Lookback call", Products.lookbackCall());
     book.put("Floating lookback", Products.floatingLookbackCall());
-    book.put("Barrier UO call", ExoticProducts.barrier(OptionType.CALL, ExoticProducts.Barrier.UP_OUT, 130, 1.0));
-    book.put("Digital cash", ExoticProducts.digitalCash(OptionType.CALL, 1.0, 1.0));
-    book.put("Cliquet", ExoticProducts.cliquet(-0.05, 0.05, 0.0, 0.4, 100.0));
-    book.put("Autocallable", ExoticProducts.autocallable(105.0, 0.02, 4, 1.0, 100.0));
+    book.put("BarrierEnum UO call", ExoticProducts.BarrierOption.of().type(OptionTypeEnum.CALL).kind(ExoticProducts.BarrierEnum.UP_OUT).barrier(130).width(1.0).build());
+    book.put("Digital cash", ExoticProducts.DigitalCash.of().type(OptionTypeEnum.CALL).cash(1.0).width(1.0).build());
+    book.put("Cliquet", ExoticProducts.Cliquet.of().localFloor(-0.05).localCap(0.05).globalFloor(0.0).globalCap(0.4).notional(100.0).build());
+    book.put("Autocallable", ExoticProducts.Autocallable.of().autocallLevel(105.0).couponPerPeriod(0.02).observations(4).width(1.0).notional(100.0).build());
 
     System.out.printf(Locale.ROOT, "# Per-product: adjoint vs bump  (engine %s, fp32, %,d scenarios, %d steps, seed %d)%n%n",
         engine, scenarios, steps, seed);

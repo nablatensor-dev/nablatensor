@@ -102,7 +102,7 @@ banner "4 · THE HEAVY PART: Monte-Carlo netting-set exposure simulation"
 note "one compiled kernel, replayed over every path — the only costly stage"
 
 run <<'CODE'
-var simA = new ExposureSimulation(nsA, STEPS).on(ENGINE);
+var simA = ExposureSimulation.of(nsA, STEPS).on(ENGINE);
 var resA = simA.run(mkt, N, SEED);
 bar(resA.epeProfile());
 CODE
@@ -189,9 +189,9 @@ run <<'CODE'
 for (var rt : sa.byRiskType().entrySet())
   System.out.printf(Locale.ROOT, "   %-14s %s%n", rt.getKey(), money(rt.getValue()));
 System.out.printf(Locale.ROOT, "   SA-CVA   L %s   M %s   H %s   ->  %s  %s%n",
-    money(sa.perScenario().get(CorrelationScenario.LOW)),
-    money(sa.perScenario().get(CorrelationScenario.MEDIUM)),
-    money(sa.perScenario().get(CorrelationScenario.HIGH)),
+    money(sa.perScenario().get(CorrelationScenarioEnum.LOW)),
+    money(sa.perScenario().get(CorrelationScenarioEnum.MEDIUM)),
+    money(sa.perScenario().get(CorrelationScenarioEnum.HIGH)),
     sa.selected(), green(money(sa.total())));
 CODE
 

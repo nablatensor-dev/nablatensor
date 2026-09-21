@@ -15,12 +15,63 @@
  */
 package com.nablatensor.quant;
 
+import com.nablatensor.codegen.Of;
+
 /**
  * A four-forward LMM market: the strip {@code L1..L4}, a flat instantaneous
  * volatility and a flat Brownian correlation. Accrual period length is fixed at
  * {@link #TENOR}.
  */
-public record LmmMarket(double l1, double l2, double l3, double l4, double vol, double corr) {
+@Of
+public final class LmmMarket {
+
+  private LmmMarket(double l1, double l2, double l3, double l4, double vol, double corr) {
+    this.l1 = l1;
+    this.l2 = l2;
+    this.l3 = l3;
+    this.l4 = l4;
+    this.vol = vol;
+    this.corr = corr;
+  }
+
+  private final double l1;
+  private final double l2;
+  private final double l3;
+  private final double l4;
+  private final double vol;
+  private final double corr;
+  static LmmMarket create(double l1, double l2, double l3, double l4, double vol, double corr) {
+    return new LmmMarket(l1, l2, l3, l4, vol, corr);
+  }
+
+  public static LmmMarketBuilder of() {
+    return new LmmMarketBuilder();
+  }
+
+  public double l1() {
+    return l1;
+  }
+
+  public double l2() {
+    return l2;
+  }
+
+  public double l3() {
+    return l3;
+  }
+
+  public double l4() {
+    return l4;
+  }
+
+  public double vol() {
+    return vol;
+  }
+
+  public double corr() {
+    return corr;
+  }
+
 
   /** Accrual-period length of every forward in the strip, in years. */
   public static final double TENOR = 0.5;
@@ -33,6 +84,6 @@ public record LmmMarket(double l1, double l2, double l3, double l4, double vol, 
   }
 
   public static LmmMarket flat3pct() {
-    return new LmmMarket(0.03, 0.03, 0.03, 0.03, 0.25, 0.8);
+    return LmmMarket.of().l1(0.03).l2(0.03).l3(0.03).l4(0.03).vol(0.25).corr(0.8).build();
   }
 }

@@ -47,8 +47,8 @@ class HazardCurveTest {
   void bootstrapReprojectsNearlyFlatQuotes() {
     double recovery = 0.4;
     List<CdsQuote> quotes = List.of(
-        new CdsQuote(1.0, 100.0), new CdsQuote(3.0, 100.0),
-        new CdsQuote(5.0, 100.0), new CdsQuote(10.0, 100.0));
+        CdsQuote.of().tenorYears(1.0).parSpreadBp(100.0).build(), CdsQuote.of().tenorYears(3.0).parSpreadBp(100.0).build(),
+        CdsQuote.of().tenorYears(5.0).parSpreadBp(100.0).build(), CdsQuote.of().tenorYears(10.0).parSpreadBp(100.0).build());
     HazardCurve curve = HazardCurve.bootstrap(quotes, recovery, t -> Math.exp(-0.03 * t));
 
     double approximate = 100.0e-4 / (1.0 - recovery);
