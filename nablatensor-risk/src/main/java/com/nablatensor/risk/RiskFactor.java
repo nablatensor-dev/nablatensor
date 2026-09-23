@@ -16,6 +16,7 @@
 package com.nablatensor.risk;
 
 import com.nablatensor.codegen.Of;
+import java.util.Objects;
 
 /**
  * A regulatory risk factor: the key a sensitivity is bucketed and weighted by.
@@ -96,6 +97,28 @@ public final class RiskFactor {
 
   public double tenor2() {
     return tenor2;
+  }
+
+  /** Risk factors are map keys, so equality follows all fields of the factor. */
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof RiskFactor that)) {
+      return false;
+    }
+    return riskClass == that.riskClass
+        && measure == that.measure
+        && bucket.equals(that.bucket)
+        && name.equals(that.name)
+        && Double.compare(tenor, that.tenor) == 0
+        && Double.compare(tenor2, that.tenor2) == 0;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(riskClass, measure, bucket, name, tenor, tenor2);
   }
 
 
