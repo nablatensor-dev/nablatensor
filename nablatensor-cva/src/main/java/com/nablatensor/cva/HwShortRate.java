@@ -47,7 +47,7 @@ public final class HwShortRate {
   private final double sqrtDt;
 
   public static HwShortRate of(AadRecorder recorder, ADouble r0, ADouble level, ADouble meanReversion, ADouble sigma, double dt) {
-    return HwShortRate.of(recorder, r0, level, meanReversion, sigma, dt);
+    return new HwShortRate(recorder, r0, level, meanReversion, sigma, dt);
   }
 
   private HwShortRate(AadRecorder recorder, ADouble r0, ADouble level,

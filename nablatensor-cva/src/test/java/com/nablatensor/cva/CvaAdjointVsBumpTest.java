@@ -56,7 +56,6 @@ class CvaAdjointVsBumpTest {
     Sensitivities adjoint = SaCvaSensitivities.adjoint(swept, keys);
     SaCvaSensitivities.BumpResult bump =
         SaCvaSensitivities.bumpAndRevalue(simulation, base, PATHS, SEED, keys);
-
     assertTrue(bump.revaluations() >= 14,
         "the prescribed-bump vector re-simulates the whole netting set per factor");
     assertEquals(adjoint.asMap().size(), bump.sensitivities().asMap().size(),

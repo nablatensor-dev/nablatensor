@@ -63,7 +63,7 @@ public final class ExposureSimulation {
   private Boolean fp64Override = null;
 
   public static ExposureSimulation of(NettingSet nettingSet, int steps) {
-    return ExposureSimulation.of(nettingSet, steps);
+    return new ExposureSimulation(nettingSet, steps);
   }
 
   private ExposureSimulation(NettingSet nettingSet, int steps) {
